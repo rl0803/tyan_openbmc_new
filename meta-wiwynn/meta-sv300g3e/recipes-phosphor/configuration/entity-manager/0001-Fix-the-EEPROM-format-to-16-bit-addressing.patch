@@ -1,0 +1,62 @@
+From db2784f738febf357fca1df57d1108be19fa6188 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 24 Jul 2019 10:23:22 +0800
+Subject: [PATCH] Fix the EEPROM format to 16-bit addressing.
+
+---
+ src/FruDevice.cpp | 27 +++++++++++++++++++++++++--
+ 1 file changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/src/FruDevice.cpp b/src/FruDevice.cpp
+index d129403..b13aa34 100644
+--- a/src/FruDevice.cpp
++++ b/src/FruDevice.cpp
+@@ -107,13 +107,31 @@ static int read_block_data(int flag, int file, uint16_t offset, uint8_t len,
+     /* This is for 16 bit addressing EEPROM device. First an offset
+      * needs to be written before read data from a offset
+      */
+-    int ret = i2c_smbus_write_byte_data(file, 0, low_addr);
++    // int ret = i2c_smbus_write_byte_data(file, 0, low_addr);
++    int ret = i2c_smbus_write_byte_data(file, high_addr, low_addr);
+     if (ret < 0)
+     {
+         return ret;
+     }
+ 
+-    return i2c_smbus_read_i2c_block_data(file, high_addr, len, buf);
++    int j = 0;
++    for(j=0;j<len;j++)
++    {
++        ret = -1;
++        ret = i2c_smbus_read_byte(file);
++        if(ret < 0)
++        {
++            return ret;
++        }
++        else
++        {
++            *(buf+j) = ret;
++        }
++    }
++
++    // return i2c_smbus_read_i2c_block_data(file, high_addr, len, buf);
++    return len;
++
+ }
+ 
+ bool validateHeader(const std::array<uint8_t, I2C_SMBUS_BLOCK_MAX>& blockData)
+@@ -191,6 +209,11 @@ int get_bus_frus(int file, int first, int last, int bus,
+ 
+             /* Check for Device type if it is 8 bit or 16 bit */
+             int flag = isDevice16Bit(file);
++
++            /* wiw - Set the flag to 1 since the EEPROM is 16-bit address.
++             * 2019/07/24 */
++            flag = 1;
++
+             if (flag < 0)
+             {
+                 std::cerr << "failed to read bus " << bus << " address " << ii
+-- 
+2.22.0
+

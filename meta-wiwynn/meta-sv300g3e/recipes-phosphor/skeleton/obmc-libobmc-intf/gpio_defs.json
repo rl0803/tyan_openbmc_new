@@ -1,0 +1,14 @@
+{
+    "gpio_definitions": [
+        {
+            "name": "POWER_BUTTON",
+            "pin": "D2",
+            "direction": "in"
+        },
+        {
+            "name": "IDENTITY_BUTTON",
+            "pin": "X4",
+            "direction": "in"
+        }
+    ]
+}

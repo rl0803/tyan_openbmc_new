@@ -1,0 +1,16 @@
+diff --git a/drivers/misc/eeprom/at24.c b/drivers/misc/eeprom/at24.c
+index ddfcf4a..dd6b611 100644
+--- a/drivers/misc/eeprom/at24.c
++++ b/drivers/misc/eeprom/at24.c
+@@ -724,7 +724,11 @@ static int at24_probe(struct i2c_client *client)
+ 	nvmem_config.name = dev_name(dev);
+ 	nvmem_config.dev = dev;
+ 	nvmem_config.read_only = !writable;
++#if 1 // IAN_CHOU
++	nvmem_config.root_only = false;
++#else
+ 	nvmem_config.root_only = true;
++#endif
+ 	nvmem_config.owner = THIS_MODULE;
+ 	nvmem_config.compat = true;
+ 	nvmem_config.base_dev = dev;
