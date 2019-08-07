@@ -1,7 +1,7 @@
 SUMMARY = "OpenBMC for Wiwynn - Applications"
 PR = "r1"
 LICENSE = "Apache-2.0"
-LIC_FILES_CHKSUM = "file://${WIWBASE}/COPYING.apache-2.0;md5=34400b68072d710fecd0a2940a0d1658"
+LIC_FILES_CHKSUM = "file://${WIWYNNBASE}/COPYING.apache-2.0;md5=34400b68072d710fecd0a2940a0d1658"
 
 inherit packagegroup
 

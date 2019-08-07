@@ -11,10 +11,10 @@ OBMC_MACHINE_FEATURES += "\
 
 VIRTUAL-RUNTIME_skeleton_workbook = "${MACHINE}-config"
 
-PREFERRED_PROVIDER_virtual/obmc-chassis-mgmt = "packagegroup-wiw-apps"
-PREFERRED_PROVIDER_virtual/obmc-fan-mgmt = "packagegroup-wiw-apps"
-PREFERRED_PROVIDER_virtual/obmc-flash-mgmt = "packagegroup-wiw-apps"
-PREFERRED_PROVIDER_virtual/obmc-system-mgmt = "packagegroup-wiw-apps"
+PREFERRED_PROVIDER_virtual/obmc-chassis-mgmt = "packagegroup-wiwynn-apps"
+PREFERRED_PROVIDER_virtual/obmc-fan-mgmt = "packagegroup-wiwynn-apps"
+PREFERRED_PROVIDER_virtual/obmc-flash-mgmt = "packagegroup-wiwynn-apps"
+PREFERRED_PROVIDER_virtual/obmc-system-mgmt = "packagegroup-wiwynn-apps"
 PREFERRED_PROVIDER_virtual/obmc-host-ctl ?= "obmc-op-control-host"
 PREFERRED_PROVIDER_virtual/obmc-inventory-data ?= "${VIRTUAL-RUNTIME_skeleton_workbook}"
 #PREFERRED_PROVIDER_virtual/obmc-gpio-monitor ?= "phosphor-gpio-monitor"
