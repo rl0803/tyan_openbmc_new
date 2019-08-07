@@ -1,14 +1,14 @@
-From db2784f738febf357fca1df57d1108be19fa6188 Mon Sep 17 00:00:00 2001
+From cdc433ac3ca30a725037e298a48b4238ea080a26 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Wed, 24 Jul 2019 10:23:22 +0800
+Date: Wed, 7 Aug 2019 14:59:37 +0800
 Subject: [PATCH] Fix the EEPROM format to 16-bit addressing.
 
 ---
- src/FruDevice.cpp | 27 +++++++++++++++++++++++++--
- 1 file changed, 25 insertions(+), 2 deletions(-)
+ src/FruDevice.cpp | 30 ++++++++++++++++++++++++++++--
+ 1 file changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/src/FruDevice.cpp b/src/FruDevice.cpp
-index d129403..b13aa34 100644
+index baa90d4..6789e87 100644
 --- a/src/FruDevice.cpp
 +++ b/src/FruDevice.cpp
 @@ -107,13 +107,31 @@ static int read_block_data(int flag, int file, uint16_t offset, uint8_t len,
@@ -35,7 +35,7 @@ index d129403..b13aa34 100644
 +        }
 +        else
 +        {
-+            *(buf+j) = ret;
++            *(buf+j) = static_cast<uint8_t>(ret);
 +        }
 +    }
 +
@@ -45,14 +45,17 @@ index d129403..b13aa34 100644
  }
  
  bool validateHeader(const std::array<uint8_t, I2C_SMBUS_BLOCK_MAX>& blockData)
-@@ -191,6 +209,11 @@ int get_bus_frus(int file, int first, int last, int bus,
+@@ -191,6 +209,14 @@ int get_bus_frus(int file, int first, int last, int bus,
  
              /* Check for Device type if it is 8 bit or 16 bit */
              int flag = isDevice16Bit(file);
 +
-+            /* wiw - Set the flag to 1 since the EEPROM is 16-bit address.
++            /*  wiw - Set the flag to 1 since the EEPROM is 16-bit address.
 +             * 2019/07/24 */
-+            flag = 1;
++            if(6 == bus)
++            {
++                flag = 1;
++            }
 +
              if (flag < 0)
              {
