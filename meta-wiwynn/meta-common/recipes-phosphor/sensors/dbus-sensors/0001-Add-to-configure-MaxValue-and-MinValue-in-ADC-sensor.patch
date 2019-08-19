@@ -1,0 +1,100 @@
+From 358de3157e7f6f6836040a225a25de7cb5a8ab5f Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 19 Aug 2019 15:09:20 +0800
+Subject: [PATCH] Add to configure MaxValue and MinValue in ADC sensor JSON
+
+---
+ include/ADCSensor.hpp |  3 ++-
+ src/ADCSensor.cpp     | 13 +++++++++----
+ src/ADCSensorMain.cpp | 20 +++++++++++++++++++-
+ 3 files changed, 30 insertions(+), 6 deletions(-)
+
+diff --git a/include/ADCSensor.hpp b/include/ADCSensor.hpp
+index e061138..5116419 100644
+--- a/include/ADCSensor.hpp
++++ b/include/ADCSensor.hpp
+@@ -55,7 +55,8 @@ class ADCSensor : public Sensor
+               std::vector<thresholds::Threshold>&& thresholds,
+               const double scaleFactor, PowerState readState,
+               const std::string& sensorConfiguration,
+-              std::optional<BridgeGpio> bridgeGpio);
++              std::optional<BridgeGpio> bridgeGpio,
++              const double MaxValue, const double MinValue);
+     ~ADCSensor();
+ 
+   private:
+diff --git a/src/ADCSensor.cpp b/src/ADCSensor.cpp
+index ab1481b..8c6629d 100644
+--- a/src/ADCSensor.cpp
++++ b/src/ADCSensor.cpp
+@@ -35,9 +35,13 @@ static constexpr unsigned int gpioBridgeEnableMs = 20;
+ static constexpr unsigned int sensorScaleFactor = 1000;
+ 
+ static constexpr double roundFactor = 10000; // 3 decimal places
+-static constexpr double maxReading = 20;
+-static constexpr double minReading = 0;
++// static constexpr double maxReading = 20;
++// static constexpr double minReading = 0;
+ 
++/* wiw - MaxValue and MinValue be set in JSON for ADC sensor 
++to enhance the precision of IPMI sensor reading conversion.
++- 2019/08/19 
++*/
+ ADCSensor::ADCSensor(const std::string& path,
+                      sdbusplus::asio::object_server& objectServer,
+                      std::shared_ptr<sdbusplus::asio::connection>& conn,
+@@ -45,10 +49,11 @@ ADCSensor::ADCSensor(const std::string& path,
+                      std::vector<thresholds::Threshold>&& _thresholds,
+                      const double scaleFactor, PowerState readState,
+                      const std::string& sensorConfiguration,
+-                     std::optional<BridgeGpio> bridgeGpio) :
++                     std::optional<BridgeGpio> bridgeGpio,
++                     const double MaxValue, const double MinValue) :
+     Sensor(boost::replace_all_copy(sensorName, " ", "_"),
+            std::move(_thresholds), sensorConfiguration,
+-           "xyz.openbmc_project.Configuration.ADC", maxReading, minReading),
++           "xyz.openbmc_project.Configuration.ADC", MaxValue, MinValue),
+     objServer(objectServer), scaleFactor(scaleFactor), path(path),
+     readState(std::move(readState)), inputDev(io, open(path.c_str(), O_RDONLY)),
+     waitTimer(io), errCount(0), thresholdTimer(io, this), bridgeGpio(bridgeGpio)
+diff --git a/src/ADCSensorMain.cpp b/src/ADCSensorMain.cpp
+index 8a88244..99b20df 100644
+--- a/src/ADCSensorMain.cpp
++++ b/src/ADCSensorMain.cpp
+@@ -206,6 +206,24 @@ void createSensors(
+                 std::visit(VariantToFloatVisitor(), findScaleFactor->second);
+         }
+ 
++        // wiw - Read the MaxValue from JSON. - 20190819
++        auto findMaxValue = baseConfiguration->second.find("MaxValue");
++        double MaxValue = 20;
++        if (findMaxValue != baseConfiguration->second.end())
++        {
++            MaxValue =
++                std::visit(VariantToDoubleVisitor(), findMaxValue->second);
++        }
++
++        // wiw - Read the MinValue from JSON. - 20190819
++        auto findMinValue = baseConfiguration->second.find("MinValue");
++        double MinValue = 0;
++        if (findMinValue != baseConfiguration->second.end())
++        {
++            MinValue =
++                std::visit(VariantToDoubleVisitor(), findMinValue->second);
++        }
++
+         auto findPowerOn = baseConfiguration->second.find("PowerState");
+         PowerState readState = PowerState::always;
+         if (findPowerOn != baseConfiguration->second.end())
+@@ -264,7 +282,7 @@ void createSensors(
+         sensor = std::make_unique<ADCSensor>(
+             path.string(), objectServer, dbusConnection, io, sensorName,
+             std::move(sensorThresholds), scaleFactor, readState, *interfacePath,
+-            bridgeGpio);
++            bridgeGpio, MaxValue, MinValue);
+     }
+ }
+ 
+-- 
+2.22.0
+

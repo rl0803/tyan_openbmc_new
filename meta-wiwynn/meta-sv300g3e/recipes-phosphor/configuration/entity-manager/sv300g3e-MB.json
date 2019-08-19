@@ -1,9 +1,11 @@
 {
     "Exposes": [
         {
-            "Index": 5,
-            "Name": "P3V3_STBY",
+            "Index": 0,
+            "Name": "P3V3",
             "ScaleFactor": 0.4107,
+            "MaxValue": 5,
+            "MinValue": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -15,15 +17,17 @@
                     "Direction": "less than",
                     "Name": "lower critical",
                     "Severity": 1,
-                    "Value": 2.97
+                    "Value": 2.98
                 }
             ],
             "Type": "ADC"
         },
         {
-            "Index": 6,
-            "Name": "P5V_STBY",
+            "Index": 1,
+            "Name": "P5V",
             "ScaleFactor": 0.2717,
+            "MaxValue": 7,
+            "MinValue": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -35,7 +39,139 @@
                     "Direction": "less than",
                     "Name": "lower critical",
                     "Severity": 1,
-                    "Value": 4.52
+                    "Value": 4.5
+                }
+            ],
+            "Type": "ADC"
+        },
+        {
+            "Index": 3,
+            "Name": "P1V05_PCH_STBY",
+            "ScaleFactor": 1,
+            "MaxValue": 2,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.153
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 0.945
+                }
+            ],
+            "Type": "ADC"
+        },
+        {
+            "Index": 4,
+            "Name": "PVNN_PCH_STBY",
+            "ScaleFactor": 1,
+            "MaxValue": 2,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.098
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 0.768
+                }
+            ],
+            "Type": "ADC"
+        },
+        {
+            "Index": 5,
+            "Name": "P3V3_STBY",
+            "ScaleFactor": 0.4107,
+            "MaxValue": 5,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 3.62
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 2.98
+                }
+            ],
+            "Type": "ADC"
+        },
+        {
+            "Index": 6,
+            "Name": "P5V_STBY",
+            "ScaleFactor": 0.2717,
+            "MaxValue": 7,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 5.49
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 4.5
+                }
+            ],
+            "Type": "ADC"
+        },
+        {
+            "Index": 7,
+            "Name": "P3V_BAT",
+            "ScaleFactor": 0.3333,
+            "MaxValue": 5,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 3.62
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 2.3
+                }
+            ],
+            "Type": "ADC"
+        },
+        {
+            "Index": 8,
+            "Name": "P12V",
+            "ScaleFactor": 0.1124,
+            "MaxValue": 18,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 13.176
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 10.8
                 }
             ],
             "Type": "ADC"
@@ -43,9 +179,8 @@
         {
             "Address": "0x4c",
             "Bus": 1,
-            "Name": "blade_outlet",
+            "Name": "Blade Temp",
             "Thresholds": [
-                [
                     {
                         "Direction": "greater than",
                         "Name": "upper critical",
@@ -70,7 +205,6 @@
                         "Severity": 1,
                         "Value": 0
                     }
-                ]
             ],
             "Type": "TMP421"
         },
