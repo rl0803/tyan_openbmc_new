@@ -1,4 +1,4 @@
-# OpenBMC
+# Twitter OpenBMC
 
 [![Build Status](https://openpower.xyz/buildStatus/icon?job=openbmc-build)](https://openpower.xyz/job/openbmc-build/)
 
@@ -30,8 +30,8 @@ sudo dnf groupinstall "C Development Tools and Libraries"
 ```
 ### 2) Download the source
 ```
-git clone git@github.com:openbmc/openbmc.git
-cd openbmc
+git clone https://github.com/twitter-forks/twitter_openbmc.git
+cd twitter_openbmc
 ```
 
 ### 3) Target your hardware
@@ -44,15 +44,13 @@ then move to the next step. Additional examples can be found in the
 
 Machine | TEMPLATECONF
 --------|---------
-Palmetto | ```meta-ibm/meta-palmetto/conf```
-Zaius| ```meta-ingrasys/meta-zaius/conf```
-Witherspoon| ```meta-ibm/meta-witherspoon/conf```
-Romulus| ```meta-ibm/meta-romulus/conf```
+s7106 | ```meta-mct/meta-s7106/conf```
+sv300g3e| ```meta-wiwynn/meta-sv300g3e/conf```
 
 
-As an example target Palmetto
+As an example target Tyan S7106 Motherboard
 ```
-export TEMPLATECONF=meta-ibm/meta-palmetto/conf
+export TEMPLATECONF=meta-mct/meta-s7106/conf
 ```
 
 ### 4) Build
