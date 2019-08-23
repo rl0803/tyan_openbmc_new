@@ -1,4 +1,4 @@
-# Twitter OpenBMC
+# Twitter OpenBMC [![alt text][1.1]][1] 
 
 [![Build Status](https://openpower.xyz/buildStatus/icon?job=openbmc-build)](https://openpower.xyz/job/openbmc-build/)
 
@@ -125,3 +125,8 @@ Dive deeper into OpenBMC by opening the
 - Mail: openbmc@lists.ozlabs.org [https://lists.ozlabs.org/listinfo/openbmc](https://lists.ozlabs.org/listinfo/openbmc)
 - IRC: #openbmc on freenode.net
 - Riot: [#openbmc:matrix.org](https://riot.im/app/#/room/#openbmc:matrix.org)
+
+<!-- icons with padding -->
+
+[1.1]: http://i.imgur.com/tXSoThF.png (twitter icon with padding)
+[1]: http://www.twitter.com/
