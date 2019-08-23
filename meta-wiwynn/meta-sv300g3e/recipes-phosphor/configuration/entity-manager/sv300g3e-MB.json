@@ -177,67 +177,37 @@
             "Type": "ADC"
         },
         {
-            "Address": "0x4c",
-            "Bus": 1,
-            "Name": "Blade Temp",
+            "Address": "0x4d",
+            "Bus": 2,
+            "Name": "FP Inlet",
             "Thresholds": [
                     {
                         "Direction": "greater than",
                         "Name": "upper critical",
                         "Severity": 1,
-                        "Value": 115
-                    },
+                        "Value": 40
+                    }
+            ],
+            "Type": "TMP75"
+        },
+        {
+            "Address": "0x4c",
+            "Bus": 2,
+            "Name": "SYS Inlet",
+            "Thresholds": [
                     {
                         "Direction": "greater than",
-                        "Name": "upper non critical",
-                        "Severity": 0,
-                        "Value": 110
-                    },
-                    {
-                        "Direction": "less than",
-                        "Name": "lower non critical",
-                        "Severity": 0,
-                        "Value": 5
-                    },
-                    {
-                        "Direction": "less than",
-                        "Name": "lower critical",
+                        "Name": "upper critical",
                         "Severity": 1,
-                        "Value": 0
+                        "Value": 50
                     }
             ],
             "Type": "TMP421"
         },
         {
             "Address": "0x4c",
-            "Bus": 2,
-            "Name": "Inlet Temp",
-            "Thresholds": [
-                    {
-                        "Direction": "greater than",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 80
-                    },
-                    {
-                        "Direction": "greater than",
-                        "Name": "upper non critical",
-                        "Severity": 0,
-                        "Value": 70
-                    },
-                    {
-                        "Direction": "less than",
-                        "Name": "lower non critical",
-                        "Severity": 0,
-                        "Value": 15
-                    },
-                    {
-                        "Direction": "less than",
-                        "Name": "lower critical",
-                        "Severity": 1,
-                        "Value": 5
-                    }
-            ],
+            "Bus": 1,
+            "Name": "SYS Outlet",
             "Type": "TMP421"
         }
     ],

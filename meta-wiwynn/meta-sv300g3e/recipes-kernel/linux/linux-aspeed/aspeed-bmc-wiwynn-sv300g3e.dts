@@ -149,6 +149,8 @@
 
 &i2c1 {
 	status = "okay";
+
+    /* Blade Outlet */
 	tmp421@4c {
 		compatible = "ti,tmp421";
 		reg = <0x4c>;
@@ -157,10 +159,18 @@
 
 &i2c2 {
 	status = "okay";
-        tmp421@4c {
-                compatible = "ti,tmp421";
-                reg = <0x4c>;
-        };
+
+    /* Blade Inlet  */
+    tmp421@4c {
+        compatible = "ti,tmp421";
+        reg = <0x4c>;
+    };
+
+    /* FP Temp */
+    lm75@4d {
+        compatible = "ti,lm75";
+        reg = <0x4d>;
+    };
 };
 
 &i2c3 {
