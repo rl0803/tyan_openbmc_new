@@ -181,12 +181,12 @@
             "Bus": 2,
             "Name": "FP Inlet",
             "Thresholds": [
-                    {
-                        "Direction": "greater than",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 40
-                    }
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 40
+                }
             ],
             "Type": "TMP75"
         },
@@ -195,12 +195,12 @@
             "Bus": 2,
             "Name": "SYS Inlet",
             "Thresholds": [
-                    {
-                        "Direction": "greater than",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 50
-                    }
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 50
+                }
             ],
             "Type": "TMP421"
         },
@@ -209,6 +209,132 @@
             "Bus": 1,
             "Name": "SYS Outlet",
             "Type": "TMP421"
+        },
+        {
+            "Index": 0,
+            "Name": "SYS FAN0",
+            "MaxReading": 16000,
+            "MinReading": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 14900
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 500
+                }
+            ],
+            "Type": "AspeedFan"
+        },
+        {
+            "Index": 2,
+            "Name": "SYS FAN1",
+            "MaxReading": 16000,
+            "MinReading": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 14900
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 500
+                }
+            ],
+            "Type": "AspeedFan"
+        },
+        {
+            "Index": 4,
+            "Name": "SYS FAN2",
+            "MaxReading": 16000,
+            "MinReading": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 14900
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 500
+                }
+            ],
+            "Type": "AspeedFan"
+        },
+        {
+            "Index": 6,
+            "Name": "SYS FAN3",
+            "MaxReading": 16000,
+            "MinReading": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 14900
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 500
+                }
+            ],
+            "Type": "AspeedFan"
+        },
+        {
+            "Index": 8,
+            "Name": "SYS FAN4",
+            "MaxReading": 16000,
+            "MinReading": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 14900
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 500
+                }
+            ],
+            "Type": "AspeedFan"
+        },
+        {
+            "Index": 10,
+            "Name": "SYS FAN5",
+            "MaxReading": 16000,
+            "MinReading": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 14900
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 500
+                }
+            ],
+            "Type": "AspeedFan"
         }
     ],
     "Name": "SV300G3-E Main Board",
