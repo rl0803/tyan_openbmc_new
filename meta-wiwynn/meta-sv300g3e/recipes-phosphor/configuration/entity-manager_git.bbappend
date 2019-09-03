@@ -2,6 +2,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://0001-Fix-the-EEPROM-format-to-16-bit-addressing.patch \
             file://sv300g3e-MB.json \
+            file://Delta-DPS-500AB-PSU.json \
             "
 
 do_install_append(){

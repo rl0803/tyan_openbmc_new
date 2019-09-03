@@ -1,0 +1,41 @@
+From 4ed79d9821d504741b2c7a0f0936f4be4c82bf83 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Tue, 3 Sep 2019 16:25:30 +0800
+Subject: [PATCH 2/2] Add to remove PSU PWM sensor and to fix PSU threshold
+ reading bug
+
+---
+ src/PSUSensorMain.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/PSUSensorMain.cpp b/src/PSUSensorMain.cpp
+index 93d88d0..22584c8 100644
+--- a/src/PSUSensorMain.cpp
++++ b/src/PSUSensorMain.cpp
+@@ -370,9 +370,11 @@ void createSensors(boost::asio::io_service& io,
+                 labelHead = label.substr(0, label.find(" "));
+             }
+ 
++            // wiw - Remove the PSU PWM sensor. - 20190903
++/*
+             checkPWMSensor(sensorPath, labelHead, *interfacePath, objectServer,
+                            psuNames[0]);
+-
++*/
+             if (!findLabels.empty())
+             {
+                 /* Check if this labelHead is enabled in config file */
+@@ -423,7 +425,9 @@ void createSensors(boost::asio::io_service& io,
+ 
+             std::vector<thresholds::Threshold> sensorThresholds;
+ 
+-            if (!parseThresholdsFromConfig(*sensorData, sensorThresholds))
++            // wiw - Provide the label name to obtain the correct threshold value. - 20190903
++            // if (!parseThresholdsFromConfig(*sensorData, sensorThresholds))
++            if (!parseThresholdsFromConfig(*sensorData, sensorThresholds, &labelHead))
+             {
+                 std::cerr << "error populating thresholds for "
+                           << sensorNameSubStr << "\n";
+-- 
+2.22.0
+
