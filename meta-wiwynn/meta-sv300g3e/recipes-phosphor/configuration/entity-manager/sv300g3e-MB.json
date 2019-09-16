@@ -335,6 +335,104 @@
                 }
             ],
             "Type": "AspeedFan"
+        },
+        {
+            "Name":"CPU0 VccIN VOUT",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x8B",
+            "Page" : 0,
+            "SensorType" : "volt",
+            "Mode" : "VID12.5",
+            "MaxValue": 3,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 2.08
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 1.42
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VccIN IOUT",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x8C",
+            "Page" : 0,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 200,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 159.36
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VccIN Temp",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x8D",
+            "Page" : 0,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 100
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VccIN PIN",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x97",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 100,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VccIN POUT",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x96",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 320,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 306
+                }
+            ],
+            "Type": "PXE1610"
         }
     ],
     "Name": "SV300G3-E Main Board",
