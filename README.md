@@ -1,4 +1,4 @@
-# Twitter OpenBMC [![alt text][1.1]][1] 
+# OpenBMC
 
 [![Build Status](https://openpower.xyz/buildStatus/icon?job=openbmc-build)](https://openpower.xyz/job/openbmc-build/)
 
@@ -30,8 +30,8 @@ sudo dnf groupinstall "C Development Tools and Libraries"
 ```
 ### 2) Download the source
 ```
-git clone https://github.com/twitter-forks/twitter_openbmc.git
-cd twitter_openbmc
+git clone git@github.com:openbmc/openbmc.git
+cd openbmc
 ```
 
 ### 3) Target your hardware
@@ -44,13 +44,15 @@ then move to the next step. Additional examples can be found in the
 
 Machine | TEMPLATECONF
 --------|---------
-s7106 | ```meta-mct/meta-s7106/conf```
-sv300g3e| ```meta-wiwynn/meta-sv300g3e/conf```
+Palmetto | ```meta-ibm/meta-palmetto/conf```
+Zaius| ```meta-ingrasys/meta-zaius/conf```
+Witherspoon| ```meta-ibm/meta-witherspoon/conf```
+Romulus| ```meta-ibm/meta-romulus/conf```
 
 
-As an example target Tyan S7106 Motherboard
+As an example target Palmetto
 ```
-export TEMPLATECONF=meta-mct/meta-s7106/conf
+export TEMPLATECONF=meta-ibm/meta-palmetto/conf
 ```
 
 ### 4) Build
@@ -125,8 +127,3 @@ Dive deeper into OpenBMC by opening the
 - Mail: openbmc@lists.ozlabs.org [https://lists.ozlabs.org/listinfo/openbmc](https://lists.ozlabs.org/listinfo/openbmc)
 - IRC: #openbmc on freenode.net
 - Riot: [#openbmc:matrix.org](https://riot.im/app/#/room/#openbmc:matrix.org)
-
-<!-- icons with padding -->
-
-[1.1]: http://i.imgur.com/tXSoThF.png (twitter icon with padding)
-[1]: http://www.twitter.com/
