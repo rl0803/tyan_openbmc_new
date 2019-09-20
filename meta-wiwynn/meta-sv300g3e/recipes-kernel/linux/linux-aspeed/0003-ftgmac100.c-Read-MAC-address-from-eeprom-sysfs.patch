@@ -1,25 +1,35 @@
+From a50463c73c38bbf6769042a44f6a7fda9824b99a Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 20 Sep 2019 07:40:15 +0800
+Subject: [PATCH 2/2] ftgmac100.c Read MAC address from eeprom sysfs
+
+---
+ drivers/net/ethernet/faraday/ftgmac100.c | 102 +++++++++++++++++++++++
+ 1 file changed, 102 insertions(+)
+
 diff --git a/drivers/net/ethernet/faraday/ftgmac100.c b/drivers/net/ethernet/faraday/ftgmac100.c
-index 3e5e971..e666a57 100644
+index 9b7af94a40bb..c65cd7d6a566 100644
 --- a/drivers/net/ethernet/faraday/ftgmac100.c
 +++ b/drivers/net/ethernet/faraday/ftgmac100.c
-@@ -38,6 +38,12 @@
- #include <linux/of_net.h>
+@@ -27,6 +27,13 @@
  #include <net/ip.h>
  #include <net/ncsi.h>
-+#if 1 // IAN_CHOU
+ 
++#if 1 // wiw
 +#include <linux/file.h>
 +#include <linux/fs.h>
 +#include <linux/namei.h>
 +#include <linux/slab.h>
 +#endif
- 
++
  #include "ftgmac100.h"
  
-@@ -63,6 +69,22 @@
+ #define DRV_NAME	"ftgmac100"
+@@ -51,6 +58,22 @@
  #define FTGMAC_100MHZ		100000000
  #define FTGMAC_25MHZ		25000000
  
-+#if 1 // IAN_CHOU
++#if 1 // wiw
 +#define EEPROM_BUS_ID 6
 +#define EEPROM_SLAVE_ADDR 54
 +#define MAC_OFFSET 0x1900
@@ -38,12 +48,13 @@ index 3e5e971..e666a57 100644
  struct ftgmac100 {
  	/* Registers */
  	struct resource *res;
-@@ -121,6 +143,17 @@ struct ftgmac100 {
+@@ -109,6 +132,18 @@ struct ftgmac100 {
  	bool is_aspeed;
  };
  
-+#if 1 // IAN_CHOU
-+static struct file *kernel_open(const char *filename, int flags, umode_t mode) {
++#if 1 // wiw
++static struct file *kernel_open(const char *filename, int flags, umode_t mode)
++{
 +	struct file *filp = NULL;
 +	mm_segment_t oldfs = get_fs();
 +	set_fs(KERNEL_DS);
@@ -56,11 +67,11 @@ index 3e5e971..e666a57 100644
  static int ftgmac100_reset_mac(struct ftgmac100 *priv, u32 maccr)
  {
  	struct net_device *netdev = priv->netdev;
-@@ -222,6 +255,60 @@ static void ftgmac100_initial_mac(struct ftgmac100 *priv)
+@@ -210,6 +245,60 @@ static void ftgmac100_initial_mac(struct ftgmac100 *priv)
  	}
  }
  
-+#if 1 // IAN_CHOU
++#if 1 // wiw
 +static void ftgmac100_set_mac_from_eeprom(struct ftgmac100 *priv)
 +{
 +	u8 mac[ETH_ALEN];
@@ -117,24 +128,26 @@ index 3e5e971..e666a57 100644
  static int ftgmac100_set_mac_addr(struct net_device *dev, void *p)
  {
  	int ret;
-@@ -1487,6 +1574,11 @@ static int ftgmac100_open(struct net_device *netdev)
+@@ -1475,6 +1564,12 @@ static int ftgmac100_open(struct net_device *netdev)
  	}
  
  	if (netdev->phydev) {
-+#if 1 // IAN_CHOU
-+		if (priv->is_aspeed && netdev->ifindex == ETH_INDEX_0) {
++#if 1 // wiw
++        if (priv->is_aspeed && netdev->ifindex == ETH_INDEX_0) 
++		{
 +			ftgmac100_set_mac_from_eeprom(priv);
 +		}
 +#endif
  		/* If we have a PHY, start polling */
  		phy_start(netdev->phydev);
  	} else if (priv->use_ncsi) {
-@@ -1888,6 +1980,12 @@ static int ftgmac100_remove(struct platform_device *pdev)
+@@ -1904,6 +1999,13 @@ static int ftgmac100_remove(struct platform_device *pdev)
  	struct net_device *netdev;
  	struct ftgmac100 *priv;
  
-+#if 1 // IAN_CHOU
-+	if (g_mac_initialized) {
++#if 1 // wiw
++	if (g_mac_initialized)
++	{
 +		g_mac_initialized = false;
 +	}
 +#endif
@@ -142,3 +155,6 @@ index 3e5e971..e666a57 100644
  	netdev = platform_get_drvdata(pdev);
  	priv = netdev_priv(netdev);
  
+-- 
+2.22.0
+
