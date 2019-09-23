@@ -211,6 +211,21 @@
             "Type": "TMP421"
         },
         {
+            "Address": "0x8",
+            "Class": "METemp",
+            "Name": "PCH Temp",
+            "PowerState": "Always",
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 86
+                }
+            ],
+            "Type": "IpmbSensor"
+        },
+        {
             "Index": 0,
             "Name": "SYS FAN0",
             "MaxReading": 16000,
