@@ -1,0 +1,91 @@
+From d244442cff48e6010c3148f926c9add5a8607460 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 27 Sep 2019 15:46:50 +0800
+Subject: [PATCH] Add to support IPMI mc warm reset command
+
+---
+ globalhandler.cpp | 49 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 49 insertions(+)
+
+diff --git a/globalhandler.cpp b/globalhandler.cpp
+index c192cbb..10453ed 100644
+--- a/globalhandler.cpp
++++ b/globalhandler.cpp
+@@ -1,5 +1,7 @@
+ #include "globalhandler.hpp"
+ 
++#include <filesystem>
++#include <fstream>
+ #include <ipmid/api.hpp>
+ #include <ipmid/utils.hpp>
+ #include <phosphor-logging/elog-errors.hpp>
+@@ -13,6 +15,10 @@ static constexpr auto bmcStateIntf = "xyz.openbmc_project.State.BMC";
+ static constexpr auto reqTransition = "RequestedBMCTransition";
+ static constexpr auto match = "bmc0";
+ 
++static constexpr auto systemdBusName = "org.freedesktop.systemd1";
++static constexpr auto systemdObjPath = "/org/freedesktop/systemd1";
++static constexpr auto systemdMagIface = "org.freedesktop.systemd1.Manager";
++
+ using namespace phosphor::logging;
+ using BMC = sdbusplus::xyz::openbmc_project::State::server::BMC;
+ 
+@@ -52,6 +58,44 @@ ipmi::RspType<> ipmiGlobalReset()
+     return ipmi::responseSuccess();
+ }
+ 
++/** @brief IPMI Warm Reset command handler
++ *  @param - None
++ *  @returns IPMI completion code.
++ */
++ipmi::RspType<> ipmiWarmReset()
++{
++    static constexpr auto sysTarget = "rescue.target";
++    static constexpr auto tempFile = "/run/initramfs/WarmReset";
++
++    // 1. Create a temp file /run/initramfs/WarmReset
++    std::ofstream file(tempFile);
++    if (!file)
++    {
++        return ipmi::responseUnspecifiedError();
++    }
++    file.close();
++
++    // 2. Switch to rescue.target by dbus method call
++    sdbusplus::bus::bus bus{ipmid_get_sd_bus_connection()};
++
++    auto starUintCall = bus.new_method_call(systemdBusName, systemdObjPath,
++                                            systemdMagIface, "StartUnit");
++    starUintCall.append(sysTarget, "isolate");
++
++    auto starUintReply = bus.call(starUintCall);
++
++    if (starUintReply.is_method_error())
++    {
++        std::error_code ec;
++        std::filesystem::remove(tempFile, ec);
++        log<level::ERR>("Error in StartUnit rescue.target\n");
++        return ipmi::responseUnspecifiedError();
++    }
++
++    // Status code.
++    return ipmi::responseSuccess();
++}
++
+ void register_netfn_global_functions()
+ {
+ 
+@@ -59,5 +103,10 @@ void register_netfn_global_functions()
+     ipmi::registerHandler(ipmi::prioOpenBmcBase, ipmi::netFnApp,
+                           ipmi::app::cmdColdReset, ipmi::Privilege::Admin,
+                           ipmiGlobalReset);
++
++    // Warm Reset
++    ipmi::registerHandler(ipmi::prioOpenBmcBase, ipmi::netFnApp,
++                          ipmi::app::cmdWarmReset, ipmi::Privilege::Admin,
++                          ipmiWarmReset);
+     return;
+ }
+-- 
+2.22.0
+
