@@ -450,6 +450,22 @@
             "Type": "PXE1610"
         }
     ],
+    "Fru":[
+        {
+            "Name": "Main BD FRU",
+            "Size": 512,
+            "Index": 0,
+            "Bus": 6,
+            "Address": "0x54"
+        },
+        {
+            "Name": "PSU FRU",
+            "Size": 256,
+            "Index": 1,
+            "Bus": 7,
+            "Address": "0x50"
+        }
+    ],
     "Name": "SV300G3-E Main Board",
     "Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME' : '.*WW*'})",
     "Type": "Board",
