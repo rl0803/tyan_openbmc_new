@@ -7,6 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=a6a4edad4aed50f39a66d098d74b265b"
 SRC_URI = "git://github.com/openbmc/intel-ipmi-oem \
            file://0003-Support-FRU-device-id-and-size-configuration-in-JSON.patch \
            file://0004-Support-event-only-type-SDR-format.patch \
+           file://0005-Add-SDR-unit-hit-for-SOL-pattern-sensor.patch \
           "
 # SRCREV = "ba9c1765f5edc2f0891e012f33b3059a0dbd7ff1"
 SRCREV = "147daec5fcfcdacd8813eab6a7735d0f1b615c8a"
