@@ -71,7 +71,7 @@ find_package (OpenSSL REQUIRED)
 include_directories (${OPENSSL_INCLUDE_DIR})
 
 add_library (
-    zsv300g3eoemcmds SHARED oemcommands.cpp
+    zsv300g3eoemcmds SHARED oemcommands.cpp appcommands.cpp
 )
 set_target_properties (zsv300g3eoemcmds PROPERTIES VERSION "0.1.0")
 set_target_properties (zsv300g3eoemcmds PROPERTIES SOVERSION "0")

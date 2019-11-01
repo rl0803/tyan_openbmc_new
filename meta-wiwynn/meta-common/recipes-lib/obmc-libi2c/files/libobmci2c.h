@@ -18,6 +18,9 @@ extern "C" {
 #include <sys/ioctl.h>
 #include <stddef.h>
 
+#define SUCCESS 0
+#define FAILURE 0xFF
+
 int open_i2c_dev(int i2cbus, char *filename, size_t size, int quiet);
 int set_slave_addr(int file, int address, int force);
 void close_i2c_dev(int file);
@@ -26,7 +29,8 @@ int i2c_master_write_read(int file, uint8_t slave_addr,
                           uint8_t rx_cnt, uint8_t* rx_buf);
 int i2c_master_write(int file, uint8_t slave_addr,
                      uint8_t tx_cnt, uint8_t* tx_buf);
-
+uint8_t i2cEEPROMGet(const char* i2cbus, const char* i2caddr, uint32_t offset,
+                     uint8_t len, uint8_t* buffer);
 #ifdef  __cplusplus
 }
 #endif

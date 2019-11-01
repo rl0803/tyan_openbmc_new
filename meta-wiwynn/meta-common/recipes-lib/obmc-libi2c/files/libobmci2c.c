@@ -93,3 +93,70 @@ int i2c_master_write(int file, uint8_t slave_addr,
 
     return ret;
 }
+
+/**
+ *  @brief Function of getting EEPROM data on i2c bus
+ *
+ *  @param i2cbus: The i2c bus number of EEPROM
+ *  @param i2caddr: The i2c address (7-bit) of EEPROM
+ *  @param offset: Offset to target location
+ *  @param len: The data length retrieved from target location
+ *  @param buffer: The data buffer of returned data
+ *
+ *  @return Status of fetching EEPROM data.
+ *      0: Success
+ *      others: Fail
+ **/
+uint8_t i2cEEPROMGet(const char* i2cbus, const char* i2caddr, uint32_t offset,
+                     uint8_t len, uint8_t* buffer)
+{
+    uint8_t status = SUCCESS;
+    char eeprom_path[64] = {0};
+    FILE *eeprom_fp;
+    uint8_t c, n = 0;
+    uint8_t* ptr = NULL;
+    uint8_t result, unit = 1;
+
+    ptr = (uint8_t*)malloc(sizeof(uint8_t)*len);
+    if (NULL == ptr)
+    {
+        fprintf(stderr, "Failed to allocate memory.\n");
+        return FAILURE;
+    }
+
+    sprintf(eeprom_path, "/sys/bus/i2c/devices/%s-00%s/eeprom", i2cbus, i2caddr);
+
+    // Open EEPROM bin file
+    eeprom_fp = fopen(eeprom_path, "rb");
+    if (NULL == eeprom_fp)
+    {
+        fprintf(stderr, "eeprom_fp: Unable to open the file %s\n", eeprom_path);
+
+        free(ptr);
+
+        return FAILURE;
+    }
+
+    // Locate the system GUID in EEPROM
+    fseek(eeprom_fp, offset, SEEK_SET);
+
+    result = fread(ptr, unit, len, eeprom_fp);
+    if (result != (len * unit))
+    {
+        fprintf(stderr, "Failed to read EEPROM.\n");
+
+        fclose(eeprom_fp);
+
+        free(ptr);
+
+        return FAILURE;
+    }
+
+    memcpy(buffer, ptr, len);
+
+    fclose(eeprom_fp);
+
+    free(ptr);
+
+    return status;
+}

@@ -20,7 +20,10 @@ S = "${WORKDIR}"
 SRC_URI = "file://CMakeLists.txt \
            file://LICENSE \
            file://oemcommands.cpp \
-           file://oemcommands.hpp "
+           file://oemcommands.hpp \
+           file://appcommands.cpp \
+           file://appcommands.hpp \
+          "
 
 LIBRARY_NAMES = "libzsv300g3eoemcmds.so"
 
