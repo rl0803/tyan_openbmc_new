@@ -47,12 +47,36 @@
         };
 	};
 
+	leds {
+		compatible = "gpio-leds";
+
+		caterr {
+			gpios = <&gpio ASPEED_GPIO(F, 6) GPIO_ACTIVE_LOW>;
+		};
+
+		identify {
+			gpios = <&gpio ASPEED_GPIO(Q, 6) GPIO_ACTIVE_LOW>;
+		};
+
+		status_green {
+			gpios = <&gpio ASPEED_GPIO(AA, 0) GPIO_ACTIVE_HIGH>;
+		};
+
+		status_amber {
+			gpios = <&gpio ASPEED_GPIO(AA, 1) GPIO_ACTIVE_HIGH>;
+		};
+
+		power {
+			gpios = <&gpio ASPEED_GPIO(AA, 5) GPIO_ACTIVE_LOW>;
+		};
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 		id-button {
-		label = "id-btn";
-		gpios = <&gpio ASPEED_GPIO(X, 4) GPIO_ACTIVE_LOW>;
-		linux,code = <ASPEED_GPIO(X, 4)>;
+			label = "id-button";
+			gpios = <&gpio ASPEED_GPIO(X, 4) GPIO_ACTIVE_LOW>;
+			linux,code = <ASPEED_GPIO(X, 4)>;
 		 };
 	};
 
