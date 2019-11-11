@@ -214,7 +214,7 @@
             "Address": "0x8",
             "Class": "METemp",
             "Name": "PCH Temp",
-            "PowerState": "Always",
+            "PowerState": "On",
             "Thresholds": [
                 {
                     "Direction": "greater than",

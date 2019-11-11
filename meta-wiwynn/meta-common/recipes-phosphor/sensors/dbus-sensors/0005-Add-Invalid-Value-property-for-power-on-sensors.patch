@@ -1,0 +1,62 @@
+From 5d11daa95eb8046e3ca75afeddc8d7d724ccf4e1 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 11 Nov 2019 14:35:09 +0800
+Subject: [PATCH 1/2] Add Invalid Value dbus sensor property for power-on
+ sensors
+
+---
+ include/sensor.hpp | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/include/sensor.hpp b/include/sensor.hpp
+index 641d390..ad1229c 100644
+--- a/include/sensor.hpp
++++ b/include/sensor.hpp
+@@ -31,6 +31,7 @@ struct Sensor
+     std::shared_ptr<sdbusplus::asio::dbus_interface> thresholdInterfaceCritical;
+     std::shared_ptr<sdbusplus::asio::dbus_interface> association;
+     double value = std::numeric_limits<double>::quiet_NaN();
++    bool invalidValue = false;
+     bool overriddenState = false;
+     bool internalSet = false;
+     double hysteresis;
+@@ -52,6 +53,14 @@ struct Sensor
+         return 1;
+     }
+ 
++    int setSensorValueInvalid(const bool& newState, bool& oldState)
++    {
++        oldState = newState;
++        invalidValue = newState;
++
++        return 1;
++    }
++
+     void
+         setInitialProperties(std::shared_ptr<sdbusplus::asio::connection>& conn)
+     {
+@@ -64,6 +73,11 @@ struct Sensor
+                 return setSensorValue(newValue, oldValue);
+             });
+ 
++        sensorInterface->register_property(
++            "InvalidValue", invalidValue, [&](const bool& newState, bool& oldState) {
++                return setSensorValueInvalid(newState, oldState);
++            });
++
+         for (auto& threshold : thresholds)
+         {
+             std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
+@@ -154,4 +168,9 @@ struct Sensor
+             checkThresholds();
+         }
+     }
++
++    void updateValueInvalid(const bool& newState)
++    {
++        sensorInterface->set_property("InvalidValue", newState);
++    }
+ };
+-- 
+2.22.0
+

@@ -1,0 +1,47 @@
+From 7268cc59bc4c9ec0285a46dab80b0b20b078037c Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 11 Nov 2019 14:41:10 +0800
+Subject: [PATCH 2/2] IPMB-type sensors to support the invalid value property
+
+---
+ src/IpmbSensor.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/IpmbSensor.cpp b/src/IpmbSensor.cpp
+index 946c060..1e10cbe 100644
+--- a/src/IpmbSensor.cpp
++++ b/src/IpmbSensor.cpp
+@@ -224,6 +224,7 @@ void IpmbSensor::read(void)
+         }
+         if (!isPowerOn() && readState != PowerState::always)
+         {
++            updateValueInvalid(true);
+             updateValue(0);
+             read();
+             return;
+@@ -241,12 +242,14 @@ void IpmbSensor::read(void)
+                                   << "\n";
+                         firstError = false;
+                     }
++                    updateValueInvalid(true);
+                     updateValue(0);
+                     read();
+                     return;
+                 }
+                 if (!isPowerOn() && readState != PowerState::always)
+                 {
++                    updateValueInvalid(true);
+                     updateValue(0);
+                     read();
+                     return;
+@@ -343,6 +346,7 @@ void IpmbSensor::read(void)
+                 /* Adjust value as per scale and offset */
+                 value = (value * scaleVal) + offsetVal;
+                 updateValue(value);
++                updateValueInvalid(false);
+                 read();
+                 firstError = true; // success
+             },
+-- 
+2.22.0
+

@@ -46,6 +46,8 @@ SolPatternSensor::SolPatternSensor(
     
     unsigned int maxValue = 255;
     unsigned int minValue = 0;
+    bool invalidValue = false;
+    sensorInterface->register_property("InvalidValue", invalidValue);
     sensorInterface->register_property("MaxValue", maxValue);
     sensorInterface->register_property("MinValue", minValue);
 
