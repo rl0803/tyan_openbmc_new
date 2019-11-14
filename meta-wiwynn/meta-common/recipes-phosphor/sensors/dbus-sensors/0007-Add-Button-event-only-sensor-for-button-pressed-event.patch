@@ -1,0 +1,26 @@
+From 4511b57829308ea28e779d1c2db8923e9b0835f6 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 14 Nov 2019 14:30:26 +0800
+Subject: [PATCH] Add Button event-only sensor for button pressed event log
+
+---
+ include/EventSensor.hpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index c564455..2c855a3 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -36,7 +36,8 @@ struct sensorTypeMap
+ };
+ 
+ static const std::vector<struct sensorTypeMap> sensorList = {
+-    {.sensorName = "ACPI_Power_State", .sensorType = "acpi/"}
++    {.sensorName = "ACPI_Power_State", .sensorType = "acpi/"},
++    {.sensorName = "Button", .sensorType = "button/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+-- 
+2.22.0
+

@@ -16,7 +16,7 @@
         {
             "name": "POWER_BUTTON",
             "pin": "D2",
-            "direction": "in"
+            "direction": "both"
         },
         {
             "name": "POWER_UP_PIN",
@@ -24,9 +24,14 @@
             "direction": "out"
         },
         {
-            "name": "ID_BUTTON",
-            "pin": "X4",
-            "direction": "in"
+            "name": "RESET_BUTTON",
+            "pin": "D4",
+            "direction": "both"
+        },
+        {
+            "name": "RESET_OUT",
+            "pin": "D3",
+            "direction": "out"
         }
     ]
 }

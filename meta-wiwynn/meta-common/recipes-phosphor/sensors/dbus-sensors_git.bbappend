@@ -6,6 +6,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0004-Support-Event-only-type-sensor-monitoring.patch \
             file://0005-Add-Invalid-Value-property-for-power-on-sensors.patch \
             file://0006-IPMB-type-sensors-to-support-the-invalid-value-property.patch \
+            file://0007-Add-Button-event-only-sensor-for-button-pressed-event.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.vrsensor.service \
