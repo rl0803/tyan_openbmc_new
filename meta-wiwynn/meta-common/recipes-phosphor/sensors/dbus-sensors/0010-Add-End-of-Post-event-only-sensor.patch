@@ -1,0 +1,26 @@
+From 5f10dd657299920d0e4f970bc80f47d28a212313 Mon Sep 17 00:00:00 2001
+From: Jason <Jason_YX_Chang@wiwynn.com>
+Date: Thu, 21 Nov 2019 09:56:11 +0800
+Subject: [PATCH] Add event-only SEL Post Complete
+
+---
+ include/EventSensor.hpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index 2c855a3..f7d9b4b 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -37,7 +37,8 @@ struct sensorTypeMap
+ 
+ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "ACPI_Power_State", .sensorType = "acpi/"},
+-    {.sensorName = "Button", .sensorType = "button/"}
++    {.sensorName = "Button", .sensorType = "button/"},
++    {.sensorName = "End_of_Post", .sensorType = "systemevent/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+-- 
+1.9.1
+

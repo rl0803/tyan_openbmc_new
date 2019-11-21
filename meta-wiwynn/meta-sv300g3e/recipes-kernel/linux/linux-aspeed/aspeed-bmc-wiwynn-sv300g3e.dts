@@ -77,7 +77,13 @@
 			label = "id-button";
 			gpios = <&gpio ASPEED_GPIO(X, 4) GPIO_ACTIVE_LOW>;
 			linux,code = <ASPEED_GPIO(X, 4)>;
-		 };
+		};
+		 end-of-post {
+			 label = "end-of-post";
+			 gpios = <&gpio ASPEED_GPIO(A, 2) GPIO_ACTIVE_LOW>;
+			 linux,code = <ASPEED_GPIO(A, 2)>;
+		};
+
 	};
 
 	iio-hwmon {

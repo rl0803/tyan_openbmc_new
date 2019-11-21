@@ -12,4 +12,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_sv300g3e += " entity-manager \
                                               pattern-matching \
                                               sv300g3e-ipmi-oem \
                                               id-button \
+                                              end-of-post \
                                             "
