@@ -7,16 +7,21 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0005-Add-Invalid-Value-property-for-power-on-sensors.patch \
             file://0006-IPMB-type-sensors-to-support-the-invalid-value-property.patch \
             file://0007-Add-Button-event-only-sensor-for-button-pressed-event.patch \
+            file://0008-Support-a-pgood-GPIO-read-func-for-power-status-checking.patch \
+            file://0009-PSU-type-sensors-to-support-the-invalid-value-property.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.vrsensor.service \
                            xyz.openbmc_project.eventsensor.service \
                          "
 
-DEPENDS += "obmc-libi2c \
+DEPENDS += "gpioplus \
+            obmc-libi2c \
             obmc-libmisc \
+            obmc-libgpio \
            "
 
 RDEPENDS_${PN} += "obmc-libi2c \
                    obmc-libmisc \
+                   obmc-libgpio \
                   "

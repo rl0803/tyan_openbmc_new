@@ -1,15 +1,14 @@
-From 5d11daa95eb8046e3ca75afeddc8d7d724ccf4e1 Mon Sep 17 00:00:00 2001
+From 9fcc689a8b1e90260a913896bcaf0c36df7875d7 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
 Date: Mon, 11 Nov 2019 14:35:09 +0800
-Subject: [PATCH 1/2] Add Invalid Value dbus sensor property for power-on
- sensors
+Subject: [PATCH] Add Invalid Value dbus sensor property for power-on sensors
 
 ---
- include/sensor.hpp | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ include/sensor.hpp | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
 
 diff --git a/include/sensor.hpp b/include/sensor.hpp
-index 641d390..ad1229c 100644
+index 641d390..5f2f6fb 100644
 --- a/include/sensor.hpp
 +++ b/include/sensor.hpp
 @@ -31,6 +31,7 @@ struct Sensor
@@ -47,14 +46,29 @@ index 641d390..ad1229c 100644
          for (auto& threshold : thresholds)
          {
              std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
-@@ -154,4 +168,9 @@ struct Sensor
+@@ -146,12 +160,24 @@ struct Sensor
+             internalSet = true;
+             sensorInterface->set_property("Value", newValue);
+             internalSet = false;
++
++        /*
+             double diff = std::abs(value - newValue);
+             if (std::isnan(diff) || diff > hysteresis)
+             {
+                 value = newValue;
+             }
++        */
++            value = newValue;
              checkThresholds();
          }
      }
 +
 +    void updateValueInvalid(const bool& newState)
 +    {
-+        sensorInterface->set_property("InvalidValue", newState);
++        if(newState != invalidValue)
++        {
++            sensorInterface->set_property("InvalidValue", newState);
++        }
 +    }
  };
 -- 
