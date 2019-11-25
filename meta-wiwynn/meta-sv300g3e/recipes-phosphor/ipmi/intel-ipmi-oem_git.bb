@@ -11,6 +11,7 @@ SRC_URI = "git://github.com/openbmc/intel-ipmi-oem \
            file://0006-Support-non-volatile-IPMI-SEL-record.patch \
            file://0007-Support-the-reading-unavailable-bit.patch \
            file://0008-Add-sensor-type-system-event.patch \
+           file://0009-Support-IPMI-Get-and-Add-SEL-Entry-commands.patch \
           "
 # SRCREV = "ba9c1765f5edc2f0891e012f33b3059a0dbd7ff1"
 SRCREV = "147daec5fcfcdacd8813eab6a7735d0f1b615c8a"
