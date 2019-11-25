@@ -226,6 +226,158 @@
             "Type": "IpmbSensor"
         },
         {
+            "Address": "0x30",
+            "Bus": 0,
+            "CpuID": 1,
+            "Name": "CPU 0",
+            "Labels": [
+                {
+                    "Die" : "CPU0_Temp",
+                    "DIMM_A1" : "DIMM_A_Temp",
+                    "DIMM_B1" : "DIMM_B_Temp",
+                    "DIMM_C1" : "DIMM_C_Temp",
+                    "DIMM_D1" : "DIMM_D_Temp",
+                    "DIMM_E1" : "DIMM_E_Temp",
+                    "DIMM_F1" : "DIMM_F_Temp"
+                }
+            ],
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Label": "Die",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 102
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "Die",
+                    "Name": "upper non critical",
+                    "Severity": 0,
+                    "Value": 98
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_A1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_B1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_C1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_D1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_E1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_F1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                }
+            ],
+            "Type": "XeonCPU"
+       },
+       {
+            "Address": "0x31",
+            "Bus": 0,
+            "CpuID": 2,
+            "Name": "CPU 1",
+            "Labels": [
+                {
+                    "Die" : "CPU1_Temp",
+                    "DIMM_A1" : "DIMM_G_Temp",
+                    "DIMM_B1" : "DIMM_H_Temp",
+                    "DIMM_C1" : "DIMM_J_Temp",
+                    "DIMM_D1" : "DIMM_K_Temp",
+                    "DIMM_E1" : "DIMM_L_Temp",
+                    "DIMM_F1" : "DIMM_M_Temp"
+                }
+            ],
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Label": "Die",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 102.0
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "Die",
+                    "Name": "upper non critical",
+                    "Severity": 0,
+                    "Value": 98
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_A1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_B1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_C1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_D1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_E1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                },
+                {
+                    "Direction": "greater than",
+                    "Label": "DIMM_F1",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 85
+                }
+            ],
+            "Type": "XeonCPU"
+        },
+        {
             "Index": 0,
             "Name": "SYS FAN0",
             "MaxReading": 16000,

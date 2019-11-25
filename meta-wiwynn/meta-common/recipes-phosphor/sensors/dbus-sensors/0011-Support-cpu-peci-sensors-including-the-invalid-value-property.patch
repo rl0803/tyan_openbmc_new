@@ -1,0 +1,210 @@
+From 89da3032adbbe23b1fe3ed82d284e1995167c91a Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 25 Nov 2019 15:30:30 +0800
+Subject: [PATCH] Support cpu-peci sensors including the invalid value property
+
+---
+ CMakeLists.txt        |  5 +++++
+ include/CPUSensor.hpp |  6 +++---
+ src/CPUSensor.cpp     | 46 ++++++++++++++++++++++++++++++++++++++++++-
+ src/CPUSensorMain.cpp | 36 ++++++++++++++++++++++++++++++++-
+ 4 files changed, 88 insertions(+), 5 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fd8992b..41886fb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -47,6 +47,7 @@ option (DISABLE_INTRUSION "Disable installing intrusion sensor" OFF)
+ option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
+ option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" OFF)
+ option (DISABLE_PSU "Disable installing PSU sensor" OFF)
++option (BMC_CPU_SENSOR_TCONTROL "Enable Tcontrol Threshold setting" ON)
+ 
+ include ("cmake/HunterGate.cmake")
+ 
+@@ -163,6 +164,10 @@ add_executable (cpusensor src/CPUSensorMain.cpp ${CPU_SRC_FILES})
+ add_dependencies (cpusensor sdbusplus-project)
+ target_link_libraries (cpusensor ${SENSOR_LINK_LIBS})
+ target_link_libraries (cpusensor gpiodcxx)
++target_compile_definitions (
++    cpusensor PRIVATE
++    $<$<BOOL:${BMC_CPU_SENSOR_TCONTROL}>: -DBMC_CPU_SENSOR_TCONTROL>
++)
+ 
+ add_executable (exitairtempsensor src/ExitAirTempSensor.cpp
+                 ${EXIT_AIR_SRC_FILES})
+diff --git a/include/CPUSensor.hpp b/include/CPUSensor.hpp
+index 7a2819f..5fc3c87 100644
+--- a/include/CPUSensor.hpp
++++ b/include/CPUSensor.hpp
+@@ -19,13 +19,13 @@ class CPUSensor : public Sensor
+               boost::asio::io_service& io, const std::string& sensorName,
+               std::vector<thresholds::Threshold>&& thresholds,
+               const std::string& configuration, int cpuId, bool show,
+-              double dtsOffset);
++              double dtsOffset, double maxReading, double minReading);
+     ~CPUSensor();
+     static constexpr unsigned int sensorScaleFactor = 1000;
+     static constexpr unsigned int sensorPollMs = 1000;
+     static constexpr size_t warnAfterErrorCount = 10;
+-    static constexpr double maxReading = 127;
+-    static constexpr double minReading = -128;
++    // static constexpr double maxReading = 127;
++    // static constexpr double minReading = -128;
+     static constexpr const char* labelTcontrol = "Tcontrol";
+ 
+   private:
+diff --git a/src/CPUSensor.cpp b/src/CPUSensor.cpp
+index 7654fde..e36224e 100644
+--- a/src/CPUSensor.cpp
++++ b/src/CPUSensor.cpp
+@@ -33,7 +33,8 @@ CPUSensor::CPUSensor(const std::string& path, const std::string& objectType,
+                      boost::asio::io_service& io, const std::string& sensorName,
+                      std::vector<thresholds::Threshold>&& _thresholds,
+                      const std::string& sensorConfiguration, int cpuId,
+-                     bool show, double dtsOffset) :
++                     bool show, double dtsOffset, double maxReading,
++                     double minReading) :
+     Sensor(boost::replace_all_copy(sensorName, " ", "_"),
+            std::move(_thresholds), sensorConfiguration, objectType, maxReading,
+            minReading),
+@@ -97,9 +98,44 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+ {
+     if (err == boost::system::errc::bad_file_descriptor)
+     {
++        updateValueInvalid(true);
+         return; // we're being destroyed
+     }
++
+     size_t pollTime = CPUSensor::sensorPollMs;
++
++    // Set as sensor reading invalid for cup peci sensors
++    if (!isPowerOn())
++    {
++        updateValueInvalid(true);
++        errCount = 0;
++
++        // clear response buffer reading
++        std::istream invalidResponseStream(&readBuf);
++        std::string invalidResponse;
++        std::getline(invalidResponseStream, invalidResponse);
++        invalidResponseStream.clear();
++
++        inputDev.close();
++        int fd = open(path.c_str(), O_RDONLY);
++        if (fd <= 0)
++        {
++            return; // we're no longer valid
++        }
++        inputDev.assign(fd);
++        waitTimer.expires_from_now(boost::posix_time::milliseconds(pollTime));
++        waitTimer.async_wait([&](const boost::system::error_code& ec) {
++        if (ec == boost::asio::error::operation_aborted)
++        {
++            return; // we're being canceled
++        }
++            setupRead();
++        });
++
++        return;
++    }
++
++    // size_t pollTime = CPUSensor::sensorPollMs;
+     std::istream responseStream(&readBuf);
+     if (!err)
+     {
+@@ -121,6 +157,10 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+                     value = nvalue;
+                 }
+             }
++
++            updateValueInvalid(false);
++
++#ifdef BMC_CPU_SENSOR_TCONTROL
+             double gTcontrol = gCpuSensors[nameTcontrol]
+                                    ? gCpuSensors[nameTcontrol]->value
+                                    : std::numeric_limits<double>::quiet_NaN();
+@@ -153,6 +193,7 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+                     }
+                 }
+             }
++#endif
+             errCount = 0;
+         }
+         catch (const std::invalid_argument&)
+@@ -168,6 +209,9 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+ 
+     if (errCount >= warnAfterErrorCount)
+     {
++        // Set the sensor reading invalid
++        updateValueInvalid(true);
++
+         // only an error if power is on
+         if (isPowerOn())
+         {
+diff --git a/src/CPUSensorMain.cpp b/src/CPUSensorMain.cpp
+index 2a3ff16..665296c 100644
+--- a/src/CPUSensorMain.cpp
++++ b/src/CPUSensorMain.cpp
+@@ -40,6 +40,9 @@
+ 
+ static constexpr bool DEBUG = false;
+ 
++static constexpr double maxReading = 127;
++static constexpr double minReading = -128;
++
+ boost::container::flat_map<std::string, std::unique_ptr<CPUSensor>> gCpuSensors;
+ 
+ enum State
+@@ -263,8 +266,39 @@ bool createSensors(boost::asio::io_service& io,
+             std::getline(labelFile, label);
+             labelFile.close();
+ 
++            double maxValue = maxReading; // Initial value if we don't set value in json.
++            double minValue = minReading; // Initial value if we don't set value in json.
++            auto limits = std::make_pair(maxReading, minReading);
++
++            findLimits(limits, baseConfiguration);
++
+             std::string sensorName = label + " CPU" + std::to_string(cpuId);
+ 
++            label = boost::replace_all_copy(label, " ", "_");
++
++            bool isLabelsError = false; // Check the label format is correct or not.
++            for (const auto& item : *sensorData)
++            {
++                if (item.first.find("Labels") == std::string::npos)
++                {
++                    continue;
++                }
++                auto nameFind = item.second.find(label);
++                if (nameFind != item.second.end())
++                {
++                    sensorName = std::visit(VariantToStringVisitor(), nameFind->second);
++                }
++                else
++                {
++                    isLabelsError = true;
++                }
++            }
++
++            if (isLabelsError)
++            {
++                continue;
++            }
++
+             auto findSensor = gCpuSensors.find(sensorName);
+             if (findSensor != gCpuSensors.end())
+             {
+@@ -320,7 +354,7 @@ bool createSensors(boost::asio::io_service& io,
+             gCpuSensors[sensorName] = std::make_unique<CPUSensor>(
+                 inputPathStr, sensorType, objectServer, dbusConnection, io,
+                 sensorName, std::move(sensorThresholds), *interfacePath, cpuId,
+-                show, dtsOffset);
++                show, dtsOffset, limits.first, limits.second);
+             createdSensors.insert(sensorName);
+             if (DEBUG)
+             {
+-- 
+2.22.0
+

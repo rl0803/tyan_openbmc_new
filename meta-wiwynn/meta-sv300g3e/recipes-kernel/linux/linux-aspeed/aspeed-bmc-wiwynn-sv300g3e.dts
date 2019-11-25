@@ -316,3 +316,7 @@
     memory-region = <&flash_memory>;
     flash = <&spi1>;
 };
+
+&peci0 {
+    status = "okay";
+};

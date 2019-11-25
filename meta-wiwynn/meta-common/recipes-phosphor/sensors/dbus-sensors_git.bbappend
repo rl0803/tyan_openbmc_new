@@ -10,6 +10,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0008-Support-a-pgood-GPIO-read-func-for-power-status-checking.patch \
             file://0009-PSU-type-sensors-to-support-the-invalid-value-property.patch \
             file://0010-Add-End-of-Post-event-only-sensor.patch \
+            file://0011-Support-cpu-peci-sensors-including-the-invalid-value-property.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.vrsensor.service \
