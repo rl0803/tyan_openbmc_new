@@ -226,6 +226,74 @@
             "Type": "IpmbSensor"
         },
         {
+            "Name": "NVMe 0 Temp",
+            "Bus": 0,
+            "MuxChannel": 0,
+            "SensorType": "temp",
+            "MaxReading": 255,
+            "MinReading": 0,
+            "Type": "NVME",
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 70
+                }
+            ]
+        },
+        {
+            "Name": "NVMe 1 Temp",
+            "Bus": 0,
+            "MuxChannel": 1,
+            "SensorType": "temp",
+            "MaxReading": 255,
+            "MinReading": 0,
+            "Type": "NVME",
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 70
+                }
+            ]
+        },
+        {
+            "Name": "NVMe 2 Temp",
+            "Bus": 0,
+            "MuxChannel": 2,
+            "SensorType": "temp",
+            "MaxReading": 255,
+            "MinReading": 0,
+            "Type": "NVME",
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 70
+                }
+            ]
+        },
+        {
+            "Name": "NVMe 3 Temp",
+            "Bus": 0,
+            "MuxChannel": 3,
+            "SensorType": "temp",
+            "MaxReading": 255,
+            "MinReading": 0,
+            "Type": "NVME",
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 70
+                }
+            ]
+        },
+        {
             "Address": "0x30",
             "Bus": 0,
             "CpuID": 1,

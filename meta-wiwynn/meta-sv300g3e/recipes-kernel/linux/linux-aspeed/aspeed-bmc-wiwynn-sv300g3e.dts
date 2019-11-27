@@ -175,6 +175,10 @@
 
 &i2c0 {
 	status = "okay";
+	i2cswitch@70{
+		compatible = "nxp,pca9548";
+		reg = <0x70>;
+	};
 };
 
 &i2c1 {
