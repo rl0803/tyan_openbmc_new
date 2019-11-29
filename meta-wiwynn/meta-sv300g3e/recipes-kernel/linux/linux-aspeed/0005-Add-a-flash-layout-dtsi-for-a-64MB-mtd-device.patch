@@ -36,12 +36,12 @@ index 000000000000..ce4f9ebdfe3d
 +		label = "kernel";
 +	};
 +
-+	rofs@c0000 {
-+		reg = <0x4c0000 0x2800000>;
++	rofs@4c0000 {
++		reg = <0x4c0000 0x2B40000>;
 +		label = "rofs";
 +	};
 +
-+	rwfs@1c00000 {
++	rwfs@3000000 {
 +		reg = <0x3000000 0x1000000>;
 +		label = "rwfs";
 +	};
