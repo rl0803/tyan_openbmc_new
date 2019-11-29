@@ -226,6 +226,24 @@
             "Type": "IpmbSensor"
         },
         {
+            "Name": "Mezz NIC Temp",
+            "Bus1": 1,
+            "Bus2": 6,
+            "Address": "0x1F",
+            "SensorType": "temp",
+            "MaxReading": 127,
+            "MinReading": -128,
+            "Type": "NIC",
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 102
+                }
+            ]
+        },
+        {
             "Name": "NVMe 0 Temp",
             "Bus": 0,
             "MuxChannel": 0,
