@@ -13,6 +13,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0011-Support-cpu-peci-sensors-including-the-invalid-value-property.patch \
             file://0012-Add-to-support-NVMe-temperature-sensor.patch \
             file://0013-Add-to-support-NIC-temperature-sensor.patch \
+            file://0014-FRU-state-sensor-for-power-cycle-SEL.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.vrsensor.service \
