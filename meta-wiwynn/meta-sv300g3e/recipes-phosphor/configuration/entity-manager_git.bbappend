@@ -2,6 +2,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://sv300g3e-MB.json \
             file://Delta-DPS-500AB-PSU.json \
+            file://fan-table.json \
             "
 
 do_install_append(){

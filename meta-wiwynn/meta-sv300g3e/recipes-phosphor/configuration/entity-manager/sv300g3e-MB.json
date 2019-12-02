@@ -248,8 +248,8 @@
             "Bus": 0,
             "MuxChannel": 0,
             "SensorType": "temp",
-            "MaxReading": 255,
-            "MinReading": 0,
+            "MaxReading": 127,
+            "MinReading": -128,
             "Type": "NVME",
             "Thresholds": [
                 {
@@ -265,8 +265,8 @@
             "Bus": 0,
             "MuxChannel": 1,
             "SensorType": "temp",
-            "MaxReading": 255,
-            "MinReading": 0,
+            "MaxReading": 127,
+            "MinReading": -128,
             "Type": "NVME",
             "Thresholds": [
                 {
@@ -282,8 +282,8 @@
             "Bus": 0,
             "MuxChannel": 2,
             "SensorType": "temp",
-            "MaxReading": 255,
-            "MinReading": 0,
+            "MaxReading": 127,
+            "MinReading": -128,
             "Type": "NVME",
             "Thresholds": [
                 {
@@ -299,8 +299,8 @@
             "Bus": 0,
             "MuxChannel": 3,
             "SensorType": "temp",
-            "MaxReading": 255,
-            "MinReading": 0,
+            "MaxReading": 127,
+            "MinReading": -128,
             "Type": "NVME",
             "Thresholds": [
                 {

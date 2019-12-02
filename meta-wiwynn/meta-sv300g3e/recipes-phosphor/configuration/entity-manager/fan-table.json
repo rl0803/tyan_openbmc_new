@@ -1,0 +1,252 @@
+{
+    "sensors": [
+    {
+        "name": "FP_Inlet",
+        "type": "temp",
+        "readPath": "/xyz/openbmc_project/sensors/temperature/FP_Inlet",
+        "timeout": 0,
+        "ignoreDbusMinMax": true
+    },
+    {
+        "name": "Mezz_NIC_Temp",
+        "type": "temp",
+        "readPath": "/xyz/openbmc_project/sensors/temperature/Mezz_NIC_Temp",
+        "timeout": 0,
+        "ignoreDbusMinMax": true
+    },
+    {
+        "name": "NVMe_0_Temp",
+        "type": "temp",
+        "readPath": "/xyz/openbmc_project/sensors/temperature/NVMe_0_Temp",
+        "timeout": 0,
+        "ignoreDbusMinMax": true
+    },
+    {
+        "name": "NVMe_1_Temp",
+        "type": "temp",
+        "readPath": "/xyz/openbmc_project/sensors/temperature/NVMe_1_Temp",
+        "timeout": 0,
+        "ignoreDbusMinMax": true
+    },
+    {
+        "name": "NVMe_2_Temp",
+        "type": "temp",
+        "readPath": "/xyz/openbmc_project/sensors/temperature/NVMe_2_Temp",
+        "timeout": 0,
+        "ignoreDbusMinMax": true
+    },
+    {
+        "name": "NVMe_3_Temp",
+        "type": "temp",
+        "readPath": "/xyz/openbmc_project/sensors/temperature/NVMe_3_Temp",
+        "timeout": 0,
+        "ignoreDbusMinMax": true
+    },
+    {
+        "name": "SYS_FAN0",
+        "type": "fan",
+        "readPath": "/xyz/openbmc_project/sensors/fan_tach/SYS_FAN0",
+        "writePath": "/sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm1",
+        "min": 0,
+        "max": 255
+    },
+    {
+        "name": "SYS_FAN1",
+        "type": "fan",
+        "readPath": "/xyz/openbmc_project/sensors/fan_tach/SYS_FAN1",
+        "writePath": "/sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm2",
+        "min": 0,
+        "max": 255
+    },
+    {
+        "name": "SYS_FAN2",
+        "type": "fan",
+        "readPath": "/xyz/openbmc_project/sensors/fan_tach/SYS_FAN2",
+        "writePath": "/sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm3",
+        "min": 0,
+        "max": 255
+    },
+    {
+        "name": "SYS_FAN3",
+        "type": "fan",
+        "readPath": "/xyz/openbmc_project/sensors/fan_tach/SYS_FAN3",
+        "writePath": "/sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm4",
+        "min": 0,
+        "max": 255
+    },
+    {
+        "name": "SYS_FAN4",
+        "type": "fan",
+        "readPath": "/xyz/openbmc_project/sensors/fan_tach/SYS_FAN4",
+        "writePath": "/sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm5",
+        "min": 0,
+        "max": 255
+    },
+    {
+        "name": "SYS_FAN5",
+        "type": "fan",
+        "readPath": "/xyz/openbmc_project/sensors/fan_tach/SYS_FAN5",
+        "writePath": "/sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm6",
+        "min": 0,
+        "max": 255
+    }
+    ],
+    "zones" : [
+        {
+            "id": 1,
+            "failsafePercent": 100.0,
+            "minThermalOutput": 0.0,
+            "pids": [
+                {
+                    "name": "fan0-5",
+                    "type": "fan",
+                    "inputs": ["SYS_FAN0", "SYS_FAN1", "SYS_FAN2", "SYS_FAN3", "SYS_FAN4", "SYS_FAN5"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 0.0,
+                        "integralCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 1.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 0.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 0
+                    }
+                },
+                {
+                    "name": "Linear_FP_Inlet",
+                    "type": "linear",
+                    "inputs": ["FP_Inlet"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 0.0,
+                            "1": 20.0,
+                            "2": 21.0,
+                            "3": 22.0,
+                            "4": 23.0,
+                            "5": 24.0,
+                            "6": 25.0,
+                            "7": 26.0,
+                            "8": 27.0,
+                            "9": 28.0,
+                            "10": 29.0,
+                            "11": 30.0,
+                            "12": 31.0,
+                            "13": 32.0,
+                            "14": 33.0,
+                            "15": 34.0,
+                            "16": 35.0,
+                            "17": 36.0,
+                            "18": 37.0,
+                            "19": 38.0,
+                            "20": 39.0,
+                            "21": 40.0
+                        },
+                        "output": {
+                            "0": 29.0,
+                            "1": 29.0,
+                            "2": 30.0,
+                            "3": 32.0,
+                            "4": 33.0,
+                            "5": 36.0,
+                            "6": 37.0,
+                            "7": 38.0,
+                            "8": 39.0,
+                            "9": 40.0,
+                            "10": 41.0,
+                            "11": 42.0,
+                            "12": 43.0,
+                            "13": 44.0,
+                            "14": 46.0,
+                            "15": 47.0,
+                            "16": 49.0,
+                            "17": 55.0,
+                            "18": 60.0,
+                            "19": 65.0,
+                            "20": 70.0,
+                            "21": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 0
+                    }
+                },
+                {
+                    "name": "Linear_Mezz_NIC_Temp",
+                    "type": "linear",
+                    "inputs": ["Mezz_NIC_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 0.0,
+                            "1": 85.0,
+                            "2": 86.0,
+                            "3": 87.0,
+                            "4": 88.0,
+                            "5": 89.0,
+                            "6": 90.0,
+                            "7": 91.0,
+                            "8": 92.0,
+                            "9": 93.0,
+                            "10": 101.0,
+                            "11": 102.0
+                        },
+                        "output": {
+                            "0": 29.0,
+                            "1": 29.0,
+                            "2": 31.0,
+                            "3": 33.0,
+                            "4": 35.0,
+                            "5": 40.0,
+                            "6": 46.0,
+                            "7": 53.0,
+                            "8": 61.0,
+                            "9": 68.0,
+                            "10": 68.0,
+                            "11": 100.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 0
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_0_Temp","NVMe_1_Temp","NVMe_2_Temp","NVMe_3_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 0.0,
+                            "1": 61.0,
+                            "2": 63.0,
+                            "3": 65.0,
+                            "4": 67.0,
+                            "5": 69.0
+                        },
+                        "output": {
+                            "0": 29.0,
+                            "1": 29.0,
+                            "2": 50.0,
+                            "3": 70.0,
+                            "4": 87.0,
+                            "5": 100.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 0
+                    }
+                }
+            ]
+        }
+    ]
+}

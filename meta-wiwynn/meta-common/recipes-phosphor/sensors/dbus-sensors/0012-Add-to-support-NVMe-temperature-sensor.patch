@@ -649,8 +649,8 @@ index 0000000..9dc1fd6
 +                      << "\n";
 +        }
 +
-+        constexpr double defaultMaxReading = 255;
-+        constexpr double defaultMinReading = 0;
++        constexpr double defaultMaxReading = 127;
++        constexpr double defaultMinReading = -128;
 +        auto limits = std::make_pair(defaultMinReading, defaultMaxReading);
 +
 +        findLimits(limits, baseConfiguration);
