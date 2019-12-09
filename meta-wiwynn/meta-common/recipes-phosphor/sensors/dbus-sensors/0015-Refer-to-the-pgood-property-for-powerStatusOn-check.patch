@@ -1,0 +1,73 @@
+From 01c68a49acbb764ff48dba77efe969118cd39603 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 9 Dec 2019 18:51:03 +0800
+Subject: [PATCH 1/2] Refer to the pgood property for powerStatusOn checking
+
+---
+ include/Utils.hpp |  8 ++++----
+ src/Utils.cpp     | 12 +++++-------
+ 2 files changed, 9 insertions(+), 11 deletions(-)
+
+diff --git a/include/Utils.hpp b/include/Utils.hpp
+index d0ebfa3..fdbc237 100644
+--- a/include/Utils.hpp
++++ b/include/Utils.hpp
+@@ -84,10 +84,10 @@ constexpr const char* get = "Get";
+ 
+ namespace power
+ {
+-const static constexpr char* busname = "xyz.openbmc_project.State.Host";
+-const static constexpr char* interface = "xyz.openbmc_project.State.Host";
+-const static constexpr char* path = "/xyz/openbmc_project/state/host0";
+-const static constexpr char* property = "CurrentHostState";
++const static constexpr char* busname = "org.openbmc.control.Power";
++const static constexpr char* path = "/org/openbmc/control/power0";
++const static constexpr char* interface = "org.openbmc.control.Power";
++const static constexpr char* property = "pgood";
+ } // namespace power
+ namespace post
+ {
+diff --git a/src/Utils.cpp b/src/Utils.cpp
+index 75abc55..c746b78 100644
+--- a/src/Utils.cpp
++++ b/src/Utils.cpp
+@@ -224,15 +224,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+             std::string(power::interface) + "'",
+         [](sdbusplus::message::message& message) {
+             std::string objectName;
+-            boost::container::flat_map<std::string, std::variant<std::string>>
++            boost::container::flat_map<std::string, std::variant<int>>
+                 values;
+             message.read(objectName, values);
+             auto findState = values.find(power::property);
+             if (findState != values.end())
+             {
+-                bool on = boost::ends_with(
+-                    std::get<std::string>(findState->second), "Running");
+-                if (!on)
++                int on = std::get<int>(findState->second);
++                if ( 1 != on)
+                 {
+                     timer.cancel();
+                     powerStatusOn = false;
+@@ -275,15 +274,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+ 
+     conn->async_method_call(
+         [](boost::system::error_code ec,
+-           const std::variant<std::string>& state) {
++           const std::variant<int>& state) {
+             if (ec)
+             {
+                 // we commonly come up before power control, we'll capture the
+                 // property change later
+                 return;
+             }
+-            powerStatusOn =
+-                boost::ends_with(std::get<std::string>(state), "Running");
++            powerStatusOn = (1 == (std::get<int>(state))) ? true : false;
+         },
+         power::busname, power::path, properties::interface, properties::get,
+         power::interface, power::property);
+-- 
+2.22.0
+

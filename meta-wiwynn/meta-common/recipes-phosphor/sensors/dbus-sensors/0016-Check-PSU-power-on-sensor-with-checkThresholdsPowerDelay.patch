@@ -1,0 +1,98 @@
+From 6f02b178a35a73f8f460743a539b2ca58ea5ff0e Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 9 Dec 2019 18:53:00 +0800
+Subject: [PATCH 2/2] Check PSU power-on sensor thresholds with
+ checkThresholdsPowerDelay
+
+---
+ include/PSUSensor.hpp |  1 +
+ src/PSUSensor.cpp     | 31 ++++++++++++++++++-------------
+ 2 files changed, 19 insertions(+), 13 deletions(-)
+
+diff --git a/include/PSUSensor.hpp b/include/PSUSensor.hpp
+index 08aa469..ae8649c 100644
+--- a/include/PSUSensor.hpp
++++ b/include/PSUSensor.hpp
+@@ -35,6 +35,7 @@ class PSUSensor : public Sensor
+ 
+     // Power-on sensor
+     PowerState readState;
++    thresholds::ThresholdTimer thresholdTimer;
+ };
+ 
+ class PSUProperty
+diff --git a/src/PSUSensor.cpp b/src/PSUSensor.cpp
+index b539e59..ddba59e 100644
+--- a/src/PSUSensor.cpp
++++ b/src/PSUSensor.cpp
+@@ -40,7 +40,7 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
+            std::move(_thresholds), sensorConfiguration, objectType, max, min),
+     path(path), objServer(objectServer),
+     inputDev(io, open(path.c_str(), O_RDONLY)), waitTimer(io), errCount(0),
+-    sensorFactor(factor), readState(std::move(readState))
++    sensorFactor(factor), readState(std::move(readState)), thresholdTimer(io, this)
+ {
+     std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
+ 
+@@ -76,10 +76,17 @@ PSUSensor::~PSUSensor()
+ 
+ void PSUSensor::setupRead(void)
+ {
++#if 0
+     boost::asio::async_read_until(
+         inputDev, readBuf, '\n',
+         [&](const boost::system::error_code& ec,
+             std::size_t /*bytes_transfered*/) { handleResponse(ec); });
++#endif
++
++    // Sync read to PSU sensor
++    boost::system::error_code ec;
++    boost::asio::read_until(inputDev, readBuf, '\n', ec);
++    handleResponse(ec);
+ }
+ 
+ void PSUSensor::handleResponse(const boost::system::error_code& err)
+@@ -135,17 +142,7 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
+             nvalue /= sensorFactor;
+             if (static_cast<double>(nvalue) != value)
+             {
+-                if(readState == PowerState::always)
+-                {
+-                    updateValue(nvalue);
+-                }
+-                else
+-                {
+-                    if(isPowerGood())
+-                    {
+-                        updateValue(nvalue);
+-                    }
+-                }
++                updateValue(nvalue);
+             }
+ 
+             updateValueInvalid(false);
+@@ -174,6 +171,7 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
+     }
+ 
+     responseStream.clear();
++
+     inputDev.close();
+     int fd = open(path.c_str(), O_RDONLY);
+     if (fd <= 0)
+@@ -198,5 +196,12 @@ void PSUSensor::checkThresholds(void)
+         return;
+     }
+ 
+-    thresholds::checkThresholds(this);
++    if(readState == PowerState::always)
++    {
++        thresholds::checkThresholds(this);
++    }
++    else
++    {
++        thresholds::checkThresholdsPowerDelay(this, thresholdTimer);
++    }
+ }
+-- 
+2.22.0
+
