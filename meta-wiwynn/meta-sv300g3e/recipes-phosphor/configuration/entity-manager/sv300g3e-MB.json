@@ -6,6 +6,7 @@
             "ScaleFactor": 0.4107,
             "MaxValue": 5,
             "MinValue": 0,
+            "PowerState": "On",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -28,6 +29,7 @@
             "ScaleFactor": 0.2717,
             "MaxValue": 7,
             "MinValue": 0,
+            "PowerState": "On",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -50,6 +52,7 @@
             "ScaleFactor": 1,
             "MaxValue": 2,
             "MinValue": 0,
+            "PowerState": "Always",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -72,6 +75,7 @@
             "ScaleFactor": 1,
             "MaxValue": 2,
             "MinValue": 0,
+            "PowerState": "Always",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -94,6 +98,7 @@
             "ScaleFactor": 0.4107,
             "MaxValue": 5,
             "MinValue": 0,
+            "PowerState": "Always",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -116,6 +121,7 @@
             "ScaleFactor": 0.2717,
             "MaxValue": 7,
             "MinValue": 0,
+            "PowerState": "Always",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -138,6 +144,7 @@
             "ScaleFactor": 0.3333,
             "MaxValue": 5,
             "MinValue": 0,
+            "PowerState": "Always",
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -160,6 +167,7 @@
             "ScaleFactor": 0.1124,
             "MaxValue": 18,
             "MinValue": 0,
+            "PowerState": "On",
             "Thresholds": [
                 {
                     "Direction": "greater than",
