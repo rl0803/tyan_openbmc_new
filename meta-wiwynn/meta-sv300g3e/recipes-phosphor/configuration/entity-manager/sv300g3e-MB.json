@@ -694,6 +694,612 @@
                 }
             ],
             "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 DM_ABC VOUT",
+            "Bus": 5,
+            "Address": "0x7A",
+            "Command": "0x8B",
+            "Page" : 0,
+            "SensorType" : "volt",
+            "Mode" : "VID12.0",
+            "MaxValue": 1.6,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.32
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 1.105
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_ABC IOUT",
+            "Bus": 5,
+            "Address": "0x7A",
+            "Command": "0x8C",
+            "Page" : 0,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 38,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 30.72
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_ABC Temp",
+            "Bus": 5,
+            "Address": "0x7A",
+            "Command": "0x8D",
+            "Page" : 0,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 100
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_ABC POUT",
+            "Bus": 5,
+            "Address": "0x7A",
+            "Command": "0x96",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 45,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 37.2
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_DEF VOUT",
+            "Bus": 5,
+            "Address": "0x6A",
+            "Command": "0x8B",
+            "Page" : 0,
+            "SensorType" : "volt",
+            "Mode" : "VID12.0",
+            "MaxValue": 1.6,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.32
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 1.105
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_DEF IOUT",
+            "Bus": 5,
+            "Address": "0x6A",
+            "Command": "0x8C",
+            "Page" : 0,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 38,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 30.72
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_DEF Temp",
+            "Bus": 5,
+            "Address": "0x6A",
+            "Command": "0x8D",
+            "Page" : 0,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 100
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 DM_DEF POUT",
+            "Bus": 5,
+            "Address": "0x6A",
+            "Command": "0x96",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 45,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 37.2
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU0 VSA VOUT",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x8B",
+            "Page" : 1,
+            "SensorType" : "volt",
+            "Mode" : "VID12.0",
+            "MaxValue": 1.5,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.15
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 0.45
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VSA IOUT",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x8C",
+            "Page" : 1,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 25,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 19.2
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VSA Temp",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x8D",
+            "Page" : 1,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VSA PIN",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x97",
+            "Page" : 1,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 100,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU0 VSA POUT",
+            "Bus": 5,
+            "Address": "0x78",
+            "Command": "0x96",
+            "Page" : 1,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 30,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VccIN VOUT",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x8B",
+            "Page" : 0,
+            "SensorType" : "volt",
+            "Mode" : "VID12.5",
+            "MaxValue": 3,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 2.08
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 1.42
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VccIN IOUT",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x8C",
+            "Page" : 0,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 200,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 159.36
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VccIN Temp",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x8D",
+            "Page" : 0,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 100
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VccIN PIN",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x97",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 100,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VccIN POUT",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x96",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 320,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 306
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 DM_GHJ VOUT",
+            "Bus": 5,
+            "Address": "0x5A",
+            "Command": "0x8B",
+            "Page" : 0,
+            "SensorType" : "volt",
+            "Mode" : "VID12.0",
+            "MaxValue": 1.6,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.32
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 1.105
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_GHJ IOUT",
+            "Bus": 5,
+            "Address": "0x5A",
+            "Command": "0x8C",
+            "Page" : 0,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 38,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 30.72
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_GHJ Temp",
+            "Bus": 5,
+            "Address": "0x5A",
+            "Command": "0x8D",
+            "Page" : 0,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 100
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_GHJ POUT",
+            "Bus": 5,
+            "Address": "0x5A",
+            "Command": "0x96",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 45,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 37.2
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_KLM VOUT",
+            "Bus": 5,
+            "Address": "0x4A",
+            "Command": "0x8B",
+            "Page" : 0,
+            "SensorType" : "volt",
+            "Mode" : "VID12.0",
+            "MaxValue": 1.6,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.32
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 1.105
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_KLM IOUT",
+            "Bus": 5,
+            "Address": "0x4A",
+            "Command": "0x8C",
+            "Page" : 0,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 38,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 30.72
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_KLM Temp",
+            "Bus": 5,
+            "Address": "0x4A",
+            "Command": "0x8D",
+            "Page" : 0,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 100
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 DM_KLM POUT",
+            "Bus": 5,
+            "Address": "0x4A",
+            "Command": "0x96",
+            "Page" : 0,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 45,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 37.2
+                }
+            ],
+            "Type": "PXE1110"
+        },
+        {
+            "Name":"CPU1 VSA VOUT",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x8B",
+            "Page" : 1,
+            "SensorType" : "volt",
+            "Mode" : "VID12.0",
+            "MaxValue": 1.5,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 1.15
+                },
+                {
+                    "Direction": "less than",
+                    "Name": "lower critical",
+                    "Severity": 1,
+                    "Value": 0.45
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VSA IOUT",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x8C",
+            "Page" : 1,
+            "SensorType" : "curr",
+            "Mode" : "Linear",
+            "MaxValue": 25,
+            "MinValue": 0,
+            "Thresholds": [
+                {
+                    "Direction": "greater than",
+                    "Name": "upper critical",
+                    "Severity": 1,
+                    "Value": 19.2
+                }
+            ],
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VSA Temp",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x8D",
+            "Page" : 1,
+            "SensorType" : "temp",
+            "Mode" : "Linear",
+            "MaxValue": 255,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VSA PIN",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x97",
+            "Page" : 1,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 100,
+            "MinValue": 0,
+            "Type": "PXE1610"
+        },
+        {
+            "Name":"CPU1 VSA POUT",
+            "Bus": 5,
+            "Address": "0x58",
+            "Command": "0x96",
+            "Page" : 1,
+            "SensorType" : "power",
+            "Mode" : "Linear",
+            "MaxValue": 30,
+            "MinValue": 0,
+            "Type": "PXE1610"
         }
     ],
     "Fru":[

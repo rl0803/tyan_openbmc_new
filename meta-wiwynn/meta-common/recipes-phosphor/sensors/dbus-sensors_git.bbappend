@@ -17,6 +17,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0015-Refer-to-the-pgood-property-for-powerStatusOn-check.patch \
             file://0016-Check-PSU-power-on-sensor-with-checkThresholdsPowerDelay.patch \
             file://0017-ADC-type-sensors-to-support-the-invalid-value-property.patch \
+            file://0018-VR-type-sensors-to-support-the-invalid-value-property.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.vrsensor.service \
