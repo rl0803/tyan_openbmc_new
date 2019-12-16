@@ -1,29 +1,38 @@
-From 9397713ac30a85ddd4b122f0e4f14ba9c9cf8187 Mon Sep 17 00:00:00 2001
+From 72344f1b0995010270436da7959621648c4cb785 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 9 Dec 2019 20:45:15 +0800
+Date: Mon, 16 Dec 2019 17:38:51 +0800
 Subject: [PATCH] ADC-type sensors to support the invalid value property
 
 ---
- src/ADCSensor.cpp | 53 ++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 48 insertions(+), 5 deletions(-)
+ src/ADCSensor.cpp | 54 ++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 49 insertions(+), 5 deletions(-)
 
 diff --git a/src/ADCSensor.cpp b/src/ADCSensor.cpp
-index 2816ae7..904f57a 100644
+index 1f6d6f1..2d871ad 100644
 --- a/src/ADCSensor.cpp
 +++ b/src/ADCSensor.cpp
-@@ -78,10 +78,9 @@ ADCSensor::ADCSensor(const std::string& path,
-         "/xyz/openbmc_project/sensors/voltage/" + name,
-         "org.openbmc.Associations");
+@@ -33,7 +33,7 @@
+ #include <string>
+ #include <vector>
+ 
+-static constexpr unsigned int sensorPollMs = 500;
++static constexpr unsigned int sensorPollMs = 1000;
+ static constexpr size_t warnAfterErrorCount = 10;
+ static constexpr unsigned int gpioBridgeEnableMs = 20;
+ // scaling factor from hwmon
+@@ -78,10 +78,10 @@ ADCSensor::ADCSensor(const std::string& path,
+     association = objectServer.add_interface(
+         "/xyz/openbmc_project/sensors/voltage/" + name, association::interface);
      setInitialProperties(conn);
 -    setupRead();
--
+ 
      // setup match
      setupPowerMatch(conn);
 +    setupRead();
  }
  
  ADCSensor::~ADCSensor()
-@@ -130,8 +129,42 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+@@ -130,8 +130,42 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
  {
      if (err == boost::system::errc::bad_file_descriptor)
      {
@@ -66,7 +75,7 @@ index 2816ae7..904f57a 100644
      std::istream responseStream(&readBuf);
  
      if (!err)
-@@ -152,6 +185,8 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+@@ -152,6 +186,8 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
                  updateValue(nvalue);
              }
              errCount = 0;
@@ -75,7 +84,7 @@ index 2816ae7..904f57a 100644
          }
          catch (std::invalid_argument&)
          {
-@@ -172,7 +207,8 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+@@ -172,7 +208,8 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
  
      if (errCount >= warnAfterErrorCount)
      {
@@ -85,7 +94,7 @@ index 2816ae7..904f57a 100644
      }
  
      responseStream.clear();
-@@ -199,10 +235,17 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+@@ -199,10 +236,17 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
  
  void ADCSensor::checkThresholds(void)
  {
@@ -106,5 +115,5 @@ index 2816ae7..904f57a 100644
 +    }
  }
 -- 
-2.22.0
+2.24.1
 

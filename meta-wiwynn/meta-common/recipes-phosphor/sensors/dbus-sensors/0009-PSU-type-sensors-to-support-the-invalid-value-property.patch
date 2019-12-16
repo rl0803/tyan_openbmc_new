@@ -1,19 +1,19 @@
-From 5b708ad943f2fd0c72662be4af4aa195b669bced Mon Sep 17 00:00:00 2001
+From 32829d2cc80fbe224c4c66c84f9d654562eaf346 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Thu, 21 Nov 2019 11:28:33 +0800
-Subject: [PATCH 2/2] PSU-type sensors to support the invalid value property
+Date: Mon, 16 Dec 2019 16:23:36 +0800
+Subject: [PATCH] PSU-type sensors to support the invalid value property
 
 ---
  include/PSUSensor.hpp |  7 +++--
- src/PSUSensor.cpp     | 62 ++++++++++++++++++++++++++++++++++++++++---
- src/PSUSensorMain.cpp | 58 +++++++++++++++++++++++++++++++++++++++-
- 3 files changed, 120 insertions(+), 7 deletions(-)
+ src/PSUSensor.cpp     | 63 ++++++++++++++++++++++++++++++++++++++++---
+ src/PSUSensorMain.cpp | 58 ++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 121 insertions(+), 7 deletions(-)
 
 diff --git a/include/PSUSensor.hpp b/include/PSUSensor.hpp
-index 370ded9..08aa469 100644
+index 4ab553f..e951bfc 100644
 --- a/include/PSUSensor.hpp
 +++ b/include/PSUSensor.hpp
-@@ -15,7 +15,7 @@ class PSUSensor : public Sensor
+@@ -18,7 +18,7 @@ class PSUSensor : public Sensor
                std::vector<thresholds::Threshold>&& thresholds,
                const std::string& sensorConfiguration,
                std::string& sensorTypeName, unsigned int factor, double max,
@@ -22,7 +22,7 @@ index 370ded9..08aa469 100644
      ~PSUSensor();
  
    private:
-@@ -30,8 +30,11 @@ class PSUSensor : public Sensor
+@@ -33,8 +33,11 @@ class PSUSensor : public Sensor
      void handleResponse(const boost::system::error_code& err);
      void checkThresholds(void) override;
  
@@ -36,10 +36,10 @@ index 370ded9..08aa469 100644
  
  class PSUProperty
 diff --git a/src/PSUSensor.cpp b/src/PSUSensor.cpp
-index 58dee54..b539e59 100644
+index fc24704..7c96290 100644
 --- a/src/PSUSensor.cpp
 +++ b/src/PSUSensor.cpp
-@@ -35,12 +35,12 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
+@@ -41,13 +41,12 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
                       std::vector<thresholds::Threshold>&& _thresholds,
                       const std::string& sensorConfiguration,
                       std::string& sensorTypeName, unsigned int factor,
@@ -47,29 +47,30 @@ index 58dee54..b539e59 100644
 +                     double max, double min, PowerState readState) :
      Sensor(boost::replace_all_copy(sensorName, " ", "_"),
             std::move(_thresholds), sensorConfiguration, objectType, max, min),
-     path(path), objServer(objectServer),
-     inputDev(io, open(path.c_str(), O_RDONLY)), waitTimer(io), errCount(0),
+     objServer(objectServer), inputDev(io, open(path.c_str(), O_RDONLY)),
+     waitTimer(io), path(path), errCount(0),
+-
 -    sensorFactor(factor)
 +    sensorFactor(factor), readState(std::move(readState))
  {
-     std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
- 
-@@ -61,6 +61,7 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
-         objectServer.add_interface(dbusPath, "org.openbmc.Associations");
- 
+     if constexpr (DEBUG)
+     {
+@@ -78,6 +77,7 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
      setInitialProperties(conn);
+ 
+     createInventoryAssoc(conn, association, configurationPath);
 +    setupPowerMatch(conn);
      setupRead();
  }
  
-@@ -85,8 +86,43 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
- {
+@@ -103,8 +103,43 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
      if (err == boost::system::errc::bad_file_descriptor)
      {
+         std::cerr << "Bad file descriptor from " << path << "\n";
 +        updateValueInvalid(true);
 +        // updateValue(0);
-         return;
-     }
++        return;
++    }
 +
 +    // Set as sensor reading invalid for power-on type sensor
 +    if (readState != PowerState::always && !isPowerOn())
@@ -100,17 +101,18 @@ index 58dee54..b539e59 100644
 +            setupRead();
 +        });
 +
-+        return;
-+    }
+         return;
+     }
 +
      std::istream responseStream(&readBuf);
      if (!err)
      {
-@@ -99,8 +135,20 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
-             nvalue /= sensorFactor;
-             if (static_cast<double>(nvalue) != value)
-             {
+@@ -128,14 +163,29 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
+                     std::cerr << "Update " << path << " from " << value
+                               << " to " << nvalue << "\n";
+                 }
 -                updateValue(nvalue);
++
 +                if(readState == PowerState::always)
 +                {
 +                    updateValue(nvalue);
@@ -128,17 +130,15 @@ index 58dee54..b539e59 100644
              errCount = 0;
          }
          catch (const std::invalid_argument&)
-@@ -120,7 +168,8 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
-             std::cerr << "Failure to read sensor " << name << " at " << path
+         {
+             std::cerr << "Could not parse " << response << " from path " << path
                        << "\n";
++            updateValueInvalid(true);
++            // updateValue(0);
+             errCount++;
          }
--        updateValue(0);
-+        updateValueInvalid(true);
-+        // updateValue(0);
-         errCount++;
      }
- 
-@@ -144,5 +193,10 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
+@@ -178,5 +228,10 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
  
  void PSUSensor::checkThresholds(void)
  {
@@ -150,10 +150,10 @@ index 58dee54..b539e59 100644
      thresholds::checkThresholds(this);
  }
 diff --git a/src/PSUSensorMain.cpp b/src/PSUSensorMain.cpp
-index 9a8f6e6..d033971 100644
+index 5ac9b17..ee67745 100644
 --- a/src/PSUSensorMain.cpp
 +++ b/src/PSUSensorMain.cpp
-@@ -139,6 +139,52 @@ static void checkPWMSensor(const fs::path& sensorPath, std::string& labelHead,
+@@ -157,6 +157,52 @@ static void checkPWMSensor(const fs::path& sensorPath, std::string& labelHead,
      }
  }
  
@@ -206,8 +206,8 @@ index 9a8f6e6..d033971 100644
  void createSensors(boost::asio::io_service& io,
                     sdbusplus::asio::object_server& objectServer,
                     std::shared_ptr<sdbusplus::asio::connection>& dbusConnection)
-@@ -426,6 +472,16 @@ void createSensors(boost::asio::io_service& io,
-                 continue;
+@@ -666,11 +712,21 @@ void createSensors(boost::asio::io_service& io,
+                           << "\"\n";
              }
  
 +            /* wiw - Parse the sensor reading power state from the config file.
@@ -220,18 +220,15 @@ index 9a8f6e6..d033971 100644
 +                          << sensorNameSubStr << "\n";
 +           }
 +
-             std::string sensorName =
-                 psuNames[nameIndex] + " " + findProperty->second.labelTypeName;
- 
-@@ -433,7 +489,7 @@ void createSensors(boost::asio::io_service& io,
+             sensors[sensorName] = std::make_unique<PSUSensor>(
                  sensorPathStr, sensorType, objectServer, dbusConnection, io,
                  sensorName, std::move(sensorThresholds), *interfacePath,
-                 findSensorType->second, factor, findProperty->second.maxReading,
--                findProperty->second.minReading);
-+                findProperty->second.minReading, sensorReadState);
-         }
+                 findSensorType->second, factor, psuProperty->maxReading,
+-                psuProperty->minReading);
++                psuProperty->minReading, sensorReadState);
  
-         // OperationalStatus event
+             ++numCreated;
+             if constexpr (DEBUG)
 -- 
-2.22.0
+2.24.1
 

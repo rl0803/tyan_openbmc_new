@@ -1,8 +1,7 @@
-From 5ef3a611e51d6b7c428084dec65db57070b61198 Mon Sep 17 00:00:00 2001
+From 4c5032afaddd7ff8a0f564ff69cd12461f4ac05b Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Thu, 21 Nov 2019 11:17:22 +0800
-Subject: [PATCH 1/2] Support a pgood GPIO read function for power status
- checking
+Date: Mon, 16 Dec 2019 15:46:17 +0800
+Subject: [PATCH] Support a pgood GPIO read function for power status checking
 
 ---
  CMakeLists.txt    |  2 +-
@@ -24,10 +23,10 @@ index 0d29f01..fd8992b 100644
  if (NOT YOCTO)
      option (ENABLE_TEST "Enable Google Test" OFF)
 diff --git a/include/Utils.hpp b/include/Utils.hpp
-index 85b0665..d0ebfa3 100644
+index 44e7e2e..3afacd5 100644
 --- a/include/Utils.hpp
 +++ b/include/Utils.hpp
-@@ -45,6 +45,8 @@ bool findFiles(const std::filesystem::path dirPath,
+@@ -53,6 +53,8 @@ bool findFiles(const std::filesystem::path dirPath,
                 unsigned int symlinkDepth = 1);
  bool isPowerOn(void);
  bool hasBiosPost(void);
@@ -37,13 +36,13 @@ index 85b0665..d0ebfa3 100644
  bool getSensorConfiguration(
      const std::string& type,
 diff --git a/src/Utils.cpp b/src/Utils.cpp
-index f1a70b5..75abc55 100644
+index 44a6bae..48921cc 100644
 --- a/src/Utils.cpp
 +++ b/src/Utils.cpp
-@@ -22,6 +22,10 @@
- #include <sdbusplus/asio/connection.hpp>
- #include <sdbusplus/asio/object_server.hpp>
- #include <sdbusplus/bus/match.hpp>
+@@ -30,6 +30,10 @@
+ #include <utility>
+ #include <variant>
+ #include <vector>
 +#include <openbmc/libobmcgpio.h>
 +#include <systemd/sd-journal.h>
 +#include <nlohmann/json.hpp>
@@ -51,7 +50,7 @@ index f1a70b5..75abc55 100644
  
  namespace fs = std::filesystem;
  
-@@ -31,6 +35,11 @@ static bool biosHasPost = false;
+@@ -39,6 +43,11 @@ static bool biosHasPost = false;
  static std::unique_ptr<sdbusplus::bus::match::match> powerMatch = nullptr;
  static std::unique_ptr<sdbusplus::bus::match::match> postMatch = nullptr;
  
@@ -63,7 +62,7 @@ index f1a70b5..75abc55 100644
  bool getSensorConfiguration(
      const std::string& type,
      const std::shared_ptr<sdbusplus::asio::connection>& dbusConnection,
-@@ -126,6 +135,78 @@ bool hasBiosPost(void)
+@@ -136,6 +145,78 @@ bool hasBiosPost(void)
      return biosHasPost;
  }
  
@@ -142,7 +141,7 @@ index f1a70b5..75abc55 100644
  void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
  {
      static boost::asio::steady_timer timer(conn->get_io_context());
-@@ -220,6 +301,17 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+@@ -230,6 +311,17 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
          },
          post::busname, post::path, properties::interface, properties::get,
          post::interface, post::property);
@@ -161,5 +160,5 @@ index f1a70b5..75abc55 100644
  
  // replaces limits if MinReading and MaxReading are found.
 -- 
-2.22.0
+2.24.1
 

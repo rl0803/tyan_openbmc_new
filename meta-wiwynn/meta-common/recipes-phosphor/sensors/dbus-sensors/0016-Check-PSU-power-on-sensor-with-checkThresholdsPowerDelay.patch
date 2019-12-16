@@ -1,19 +1,19 @@
-From 6f02b178a35a73f8f460743a539b2ca58ea5ff0e Mon Sep 17 00:00:00 2001
+From 1100c7cb698b740b187ca24c841d335fd0821f85 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 9 Dec 2019 18:53:00 +0800
-Subject: [PATCH 2/2] Check PSU power-on sensor thresholds with
+Date: Mon, 16 Dec 2019 17:29:55 +0800
+Subject: [PATCH] Check PSU power-on sensor thresholds with
  checkThresholdsPowerDelay
 
 ---
  include/PSUSensor.hpp |  1 +
- src/PSUSensor.cpp     | 31 ++++++++++++++++++-------------
- 2 files changed, 19 insertions(+), 13 deletions(-)
+ src/PSUSensor.cpp     | 30 +++++++++++++++++-------------
+ 2 files changed, 18 insertions(+), 13 deletions(-)
 
 diff --git a/include/PSUSensor.hpp b/include/PSUSensor.hpp
-index 08aa469..ae8649c 100644
+index e951bfc..62aa5e1 100644
 --- a/include/PSUSensor.hpp
 +++ b/include/PSUSensor.hpp
-@@ -35,6 +35,7 @@ class PSUSensor : public Sensor
+@@ -38,6 +38,7 @@ class PSUSensor : public Sensor
  
      // Power-on sensor
      PowerState readState;
@@ -22,19 +22,19 @@ index 08aa469..ae8649c 100644
  
  class PSUProperty
 diff --git a/src/PSUSensor.cpp b/src/PSUSensor.cpp
-index b539e59..ddba59e 100644
+index 7c96290..217eed9 100644
 --- a/src/PSUSensor.cpp
 +++ b/src/PSUSensor.cpp
-@@ -40,7 +40,7 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
+@@ -46,7 +46,7 @@ PSUSensor::PSUSensor(const std::string& path, const std::string& objectType,
             std::move(_thresholds), sensorConfiguration, objectType, max, min),
-     path(path), objServer(objectServer),
-     inputDev(io, open(path.c_str(), O_RDONLY)), waitTimer(io), errCount(0),
+     objServer(objectServer), inputDev(io, open(path.c_str(), O_RDONLY)),
+     waitTimer(io), path(path), errCount(0),
 -    sensorFactor(factor), readState(std::move(readState))
 +    sensorFactor(factor), readState(std::move(readState)), thresholdTimer(io, this)
  {
-     std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
- 
-@@ -76,10 +76,17 @@ PSUSensor::~PSUSensor()
+     if constexpr (DEBUG)
+     {
+@@ -92,10 +92,17 @@ PSUSensor::~PSUSensor()
  
  void PSUSensor::setupRead(void)
  {
@@ -52,10 +52,10 @@ index b539e59..ddba59e 100644
  }
  
  void PSUSensor::handleResponse(const boost::system::error_code& err)
-@@ -135,17 +142,7 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
-             nvalue /= sensorFactor;
-             if (static_cast<double>(nvalue) != value)
-             {
+@@ -164,17 +171,7 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
+                               << " to " << nvalue << "\n";
+                 }
+ 
 -                if(readState == PowerState::always)
 -                {
 -                    updateValue(nvalue);
@@ -71,15 +71,7 @@ index b539e59..ddba59e 100644
              }
  
              updateValueInvalid(false);
-@@ -174,6 +171,7 @@ void PSUSensor::handleResponse(const boost::system::error_code& err)
-     }
- 
-     responseStream.clear();
-+
-     inputDev.close();
-     int fd = open(path.c_str(), O_RDONLY);
-     if (fd <= 0)
-@@ -198,5 +196,12 @@ void PSUSensor::checkThresholds(void)
+@@ -233,5 +230,12 @@ void PSUSensor::checkThresholds(void)
          return;
      }
  
@@ -94,5 +86,5 @@ index b539e59..ddba59e 100644
 +    }
  }
 -- 
-2.22.0
+2.24.1
 

@@ -1,8 +1,7 @@
-From 03285b6bda57c48d033158f1dcd6522b9bcacbb7 Mon Sep 17 00:00:00 2001
+From 55200d2a1f7af3905cf8442dfb7a095f162ccaa4 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 16 Sep 2019 13:17:00 +0800
-Subject: [PATCH] Add to support VR sensor without VR driver - Read the VR
- register value with i2c lib
+Date: Mon, 16 Dec 2019 14:43:56 +0800
+Subject: [PATCH] Add to support VR sensor without VR driver
 
 ---
  CMakeLists.txt                                |  19 +-
@@ -668,5 +667,5 @@ index 0000000..0eac88d
 +    io.run();
 +}
 -- 
-2.22.0
+2.24.1
 

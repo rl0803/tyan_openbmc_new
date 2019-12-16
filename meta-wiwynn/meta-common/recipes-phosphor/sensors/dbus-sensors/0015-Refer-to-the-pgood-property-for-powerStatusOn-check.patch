@@ -1,7 +1,7 @@
-From 01c68a49acbb764ff48dba77efe969118cd39603 Mon Sep 17 00:00:00 2001
+From 7ebd0cca9d26f47e24d23e29c5ca4331462a78a7 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 9 Dec 2019 18:51:03 +0800
-Subject: [PATCH 1/2] Refer to the pgood property for powerStatusOn checking
+Date: Mon, 16 Dec 2019 17:20:52 +0800
+Subject: [PATCH] Refer to the pgood property for powerStatusOn checking
 
 ---
  include/Utils.hpp |  8 ++++----
@@ -9,10 +9,10 @@ Subject: [PATCH 1/2] Refer to the pgood property for powerStatusOn checking
  2 files changed, 9 insertions(+), 11 deletions(-)
 
 diff --git a/include/Utils.hpp b/include/Utils.hpp
-index d0ebfa3..fdbc237 100644
+index 3afacd5..d174ad4 100644
 --- a/include/Utils.hpp
 +++ b/include/Utils.hpp
-@@ -84,10 +84,10 @@ constexpr const char* get = "Get";
+@@ -92,10 +92,10 @@ constexpr const char* get = "Get";
  
  namespace power
  {
@@ -28,10 +28,10 @@ index d0ebfa3..fdbc237 100644
  namespace post
  {
 diff --git a/src/Utils.cpp b/src/Utils.cpp
-index 75abc55..c746b78 100644
+index 48921cc..47b6940 100644
 --- a/src/Utils.cpp
 +++ b/src/Utils.cpp
-@@ -224,15 +224,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+@@ -234,15 +234,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
              std::string(power::interface) + "'",
          [](sdbusplus::message::message& message) {
              std::string objectName;
@@ -50,7 +50,7 @@ index 75abc55..c746b78 100644
                  {
                      timer.cancel();
                      powerStatusOn = false;
-@@ -275,15 +274,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+@@ -285,15 +284,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
  
      conn->async_method_call(
          [](boost::system::error_code ec,
@@ -69,5 +69,5 @@ index 75abc55..c746b78 100644
          power::busname, power::path, properties::interface, properties::get,
          power::interface, power::property);
 -- 
-2.22.0
+2.24.1
 

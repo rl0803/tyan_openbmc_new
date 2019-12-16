@@ -1,0 +1,29 @@
+From a5c64be29da7949a349c4fca82d2e461e36f4119 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 16 Dec 2019 14:17:58 +0800
+Subject: [PATCH] Add to remove PSU PWM sensor
+
+---
+ src/PSUSensorMain.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/PSUSensorMain.cpp b/src/PSUSensorMain.cpp
+index a2c3de4..5ac9b17 100644
+--- a/src/PSUSensorMain.cpp
++++ b/src/PSUSensorMain.cpp
+@@ -414,9 +414,11 @@ void createSensors(boost::asio::io_service& io,
+                           << "\" label=\"" << labelHead << "\"\n";
+             }
+ 
++            // wiw - Remove the PSU PWM sensor. - 20190903
++/*
+             checkPWMSensor(sensorPath, labelHead, *interfacePath, objectServer,
+                            psuNames[0]);
+-
++*/
+             if (!findLabels.empty())
+             {
+                 /* Check if this labelHead is enabled in config file */
+-- 
+2.24.1
+

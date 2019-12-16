@@ -1,17 +1,17 @@
-From 9fcc689a8b1e90260a913896bcaf0c36df7875d7 Mon Sep 17 00:00:00 2001
+From b250889fc60e7954493c64c156015db8c5497cdf Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 11 Nov 2019 14:35:09 +0800
+Date: Mon, 16 Dec 2019 15:13:01 +0800
 Subject: [PATCH] Add Invalid Value dbus sensor property for power-on sensors
 
 ---
- include/sensor.hpp | 26 ++++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+ include/sensor.hpp | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
 diff --git a/include/sensor.hpp b/include/sensor.hpp
-index 641d390..5f2f6fb 100644
+index 263cbfb..755a656 100644
 --- a/include/sensor.hpp
 +++ b/include/sensor.hpp
-@@ -31,6 +31,7 @@ struct Sensor
+@@ -36,6 +36,7 @@ struct Sensor
      std::shared_ptr<sdbusplus::asio::dbus_interface> thresholdInterfaceCritical;
      std::shared_ptr<sdbusplus::asio::dbus_interface> association;
      double value = std::numeric_limits<double>::quiet_NaN();
@@ -19,7 +19,7 @@ index 641d390..5f2f6fb 100644
      bool overriddenState = false;
      bool internalSet = false;
      double hysteresis;
-@@ -52,6 +53,14 @@ struct Sensor
+@@ -57,6 +58,14 @@ struct Sensor
          return 1;
      }
  
@@ -34,11 +34,12 @@ index 641d390..5f2f6fb 100644
      void
          setInitialProperties(std::shared_ptr<sdbusplus::asio::connection>& conn)
      {
-@@ -64,6 +73,11 @@ struct Sensor
+@@ -67,6 +76,12 @@ struct Sensor
+             "Value", value, [&](const double& newValue, double& oldValue) {
                  return setSensorValue(newValue, oldValue);
              });
- 
-+        sensorInterface->register_property(
++
++         sensorInterface->register_property(
 +            "InvalidValue", invalidValue, [&](const bool& newState, bool& oldState) {
 +                return setSensorValueInvalid(newState, oldState);
 +            });
@@ -46,19 +47,19 @@ index 641d390..5f2f6fb 100644
          for (auto& threshold : thresholds)
          {
              std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
-@@ -146,12 +160,24 @@ struct Sensor
-             internalSet = true;
-             sensorInterface->set_property("Value", newValue);
+@@ -152,12 +167,24 @@ struct Sensor
+                 std::cerr << "error setting property to " << newValue << "\n";
+             }
              internalSet = false;
 +
-+        /*
++            /*
              double diff = std::abs(value - newValue);
              if (std::isnan(diff) || diff > hysteresis)
              {
                  value = newValue;
              }
-+        */
-+            value = newValue;
++            */
++
              checkThresholds();
          }
      }
@@ -72,5 +73,5 @@ index 641d390..5f2f6fb 100644
 +    }
  };
 -- 
-2.22.0
+2.24.1
 
