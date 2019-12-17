@@ -1,3 +1,8 @@
+inherit extrausers
+EXTRA_USERS_PARAMS_pn-obmc-phosphor-image = " \
+  usermod -p '\$1\$KdSxTq5i\$W7g5v8sWXDsF0zvh.8Rk61' root; \
+"
+
 OBMC_IMAGE_EXTRA_INSTALL_append_sv300g3e += " entity-manager \
                                               dbus-sensors \
                                               intel-dbus-interfaces \
