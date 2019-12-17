@@ -2,6 +2,8 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://sv300g3e-MB.json \
             file://Delta-DPS-500AB-PSU.json \
+            file://Delta-DPS-550AB-PSU.json \
+            file://Chicony-R550-PSU.json \
             file://fan-table.json \
             "
 

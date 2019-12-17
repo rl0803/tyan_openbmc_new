@@ -1319,7 +1319,11 @@
         }
     ],
     "Name": "SV300G3-E Main Board",
-    "Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME' : '.*WW*'})",
+    "Probe": [
+        "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME' : '.*WW*'})",
+        "OR",
+        "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME' : 'F5I'})"
+    ],
     "Type": "Board",
     "xyz.openbmc_project.Inventory.Decorator.Asset": {
         "Manufacturer": "$PRODUCT_MANUFACTURER",
