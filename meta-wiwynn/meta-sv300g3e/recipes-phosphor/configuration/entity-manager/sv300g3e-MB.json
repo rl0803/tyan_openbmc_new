@@ -474,14 +474,14 @@
         {
             "Index": 0,
             "Name": "SYS FAN0",
-            "MaxReading": 16000,
+            "MaxReading": 22000,
             "MinReading": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 14900
+                    "Value": 20200
                 },
                 {
                     "Direction": "less than",
@@ -495,14 +495,14 @@
         {
             "Index": 2,
             "Name": "SYS FAN1",
-            "MaxReading": 16000,
+            "MaxReading": 22000,
             "MinReading": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 14900
+                    "Value": 20200
                 },
                 {
                     "Direction": "less than",
@@ -516,14 +516,14 @@
         {
             "Index": 4,
             "Name": "SYS FAN2",
-            "MaxReading": 16000,
+            "MaxReading": 22000,
             "MinReading": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 14900
+                    "Value": 20200
                 },
                 {
                     "Direction": "less than",
@@ -537,14 +537,14 @@
         {
             "Index": 6,
             "Name": "SYS FAN3",
-            "MaxReading": 16000,
+            "MaxReading": 22000,
             "MinReading": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 14900
+                    "Value": 20200
                 },
                 {
                     "Direction": "less than",
@@ -558,14 +558,14 @@
         {
             "Index": 8,
             "Name": "SYS FAN4",
-            "MaxReading": 16000,
+            "MaxReading": 22000,
             "MinReading": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 14900
+                    "Value": 20200
                 },
                 {
                     "Direction": "less than",
@@ -579,14 +579,14 @@
         {
             "Index": 10,
             "Name": "SYS FAN5",
-            "MaxReading": 16000,
+            "MaxReading": 22000,
             "MinReading": 0,
             "Thresholds": [
                 {
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 14900
+                    "Value": 20200
                 },
                 {
                     "Direction": "less than",
