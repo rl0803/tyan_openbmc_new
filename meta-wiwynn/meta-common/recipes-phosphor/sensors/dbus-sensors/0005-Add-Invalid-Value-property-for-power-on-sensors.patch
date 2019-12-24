@@ -59,7 +59,7 @@ index 263cbfb..755a656 100644
                  value = newValue;
              }
 +            */
-+
++            value = newValue;
              checkThresholds();
          }
      }
