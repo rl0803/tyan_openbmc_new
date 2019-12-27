@@ -83,6 +83,16 @@
 			 gpios = <&gpio ASPEED_GPIO(A, 2) GPIO_ACTIVE_LOW>;
 			 linux,code = <ASPEED_GPIO(A, 2)>;
 		};
+		prochot0 {
+			label = "prochot0";
+			gpios = <&gpio ASPEED_GPIO(C, 6) GPIO_ACTIVE_LOW>;
+			linux,code = <ASPEED_GPIO(C, 6)>;
+		};
+		prochot1 {
+			label = "prochot1";
+			gpios = <&gpio ASPEED_GPIO(C, 7) GPIO_ACTIVE_LOW>;
+			linux,code = <ASPEED_GPIO(C, 7)>;
+		};
 
 	};
 

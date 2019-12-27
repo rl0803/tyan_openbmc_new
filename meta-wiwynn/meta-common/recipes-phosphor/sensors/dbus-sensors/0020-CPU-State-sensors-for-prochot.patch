@@ -1,0 +1,24 @@
+From 654d53236a1641f560ebe8fabab0de082f45ce41 Mon Sep 17 00:00:00 2001
+From: Varun Sampat <vsampat@twitter.com>
+Date: Thu, 26 Dec 2019 19:17:00 -0500
+Subject: [PATCH] CPU State sensors for prochot
+
+---
+ include/EventSensor.hpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index 2cca8d1..47a759d 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -39,7 +39,9 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "ACPI_Power_State", .sensorType = "acpi/"},
+     {.sensorName = "Button", .sensorType = "button/"},
+     {.sensorName = "End_of_Post", .sensorType = "systemevent/"},
+-    {.sensorName = "IPMI_POWER_CYCLE", .sensorType = "fru_state/"}
++    {.sensorName = "IPMI_POWER_CYCLE", .sensorType = "fru_state/"},
++    {.sensorName = "CPU0_State", .sensorType = "processor/"},
++    {.sensorName = "CPU1_State", .sensorType = "processor/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
