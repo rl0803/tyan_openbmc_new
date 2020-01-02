@@ -6,6 +6,7 @@ SRC_URI += " file://0001-Add-fan-control-linear.patch \
              file://0004-Detecting-fan-failures-and-support-timeout-option.patch \
              file://0005-Add-DIMM-CPU-sensor-and-JSON-defined-cycle-time.patch \
              file://0006-Check-sensor-failures.patch \
+             file://0007-Modify-debug-manual-mode-implementation.patch \
              file://writePwm.sh \
              file://phosphor-pid-control.sh \
            "

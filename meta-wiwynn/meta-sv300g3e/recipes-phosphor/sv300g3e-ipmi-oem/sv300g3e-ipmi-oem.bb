@@ -23,6 +23,8 @@ SRC_URI = "file://CMakeLists.txt \
            file://oemcommands.hpp \
            file://appcommands.cpp \
            file://appcommands.hpp \
+           file://Utils.cpp \
+           file://Utils.hpp \
           "
 
 LIBRARY_NAMES = "libzsv300g3eoemcmds.so"
