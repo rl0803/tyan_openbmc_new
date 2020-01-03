@@ -70,17 +70,6 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     SetPwmCmdRequest* req = reinterpret_cast<SetPwmCmdRequest*>(request);
     *dataLen = 0;
 
-    // The fan index can not be 0 since it is 1 base.
-    if (req->pwmIndex == 0)
-    {
-        sd_journal_print(LOG_ERR,
-                        "IPMI SetPwm invalid field request(pwmIndex), "
-                        "received = 0x%x, required = 0x01 ~ 0x07\n",
-                        req->pwmIndex);
-        return IPMI_CC_PARM_OUT_OF_RANGE;
-    }
-    req->pwmIndex = req->pwmIndex - 1;
-
     constexpr auto parentPwmDir = "/sys/devices/platform/ahb/ahb:apb/"
                                   "1e786000.pwm-tacho-controller/hwmon/";
 
@@ -111,8 +100,8 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
             {
                 sd_journal_print(LOG_ERR,
                                 "IPMI SetPwm invalid field request(pwmIndex), "
-                                "received = 0x%x, required = 0x01 ~ 0x07\n",
-                                (req->pwmIndex+1));
+                                "received = 0x%x, required = 0x00 ~ 0x06\n",
+                                req->pwmIndex);
                 return IPMI_CC_PARM_OUT_OF_RANGE;
             }
             auto pwmFilePath = pwmDirVec[0] + "/" + pwmFile->second;
@@ -160,8 +149,8 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         {
             sd_journal_print(LOG_ERR,
                             "IPMI SetPwm invalid field request(pwmIndex), "
-                            "received = 0x%x, required = 0x01 ~ 0x07\n",
-                            (req->pwmIndex+1));
+                            "received = 0x%x, required = 0x00 ~ 0x06\n",
+                            req->pwmIndex);
             return IPMI_CC_PARM_OUT_OF_RANGE;
         }
         auto pwmFilePath = pwmDirVec[0] + "/" + pwmFile->second;
