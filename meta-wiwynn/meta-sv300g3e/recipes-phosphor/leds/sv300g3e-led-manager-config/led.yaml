@@ -1,6 +1,8 @@
 bmc_booted:
 
 power_on:
+    power:
+        Action: 'On'
 
 enclosure_identify:
     identify:
