@@ -2,7 +2,7 @@
 
 echo "[SV300G3-E][S] System Power Reset"
 
-pwrstatus=$(/usr/bin/gpioget gpiochip0 101)
+pwrstatus=$(busctl get-property org.openbmc.control.Power /org/openbmc/control/power0 org.openbmc.control.Power pgood | cut -d' ' -f2)
 if [ ${pwrstatus} -eq 1 ]; then
     /usr/bin/gpioset gpiochip0 29=0
     sleep 1
