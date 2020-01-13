@@ -12,6 +12,7 @@ S = "${WORKDIR}"
 
 SRC_URI = "file://libmath.c \
            file://libdbus.c \
+           file://libregister.c \
            file://libmisc.h \
            file://Makefile \
            file://COPYING.MIT \

@@ -32,6 +32,10 @@ uint8_t Set_Dbus_Property(double value, char *object_str, char *path_str, char *
 uint8_t Get_Linear_Data_Format(double* real_value, uint32_t raw_value);
 int Get_VID_Data_Format(double* real_value, uint32_t raw_value, uint8_t code_type);
 
+//lib register
+int read_register(uint32_t address, uint32_t *result);
+int write_register(uint32_t address, uint32_t value);
+
 #ifdef  __cplusplus
 }
 #endif

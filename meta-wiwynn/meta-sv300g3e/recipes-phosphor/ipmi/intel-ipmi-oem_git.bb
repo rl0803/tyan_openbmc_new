@@ -16,6 +16,7 @@ SRC_URI = "git://github.com/openbmc/intel-ipmi-oem \
            file://0011-Handle-no-cacheTimer-case-in-replaceCacheFru-func.patch \
            file://0012-Support-BIOS-SDR-configuration-in-JSON.patch \
            file://0013-Modify-the-chassis-identify-behavior-to-solid-on.patch \
+           file://0014-Add-sensor-type-power-supply-and-power-unit.patch \
           "
 # SRCREV = "ba9c1765f5edc2f0891e012f33b3059a0dbd7ff1"
 SRCREV = "147daec5fcfcdacd8813eab6a7735d0f1b615c8a"

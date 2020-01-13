@@ -1,0 +1,189 @@
+From 5d2382840bb8492a0f4c951e18e60c7b8f4c7761 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 13 Jan 2020 17:42:46 +0800
+Subject: [PATCH] BMC reset and AC lost event-only sensors
+
+---
+ include/EventSensor.hpp |  18 ++++++-
+ src/EventSensor.cpp     | 115 +++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 130 insertions(+), 3 deletions(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index 47a759d..bca1d56 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -41,12 +41,21 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "End_of_Post", .sensorType = "systemevent/"},
+     {.sensorName = "IPMI_POWER_CYCLE", .sensorType = "fru_state/"},
+     {.sensorName = "CPU0_State", .sensorType = "processor/"},
+-    {.sensorName = "CPU1_State", .sensorType = "processor/"}
++    {.sensorName = "CPU1_State", .sensorType = "processor/"},
++    {.sensorName = "BMC_Health", .sensorType = "mgmtsystemhealth/"},
++    {.sensorName = "Power_Unit", .sensorType = "powerunit/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+ {
+-    ACPI_Power_State = 0
++    ACPI_Power_State = 0,
++    Button = 1,
++    End_of_Post = 2,
++    IPMI_POWER_CYCLE = 3,
++    CPU0_State = 4,
++    CPU1_State = 5,
++    BMC_Health = 6,
++    Power_Unit = 7
+ };
+ 
+ class EventOnlySensor
+@@ -61,6 +70,11 @@ class EventOnlySensor
+     private:
+         sdbusplus::asio::object_server& objServer;
+         std::shared_ptr<sdbusplus::asio::dbus_interface> sensorInterface;
++
++        void bmcRebootEventLog(std::shared_ptr<sdbusplus::asio::connection>& conn,
++                               std::string& dbusPath);
++        void sysAClostEventLog(std::shared_ptr<sdbusplus::asio::connection>& conn,
++                               std::string& dbusPath);
+ };
+ 
+ /* ACPI Event Monitor */
+diff --git a/src/EventSensor.cpp b/src/EventSensor.cpp
+index ccfc546..109bb18 100644
+--- a/src/EventSensor.cpp
++++ b/src/EventSensor.cpp
+@@ -24,7 +24,8 @@
+ #include <sdbusplus/asio/connection.hpp>
+ #include <sdbusplus/asio/object_server.hpp>
+ #include <string>
+-
++#include <openbmc/libmisc.h>
++#include <systemd/sd-journal.h>
+ 
+ EventOnlySensor::EventOnlySensor(
+     sdbusplus::asio::object_server& objectServer,
+@@ -44,9 +45,121 @@ EventOnlySensor::EventOnlySensor(
+     {
+         std::cerr << "error initializing value interface\n";
+     }
++
++    if (0 == sensorName.compare("BMC_Health"))
++    {
++        bmcRebootEventLog(conn, dbusPath);
++    }
++    else if (0 == sensorName.compare("Power_Unit"))
++    {
++        sysAClostEventLog(conn, dbusPath);
++    }
+ }
+ 
+ EventOnlySensor::~EventOnlySensor()
+ {
+     objServer.remove_interface(sensorInterface);
+ }
++
++/* BMC Reboot SEL Record */
++void EventOnlySensor::bmcRebootEventLog(
++    std::shared_ptr<sdbusplus::asio::connection>& conn,
++    std::string& dbusPath)
++{
++    uint32_t regReadValue = 0;
++    uint32_t wdt1ToStusReg = 0x1e785010;
++    if (read_register(wdt1ToStusReg, &regReadValue) < 0)
++    {
++        std::cerr<<"failed to read register WDT10 \n";
++        return;
++    }
++
++    /* BMC reboots */
++    if( 0 != regReadValue)
++    {
++        // WDT event counter clear
++        uint32_t clsToCntValue = 0x76;
++        uint32_t wdt1ClrToStusReg = 0x1e785014;
++        write_register(wdt1ClrToStusReg, clsToCntValue);
++
++        // SEL Add
++        uint16_t genId = 0x20;
++        std::vector<uint8_t> eventData(3, 0xFF);
++        bool assert = true;
++
++        /* Sensor type: Management Subsystem Health (0x28)
++            Sensor specific offset: 02h - management controller off-line
++        */
++        eventData[0] = 0x2;
++
++        sdbusplus::message::message writeSEL = conn->new_method_call(
++            ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
++        writeSEL.append(ipmiSelAddMessage, dbusPath, eventData, assert, genId);
++
++        try
++        {
++            conn->call_noreply(writeSEL);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            std::cerr<<"failed to log BMC Reboot SEL\n";
++        }
++    }
++}
++
++/* BMC AC lost SEL Record */
++void EventOnlySensor::sysAClostEventLog(
++    std::shared_ptr<sdbusplus::asio::connection>& conn,
++    std::string& dbusPath)
++{
++    uint32_t regReadValue = 0;
++    uint32_t sysRstStusReg = 0x1e6e203c;   // SCU3C
++
++    if (read_register(sysRstStusReg, &regReadValue) < 0)
++    {
++        std::cerr<<"failed to read register SCU3C \n";
++        return;
++    }
++
++    /* AC lost */
++    if( 1 == (regReadValue & 0x1))
++    {
++        // Clear Reset status register
++        uint32_t scuProtKeyReg = 0x1e6e2000;
++        uint32_t protectionKey = 0x1688A8A8;
++        uint32_t clsValue = regReadValue & 0xFFFFFFFE;
++
++        // Unlock SCU
++        if (write_register(scuProtKeyReg, protectionKey) > 0)
++        {
++            // Clear Power on reset flag
++            write_register(sysRstStusReg, clsValue);
++
++            // Lock SCU
++            write_register(scuProtKeyReg, 0);
++        }
++
++        // SEL Add
++        uint16_t genId = 0x20;
++        std::vector<uint8_t> eventData(3, 0xFF);
++        bool assert = true;
++
++        /* Sensor type: Power Unit (0x09)
++           Sensor specific offset: 04h - AC lost / Power input lost
++        */
++        eventData[0] = 0x4;
++
++        sdbusplus::message::message writeSEL = conn->new_method_call(
++            ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
++        writeSEL.append(ipmiSelAddMessage, dbusPath, eventData, assert, genId);
++
++        try
++        {
++            conn->call_noreply(writeSEL);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            std::cerr<<"failed to log AC lost SEL\n";
++        }
++    }
++}
+-- 
+2.24.1
+

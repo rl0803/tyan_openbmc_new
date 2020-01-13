@@ -20,6 +20,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0018-VR-type-sensors-to-support-the-invalid-value-property.patch \
             file://0019-Tach-type-Fan-sensors-to-support-the-invalid-value-property.patch \
             file://0020-CPU-State-sensors-for-prochot.patch  \
+            file://0021-BMC-reset-and-AC-lost-event-only-sensors.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
