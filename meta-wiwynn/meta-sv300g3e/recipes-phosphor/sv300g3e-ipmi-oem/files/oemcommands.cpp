@@ -42,6 +42,10 @@ const static constexpr char* solPatternService = "xyz.openbmc_project.SolPattern
 const static constexpr char* solPatternInterface = "xyz.openbmc_project.Sensor.SOLPattern";
 const static constexpr char* solPatternObjPrefix = "/xyz/openbmc_project/sensors/pattern/Pattern";
 
+const static constexpr char* leakyBucketService = "xyz.openbmc_project.LeakyBucket";
+const static constexpr char* thresholdObjPath = "/xyz/openbmc_project/leaky_bucket/threshold";
+const static constexpr char* thresholdInterface = "xyz.openbmc_project.LeakyBucket.threshold";
+
 static void register_oem_functions() __attribute__((constructor));
 
 /**
@@ -392,6 +396,117 @@ ipmi_ret_t ipmiGetSolPattern(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/*
+    Set Leaky Bucket threshold func
+    NetFn: 0x3E / CMD: 0xB4
+*/
+ipmi_ret_t ipmiSetLbaThreshold(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                               ipmi_request_t request, ipmi_response_t response,
+                               ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    /* Data Length -
+       threshold number (1) + threshold value (2) */
+    if(reqDataLen != (sizeof(SetLbaThresholdCmdReq)))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    SetLbaThresholdCmdReq* reqData = reinterpret_cast<SetLbaThresholdCmdReq*>(request);
+
+    /* Threshold index */
+    uint8_t thresholdNum = reqData->thresholdIdx;
+    if((thresholdNum < 1) || (thresholdNum > maxLbaThresholdNum))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid threshold number %d\n",
+                         __FUNCTION__, thresholdNum);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    /* T1 & T3 can not be 0 */
+    uint16_t thresholdData = reqData->thresholdVal;
+    if((thresholdData == 0) &&
+      ((thresholdNum == 1) || (thresholdNum == 3)))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid threshold T%d value %d\n",
+                         __FUNCTION__, thresholdNum, thresholdData);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    /* Set the threshold property through dbus */
+    std::string thresholdString = "Threshold" + std::to_string(thresholdNum);
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        ipmi::setDbusProperty(*dbus, leakyBucketService, thresholdObjPath,
+                               thresholdInterface, thresholdString.c_str(), thresholdData);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    return IPMI_CC_OK;
+}
+
+/*
+    Get Leaky Bucket threshold func
+    NetFn: 0x3E / CMD: 0xB5
+*/
+ipmi_ret_t ipmiGetLbaThreshold(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                               ipmi_request_t request, ipmi_response_t response,
+                               ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    /* Data Length - threshold number (1) */
+    if(reqDataLen != 1)
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetLbaThresholdCmdReq* reqData = reinterpret_cast<GetLbaThresholdCmdReq*>(request);
+    GetLbaThresholdCmdRes* resData = reinterpret_cast<GetLbaThresholdCmdRes*>(response);
+
+    /* Threshold index */
+    uint8_t thresholdNum = reqData->thresholdIdx;
+    if((thresholdNum < 1) || (thresholdNum > maxLbaThresholdNum))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid threshold number %d\n",
+                         __FUNCTION__, thresholdNum);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    /* Get the threshold property through dbus */
+    std::string thresholdString = "Threshold" + std::to_string(thresholdNum);
+    uint16_t thresholdData;
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        auto value = ipmi::getDbusProperty(*dbus, leakyBucketService, thresholdObjPath,
+                               thresholdInterface, thresholdString.c_str());
+        thresholdData = std::get<uint16_t>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    *data_len = sizeof(thresholdData);
+    resData->thresholdVal = thresholdData;
+
+    return IPMI_CC_OK;
+}
+
 static void register_oem_functions(void)
 {
     // <Set Fan PWM>
@@ -409,4 +524,12 @@ static void register_oem_functions(void)
     // <Get SOL Pattern>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_SOL_PATTERN,
                            NULL, ipmiGetSolPattern, PRIVILEGE_USER);
+
+    // <Set Leaky Bucket Threshold>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_LBA_THRESHOLD,
+                           NULL, ipmiSetLbaThreshold, PRIVILEGE_USER);
+
+    // <Get Leaky Bucket Threshold>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_LBA_THRESHOLD,
+                           NULL, ipmiGetLbaThreshold, PRIVILEGE_USER);
 }

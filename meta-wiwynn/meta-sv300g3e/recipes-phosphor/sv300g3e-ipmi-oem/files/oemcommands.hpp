@@ -23,7 +23,8 @@ static constexpr ipmi_netfn_t netFnSv300g3eOEM1 = 0x2E;
 static constexpr ipmi_netfn_t netFnSv300g3eOEM2 = 0x30;
 static constexpr ipmi_netfn_t netFnSv300g3eOEM3 = 0x3E;
 
-static const size_t maxPatternLen = 256;   
+static const size_t maxPatternLen = 256;
+static const uint8_t maxLbaThresholdNum = 3;
 
 enum ipmi_sv300g3e_oem2_cmds : uint8_t
 {
@@ -35,6 +36,8 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
 {
     CMD_SET_SOL_PATTERN = 0xB2,
     CMD_GET_SOL_PATTERN = 0xB3,
+    CMD_SET_LBA_THRESHOLD = 0xB4,
+    CMD_GET_LBA_THRESHOLD = 0xB5,
 
 };
 
@@ -83,4 +86,20 @@ typedef struct
 {
     char data[maxPatternLen];
 }__attribute__((packed)) GetSolPatternCmdRes;
+
+typedef struct
+{
+    uint8_t thresholdIdx;
+    uint16_t thresholdVal;
+}__attribute__((packed)) SetLbaThresholdCmdReq;
+
+typedef struct
+{
+    uint8_t thresholdIdx;
+}__attribute__((packed)) GetLbaThresholdCmdReq;
+
+typedef struct
+{
+    uint16_t thresholdVal;
+}__attribute__((packed)) GetLbaThresholdCmdRes;
 
