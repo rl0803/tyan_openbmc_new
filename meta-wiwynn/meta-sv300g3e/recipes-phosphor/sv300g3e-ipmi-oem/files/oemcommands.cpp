@@ -46,6 +46,10 @@ const static constexpr char* leakyBucketService = "xyz.openbmc_project.LeakyBuck
 const static constexpr char* thresholdObjPath = "/xyz/openbmc_project/leaky_bucket/threshold";
 const static constexpr char* thresholdInterface = "xyz.openbmc_project.LeakyBucket.threshold";
 
+static const std::string dimmObjPathPrefix = "/xyz/openbmc_project/leaky_bucket/dimm_slot/";
+const static constexpr char* eccErrorInterface = "xyz.openbmc_project.DimmEcc.Count";
+const std::string dimmConfigPath = "/etc/leaky-bucket-dimm.json";
+
 static void register_oem_functions() __attribute__((constructor));
 
 /**
@@ -507,6 +511,127 @@ ipmi_ret_t ipmiGetLbaThreshold(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+std::vector<uint8_t> dimmConfig; // DIMM configuration
+/*
+    Get total correctable ECC counter value func
+    NetFn: 0x3E / CMD: 0xB6
+*/
+ipmi_ret_t ipmiGetLbaTotalCnt(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                              ipmi_request_t request, ipmi_response_t response,
+                              ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    if(!getDimmConfig(dimmConfig, dimmConfigPath))
+    {
+        sd_journal_print(LOG_ERR, "[%s] failed to get DIMM configuration\n", __FUNCTION__);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    /* Data Length - DIMM sensor number (1) */
+    if(reqDataLen != 1)
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetLbaTotalCntReq* reqData = reinterpret_cast<GetLbaTotalCntReq*>(request);
+    GetLbaTotalCntRes* resData = reinterpret_cast<GetLbaTotalCntRes*>(response);
+
+    /* DIMM index */
+    uint8_t dimmIndex = reqData->dimmIdx;
+    if((dimmIndex == 0) || (dimmIndex > dimmConfig.size()))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid DIMM number %d\n",
+                         __FUNCTION__, dimmIndex);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    /* Get the total error number through dbus */
+    uint8_t dimmNumber = dimmConfig.at((dimmIndex-1));
+    std::string dimmObjPath = dimmObjPathPrefix + std::to_string(dimmNumber);
+    uint32_t dimmTotalEccCnt = 0;
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        auto value = ipmi::getDbusProperty(*dbus, leakyBucketService, dimmObjPath.c_str(),
+                               eccErrorInterface, "TotalEccCount");
+        dimmTotalEccCnt = std::get<uint32_t>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    *data_len = sizeof(dimmTotalEccCnt);
+    resData->totalCnt = dimmTotalEccCnt;
+
+    return IPMI_CC_OK;
+}
+
+/*
+    Get relative correctable ECC counter value func
+    NetFn: 0x3E / CMD: 0xB7
+*/
+ipmi_ret_t ipmiGetLbaRelativeCnt(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                 ipmi_request_t request, ipmi_response_t response,
+                                 ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    if(!getDimmConfig(dimmConfig, dimmConfigPath))
+    {
+        sd_journal_print(LOG_ERR, "[%s] failed to get DIMM configuration\n", __FUNCTION__);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    /* Data Length - DIMM sensor number (1) */
+    if(reqDataLen != 1)
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetLbaRelativeCntReq* reqData = reinterpret_cast<GetLbaRelativeCntReq*>(request);
+    GetLbaRelativeCntRes* resData = reinterpret_cast<GetLbaRelativeCntRes*>(response);
+
+    /* DIMM index */
+    uint8_t dimmIndex = reqData->dimmIdx;
+    if((dimmIndex == 0) || (dimmIndex > dimmConfig.size()))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid DIMM number %d\n",
+                         __FUNCTION__, dimmIndex);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    /* Get the relative error number through dbus */
+    uint8_t dimmNumber = dimmConfig.at((dimmIndex-1));
+    std::string dimmObjPath = dimmObjPathPrefix + std::to_string(dimmNumber);
+    uint32_t dimmRelativeEccCnt = 0;
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        auto value = ipmi::getDbusProperty(*dbus, leakyBucketService, dimmObjPath.c_str(),
+                               eccErrorInterface, "RelativeEccCount");
+        dimmRelativeEccCnt = std::get<uint32_t>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    *data_len = sizeof(dimmRelativeEccCnt);
+    resData->relativeCnt = dimmRelativeEccCnt;
+
+    return IPMI_CC_OK;
+}
+
 static void register_oem_functions(void)
 {
     // <Set Fan PWM>
@@ -532,4 +657,12 @@ static void register_oem_functions(void)
     // <Get Leaky Bucket Threshold>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_LBA_THRESHOLD,
                            NULL, ipmiGetLbaThreshold, PRIVILEGE_USER);
+
+    // <Get Total Correctable ECC Counter Value>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_LBA_TOTAL_CNT,
+                           NULL, ipmiGetLbaTotalCnt, PRIVILEGE_USER);
+
+    // <Get Relative Correctable ECC Counter Value>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_LBA_RELATIVE_CNT,
+                           NULL, ipmiGetLbaRelativeCnt, PRIVILEGE_USER);
 }

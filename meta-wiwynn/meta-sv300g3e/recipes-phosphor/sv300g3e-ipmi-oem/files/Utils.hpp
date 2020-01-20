@@ -21,6 +21,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <fstream>
 #include <sdbusplus/bus.hpp>
 
 using namespace std;
@@ -58,3 +59,12 @@ using DbusSubTree = std::map<DbusPath, std::map<DbusService, DbusIntfList>>;
 **/
 DbusSubTree getSubTree(sdbusplus::bus::bus& bus, const std::string& pathRoot,
                        int depth, const std::string& intf);
+
+
+/**
+*   @brief DIMM configuration function.
+*   @param[in] dimmConfig - The structure to store DIMM configuration.
+*   @param[in] path - The DIMM configuration path.
+*   @return - Successful or Not
+**/
+bool getDimmConfig(std::vector<uint8_t>& dimmConfig, const std::string& path);

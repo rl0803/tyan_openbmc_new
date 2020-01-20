@@ -38,7 +38,8 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_GET_SOL_PATTERN = 0xB3,
     CMD_SET_LBA_THRESHOLD = 0xB4,
     CMD_GET_LBA_THRESHOLD = 0xB5,
-
+    CMD_GET_LBA_TOTAL_CNT = 0xB6,
+    CMD_GET_LBA_RELATIVE_CNT = 0xB7,
 };
 
 enum
@@ -102,4 +103,24 @@ typedef struct
 {
     uint16_t thresholdVal;
 }__attribute__((packed)) GetLbaThresholdCmdRes;
+
+typedef struct
+{
+    uint8_t dimmIdx;
+}__attribute__((packed)) GetLbaTotalCntReq;
+
+typedef struct
+{
+    uint32_t totalCnt;
+}__attribute__((packed)) GetLbaTotalCntRes;
+
+typedef struct
+{
+    uint8_t dimmIdx;
+}__attribute__((packed)) GetLbaRelativeCntReq;
+
+typedef struct
+{
+    uint32_t relativeCnt;
+}__attribute__((packed)) GetLbaRelativeCntRes;
 
