@@ -1,4 +1,4 @@
-SUMMARY = "SV300G3-E interrupt register application"
+SUMMARY = "SV300G3-E event register application for gpio monitor"
 PR = "r1"
 
 inherit obmc-phosphor-systemd
@@ -14,6 +14,8 @@ SRC_URI += "file://toggle_identify_led.sh \
             file://id-button-pressed.service \
             file://end-of-post-event.sh \
             file://end-of-post-event.service \
+            file://SetPowerGoodPropertyOff.service \
+            file://SetPowerGoodPropertyOn.service \
            "
 
 do_install() {
@@ -25,3 +27,5 @@ do_install() {
 
 SYSTEMD_SERVICE_${PN} += "id-button-pressed.service"
 SYSTEMD_SERVICE_${PN} += "end-of-post-event.service"
+SYSTEMD_SERVICE_${PN} += "SetPowerGoodPropertyOff.service"
+SYSTEMD_SERVICE_${PN} += "SetPowerGoodPropertyOn.service"

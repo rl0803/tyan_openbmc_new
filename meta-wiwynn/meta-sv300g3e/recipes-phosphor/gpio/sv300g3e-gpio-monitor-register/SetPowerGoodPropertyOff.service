@@ -1,0 +1,7 @@
+[Unit]
+Description=Set Power Good Property Off
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/busctl set-property "org.openbmc.control.Power" "/org/openbmc/control/power0" "org.openbmc.control.Power" "pgood" i 0
+

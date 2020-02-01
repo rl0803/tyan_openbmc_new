@@ -18,6 +18,7 @@ OBMC_IMAGE_EXTRA_INSTALL_append_sv300g3e += " entity-manager \
                                               sv300g3e-ipmi-oem \
                                               cpu-state \
                                               leaky-bucket \
-                                              gpio-interrupt-register \
+                                              wiwynn-interrupt-dbus-register \
+                                              sv300g3e-gpio-monitor-register \
                                               phosphor-gpio-monitor \
                                             "

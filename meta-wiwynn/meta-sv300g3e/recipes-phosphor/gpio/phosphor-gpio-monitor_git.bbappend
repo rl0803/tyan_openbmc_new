@@ -1,6 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://phosphor-multi-gpio-monitor.service \
+SRC_URI += "file://0001-Support-GPIO-interrupt.patch \
+            file://phosphor-multi-gpio-monitor.service \
             file://phosphor-multi-gpio-monitor.json \
            "
 
