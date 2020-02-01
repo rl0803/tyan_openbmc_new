@@ -73,6 +73,7 @@
 
 	gpio-keys {
 		compatible = "gpio-keys";
+/*
 		id-button {
 			label = "id-button";
 			gpios = <&gpio ASPEED_GPIO(X, 4) GPIO_ACTIVE_LOW>;
@@ -83,6 +84,7 @@
 			 gpios = <&gpio ASPEED_GPIO(A, 2) GPIO_ACTIVE_LOW>;
 			 linux,code = <ASPEED_GPIO(A, 2)>;
 		};
+*/
 		prochot0 {
 			label = "prochot0";
 			gpios = <&gpio ASPEED_GPIO(C, 6) GPIO_ACTIVE_LOW>;

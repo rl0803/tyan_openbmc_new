@@ -1,0 +1,18 @@
+[
+    {
+        "Name": "UIDButton",
+        "ChipId": "0",
+        "GpioNum": 188,
+        "EventMon": "FALLING",
+        "Target": "id-button-pressed.service",
+        "Continue": true
+    },
+    {
+        "Name": "POSTComplete",
+        "ChipId": "0",
+        "GpioNum": 2,
+        "EventMon": "FALLING",
+        "Target": "end-of-post-event.service",
+        "Continue": true
+    }
+]
