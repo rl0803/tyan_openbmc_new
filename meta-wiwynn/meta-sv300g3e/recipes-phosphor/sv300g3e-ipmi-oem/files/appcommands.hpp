@@ -18,10 +18,17 @@
 
 enum ipmi_sv300g3e_app_cmds : uint8_t
 {
+    CMD_GET_SELF_TEST_RESULT = 0x04,
     CMD_GET_DEV_GUID = 0x08,
     CMD_GET_SYS_GUID = 0x37,
 
 };
+
+typedef struct
+{
+    uint8_t data1;
+    uint8_t data2;
+}__attribute__((packed)) GetSelfTestResultRes;
 
 struct OEMLibGetDevGUIDResponse
 {
