@@ -60,10 +60,12 @@
 
 		status_green {
 			gpios = <&gpio ASPEED_GPIO(AA, 0) GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
 
 		status_amber {
 			gpios = <&gpio ASPEED_GPIO(AA, 1) GPIO_ACTIVE_HIGH>;
+			default-state = "on";
 		};
 
 		power {

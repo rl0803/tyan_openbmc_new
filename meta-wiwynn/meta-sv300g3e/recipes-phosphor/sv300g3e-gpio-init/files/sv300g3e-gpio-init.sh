@@ -213,8 +213,6 @@ gpio_out_high="\
     ${GPIO_Y0} \
     ${GPIO_Y1} \
     ${GPIO_Y3} \
-    ${GPIO_AA0} \
-
 "
 for i in ${gpio_out_high}
 do
@@ -235,7 +233,6 @@ gpio_out_low="\
     ${GPIO_M7} \
     ${GPIO_S2} \
     ${GPIO_Y2} \
-    ${GPIO_AA1} \
     ${GPIO_AA5} \
 "
 for i in ${gpio_out_low}
