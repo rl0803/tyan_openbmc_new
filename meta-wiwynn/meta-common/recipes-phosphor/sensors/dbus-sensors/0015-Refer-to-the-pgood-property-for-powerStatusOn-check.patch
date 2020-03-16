@@ -1,6 +1,6 @@
-From 7ebd0cca9d26f47e24d23e29c5ca4331462a78a7 Mon Sep 17 00:00:00 2001
+From 7f36652c68111557d65e27a7fba5bf710a6725eb Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 16 Dec 2019 17:20:52 +0800
+Date: Sun, 15 Mar 2020 19:32:14 +0800
 Subject: [PATCH] Refer to the pgood property for powerStatusOn checking
 
 ---
@@ -9,10 +9,10 @@ Subject: [PATCH] Refer to the pgood property for powerStatusOn checking
  2 files changed, 9 insertions(+), 11 deletions(-)
 
 diff --git a/include/Utils.hpp b/include/Utils.hpp
-index 3afacd5..d174ad4 100644
+index 565656a..5322850 100644
 --- a/include/Utils.hpp
 +++ b/include/Utils.hpp
-@@ -92,10 +92,10 @@ constexpr const char* get = "Get";
+@@ -83,10 +83,10 @@ constexpr const char* get = "Get";
  
  namespace power
  {
@@ -28,10 +28,10 @@ index 3afacd5..d174ad4 100644
  namespace post
  {
 diff --git a/src/Utils.cpp b/src/Utils.cpp
-index 48921cc..47b6940 100644
+index ca5a294..a46265c 100644
 --- a/src/Utils.cpp
 +++ b/src/Utils.cpp
-@@ -234,15 +234,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+@@ -153,15 +153,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
              std::string(power::interface) + "'",
          [](sdbusplus::message::message& message) {
              std::string objectName;
@@ -50,7 +50,7 @@ index 48921cc..47b6940 100644
                  {
                      timer.cancel();
                      powerStatusOn = false;
-@@ -285,15 +284,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+@@ -204,15 +203,14 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
  
      conn->async_method_call(
          [](boost::system::error_code ec,

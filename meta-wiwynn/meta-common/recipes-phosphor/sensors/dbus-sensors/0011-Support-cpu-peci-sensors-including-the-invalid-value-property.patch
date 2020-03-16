@@ -1,28 +1,28 @@
-From 1edd15d2d122a4b7ea635e9f6e99e46bf72f3208 Mon Sep 17 00:00:00 2001
+From b725dcf2c33c56acbdbada4107c7ceae2eab07e0 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 16 Dec 2019 17:05:18 +0800
+Date: Sun, 15 Mar 2020 21:00:15 +0800
 Subject: [PATCH] Support cpu-peci sensors including the invalid value property
 
 ---
  CMakeLists.txt        |  5 +++++
  include/CPUSensor.hpp |  6 +++---
  src/CPUSensor.cpp     | 46 ++++++++++++++++++++++++++++++++++++++++++-
- src/CPUSensorMain.cpp | 36 ++++++++++++++++++++++++++++++++-
- 4 files changed, 88 insertions(+), 5 deletions(-)
+ src/CPUSensorMain.cpp | 37 +++++++++++++++++++++++++++++++++-
+ 4 files changed, 89 insertions(+), 5 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fd8992b..41886fb 100644
+index 453e700..d75392b 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -47,6 +47,7 @@ option (DISABLE_INTRUSION "Disable installing intrusion sensor" OFF)
- option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
+@@ -48,6 +48,7 @@ option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
  option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" OFF)
  option (DISABLE_PSU "Disable installing PSU sensor" OFF)
+ option (DISABLE_NVME "Disable installing NVME sensor" ON)
 +option (BMC_CPU_SENSOR_TCONTROL "Enable Tcontrol Threshold setting" ON)
  
  include ("cmake/HunterGate.cmake")
  
-@@ -163,6 +164,10 @@ add_executable (cpusensor src/CPUSensorMain.cpp ${CPU_SRC_FILES})
+@@ -167,6 +168,10 @@ add_executable (cpusensor src/CPUSensorMain.cpp ${CPU_SRC_FILES})
  add_dependencies (cpusensor sdbusplus-project)
  target_link_libraries (cpusensor ${SENSOR_LINK_LIBS})
  target_link_libraries (cpusensor gpiodcxx)
@@ -143,7 +143,7 @@ index 27c9c38..48c6f39 100644
          if (isPowerOn())
          {
 diff --git a/src/CPUSensorMain.cpp b/src/CPUSensorMain.cpp
-index 0e6f99d..4e91b90 100644
+index 60820de..7587515 100644
 --- a/src/CPUSensorMain.cpp
 +++ b/src/CPUSensorMain.cpp
 @@ -52,6 +52,9 @@
@@ -205,6 +205,14 @@ index 0e6f99d..4e91b90 100644
              createdSensors.insert(sensorName);
              if (DEBUG)
              {
+@@ -673,6 +707,7 @@ int main()
+     auto systemBus = std::make_shared<sdbusplus::asio::connection>(io);
+     boost::container::flat_set<CPUConfig> cpuConfigs;
+ 
++    // systemBus->request_name("xyz.openbmc_project.CPUSensor");
+     sdbusplus::asio::object_server objectServer(systemBus);
+     std::vector<std::unique_ptr<sdbusplus::bus::match::match>> matches;
+     boost::asio::deadline_timer pingTimer(io);
 -- 
 2.24.1
 

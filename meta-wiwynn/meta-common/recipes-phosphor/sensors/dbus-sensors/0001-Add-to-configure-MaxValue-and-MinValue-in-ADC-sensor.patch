@@ -1,13 +1,13 @@
-From 8cc7af661caf66dd8bb80fc174e023e244e0b714 Mon Sep 17 00:00:00 2001
+From 823ecb4b3da98441c07802f0d7e3c32917bbe67d Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 16 Dec 2019 13:33:16 +0800
+Date: Sat, 14 Mar 2020 00:00:08 +0800
 Subject: [PATCH] Add to configure MaxValue and MinValue in ADC sensor JSON
 
 ---
- include/ADCSensor.hpp |  3 ++-
- src/ADCSensor.cpp     |  9 +++++----
- src/ADCSensorMain.cpp | 20 +++++++++++++++++++-
- 3 files changed, 26 insertions(+), 6 deletions(-)
+ include/ADCSensor.hpp |  3 +-
+ src/ADCSensor.cpp     | 65 +++++++++++++++++++++++++++++++++++++------
+ src/ADCSensorMain.cpp | 20 ++++++++++++-
+ 3 files changed, 77 insertions(+), 11 deletions(-)
 
 diff --git a/include/ADCSensor.hpp b/include/ADCSensor.hpp
 index dfd8713..602150f 100644
@@ -24,10 +24,18 @@ index dfd8713..602150f 100644
  
    private:
 diff --git a/src/ADCSensor.cpp b/src/ADCSensor.cpp
-index 22194e8..1f6d6f1 100644
+index 5e01503..027c889 100644
 --- a/src/ADCSensor.cpp
 +++ b/src/ADCSensor.cpp
-@@ -40,8 +40,8 @@ static constexpr unsigned int gpioBridgeEnableMs = 20;
+@@ -33,15 +33,15 @@
+ #include <string>
+ #include <vector>
+ 
+-static constexpr unsigned int sensorPollMs = 500;
++static constexpr unsigned int sensorPollMs = 1000;
+ static constexpr size_t warnAfterErrorCount = 10;
+ static constexpr unsigned int gpioBridgeEnableMs = 20;
+ // scaling factor from hwmon
  static constexpr unsigned int sensorScaleFactor = 1000;
  
  static constexpr double roundFactor = 10000; // 3 decimal places
@@ -52,8 +60,115 @@ index 22194e8..1f6d6f1 100644
      objServer(objectServer), inputDev(io, open(path.c_str(), O_RDONLY)),
      waitTimer(io), path(path), errCount(0), scaleFactor(scaleFactor),
      bridgeGpio(std::move(bridgeGpio)), readState(std::move(readState)),
+@@ -77,10 +78,10 @@ ADCSensor::ADCSensor(const std::string& path,
+     association = objectServer.add_interface(
+         "/xyz/openbmc_project/sensors/voltage/" + name, association::interface);
+     setInitialProperties(conn);
+-    setupRead();
+ 
+     // setup match
+     setupPowerMatch(conn);
++    setupRead();
+ }
+ 
+ ADCSensor::~ADCSensor()
+@@ -129,8 +130,42 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+ {
+     if (err == boost::system::errc::bad_file_descriptor)
+     {
++        updateValueInvalid(true);
+         return; // we're being destroyed
+     }
++
++    // Set as sensor reading invalid for power-on type sensor
++    if (readState != PowerState::always && !isPowerOn())
++    {
++        updateValueInvalid(true);
++        // updateValue(0);
++        errCount = 0;
++
++        // clear response buffer reading
++        std::istream invalidResponseStream(&readBuf);
++        std::string invalidResponse;
++        std::getline(invalidResponseStream, invalidResponse);
++        invalidResponseStream.clear();
++
++        inputDev.close();
++        int fd = open(path.c_str(), O_RDONLY);
++        if (fd <= 0)
++        {
++            return;
++        }
++        inputDev.assign(fd);
++        waitTimer.expires_from_now(boost::posix_time::milliseconds(sensorPollMs));
++        waitTimer.async_wait([&](const boost::system::error_code& ec) {
++            if (ec == boost::asio::error::operation_aborted)
++            {
++                return;
++            }
++            setupRead();
++        });
++
++        return;
++    }
++
+     std::istream responseStream(&readBuf);
+ 
+     if (!err)
+@@ -151,17 +186,21 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+                 updateValue(nvalue);
+             }
+             errCount = 0;
++
++            updateValueInvalid(false);
+         }
+         catch (std::invalid_argument&)
+         {
+             errCount++;
+         }
+     }
++/*
+     else if (readState == PowerState::on && !isPowerOn())
+     {
+         errCount = 0;
+         updateValue(std::numeric_limits<double>::quiet_NaN());
+     }
++*/
+     else
+     {
+         errCount++;
+@@ -175,7 +214,8 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+ 
+     if (errCount >= warnAfterErrorCount)
+     {
+-        updateValue(0);
++        updateValueInvalid(true);
++        // updateValue(0);
+     }
+ 
+     responseStream.clear();
+@@ -202,10 +242,17 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+ 
+ void ADCSensor::checkThresholds(void)
+ {
+-    if (readState == PowerState::on && !isPowerOn())
++    if (readState != PowerState::always && !isPowerOn())
+     {
+         return;
+     }
+ 
+-    thresholds::checkThresholdsPowerDelay(this, thresholdTimer);
++    if(readState == PowerState::always)
++    {
++        thresholds::checkThresholds(this);
++    }
++    else
++    {
++        thresholds::checkThresholdsPowerDelay(this, thresholdTimer);
++    }
+ }
 diff --git a/src/ADCSensorMain.cpp b/src/ADCSensorMain.cpp
-index 1b56d93..b0d5e4b 100644
+index 1b56d93..dba043d 100644
 --- a/src/ADCSensorMain.cpp
 +++ b/src/ADCSensorMain.cpp
 @@ -210,6 +210,24 @@ void createSensors(
@@ -86,7 +201,7 @@ index 1b56d93..b0d5e4b 100644
                      path.string(), objectServer, dbusConnection, io, sensorName,
                      std::move(sensorThresholds), scaleFactor, readState,
 -                    *interfacePath, std::move(bridgeGpio));
-+                    *interfacePath, std::move(bridgeGpio), MaxValue, MinValue);
++                    *interfacePath, std::move(bridgeGpio),MaxValue, MinValue);
              }
          }));
  

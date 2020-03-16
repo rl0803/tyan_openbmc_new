@@ -1,22 +1,22 @@
-From 55200d2a1f7af3905cf8442dfb7a095f162ccaa4 Mon Sep 17 00:00:00 2001
+From 92e4f97a17e32cdbbd7741998db5a8ac6ef5f143 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 16 Dec 2019 14:43:56 +0800
+Date: Sat, 14 Mar 2020 21:50:09 +0800
 Subject: [PATCH] Add to support VR sensor without VR driver
 
 ---
  CMakeLists.txt                                |  19 +-
- include/VRSensor.hpp                          |  39 +++
+ include/VRSensor.hpp                          |  41 +++
  .../xyz.openbmc_project.vrsensor.service      |  11 +
- src/VRSensor.cpp                              | 214 +++++++++++++
- src/VRSensorMain.cpp                          | 296 ++++++++++++++++++
- 5 files changed, 578 insertions(+), 1 deletion(-)
+ src/VRSensor.cpp                              | 244 ++++++++++++++
+ src/VRSensorMain.cpp                          | 297 ++++++++++++++++++
+ 5 files changed, 611 insertions(+), 1 deletion(-)
  create mode 100644 include/VRSensor.hpp
  create mode 100644 service_files/xyz.openbmc_project.vrsensor.service
  create mode 100644 src/VRSensor.cpp
  create mode 100644 src/VRSensorMain.cpp
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 60a608b..c56d9f1 100644
+index f9d6d31..9d54988 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -41,6 +41,7 @@ option (DISBALE_CPU "Disable installing CPU sensor" OFF)
@@ -27,7 +27,7 @@ index 60a608b..c56d9f1 100644
  option (DISABLE_INTRUSION "Disable installing intrusion sensor" OFF)
  option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
  option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" OFF)
-@@ -65,6 +66,8 @@ set (FAN_SRC_FILES src/TachSensor.cpp src/PwmSensor.cpp src/Utils.cpp
+@@ -66,6 +67,8 @@ set (FAN_SRC_FILES src/TachSensor.cpp src/PwmSensor.cpp src/Utils.cpp
  set (HWMON_TEMP_SRC_FILES src/Utils.cpp src/HwmonTempSensor.cpp
       src/Thresholds.cpp)
  
@@ -36,16 +36,16 @@ index 60a608b..c56d9f1 100644
  set (INTRUSION_SRC_FILES src/Utils.cpp src/ChassisIntrusionSensor.cpp)
  
  set (IPMB_SRC_FILES src/Utils.cpp src/Thresholds.cpp)
-@@ -75,7 +78,7 @@ set (PSU_SRC_FILES src/Utils.cpp src/PSUSensor.cpp src/Thresholds.cpp
-      src/PwmSensor.cpp src/PSUEvent.cpp)
+@@ -78,7 +81,7 @@ set (PSU_SRC_FILES src/Utils.cpp src/PSUSensor.cpp src/Thresholds.cpp
+ set (NVME_SRC_FILES src/Utils.cpp src/NVMeSensorMain.cpp src/NVMeSensor.cpp src/Thresholds.cpp)
  
  set (EXTERNAL_PACKAGES Boost sdbusplus-project nlohmann-json)
 -set (SENSOR_LINK_LIBS -lsystemd stdc++fs sdbusplus)
 +set (SENSOR_LINK_LIBS -lsystemd -lobmci2c -lobmcmisc stdc++fs sdbusplus)
  
  if (NOT YOCTO)
-     option (ENABLE_TEST "Enable Google Test" OFF)
-@@ -171,6 +174,10 @@ add_executable (hwmontempsensor src/HwmonTempMain.cpp ${HWMON_TEMP_SRC_FILES})
+     set (DISABLE_NVME ON) # todo allow this to build out of tree
+@@ -176,6 +179,10 @@ add_executable (hwmontempsensor src/HwmonTempMain.cpp ${HWMON_TEMP_SRC_FILES})
  add_dependencies (hwmontempsensor sdbusplus-project)
  target_link_libraries (hwmontempsensor ${SENSOR_LINK_LIBS})
  
@@ -56,7 +56,7 @@ index 60a608b..c56d9f1 100644
  add_executable (intrusionsensor src/IntrusionSensorMain.cpp
                  ${INTRUSION_SRC_FILES})
  add_dependencies (intrusionsensor sdbusplus-project)
-@@ -196,6 +203,7 @@ if (NOT YOCTO)
+@@ -208,6 +215,7 @@ if (NOT YOCTO)
      add_dependencies (exitairtempsensor ${EXTERNAL_PACKAGES})
      add_dependencies (fansensor ${EXTERNAL_PACKAGES})
      add_dependencies (hwmontempsensor ${EXTERNAL_PACKAGES})
@@ -64,7 +64,7 @@ index 60a608b..c56d9f1 100644
      add_dependencies (intrusionsensor ${EXTERNAL_PACKAGES})
      add_dependencies (ipmbsensor ${EXTERNAL_PACKAGES})
      add_dependencies (mcutempsensor ${EXTERNAL_PACKAGES})
-@@ -243,6 +251,15 @@ if (NOT DISABLE_HWMON_TEMP)
+@@ -255,6 +263,15 @@ if (NOT DISABLE_HWMON_TEMP)
      )
  endif ()
  
@@ -82,10 +82,10 @@ index 60a608b..c56d9f1 100644
      install (
 diff --git a/include/VRSensor.hpp b/include/VRSensor.hpp
 new file mode 100644
-index 0000000..90af606
+index 0000000..6272c11
 --- /dev/null
 +++ b/include/VRSensor.hpp
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,41 @@
 +#pragma once
 +
 +#include <Thresholds.hpp>
@@ -120,6 +120,8 @@ index 0000000..90af606
 +    int pmbuspage;
 +    uint8_t pmbusmode;
 +    float senValue;
++    thresholds::ThresholdTimer thresholdTimer;
++
 +    void setupRead(void);
 +    bool visitVRReg(void);
 +    void handleResponse(void);
@@ -145,10 +147,10 @@ index 0000000..2319aaf
 +WantedBy=multi-user.target
 diff --git a/src/VRSensor.cpp b/src/VRSensor.cpp
 new file mode 100644
-index 0000000..71c0345
+index 0000000..d726e4d
 --- /dev/null
 +++ b/src/VRSensor.cpp
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,244 @@
 +/*
 +// Copyright (c) 2019 Wiwynn Corporation
 +//
@@ -200,7 +202,7 @@ index 0000000..71c0345
 +           MinValue),
 +    path(path), objServer(objectServer), waitTimer(io), errCount(0), senValue(0), 
 +    busId(busId), slaveAddr(slaveAddr), pmbuscmd(pmbuscmd), 
-+    pmbuspage(pmbuspage), pmbusmode(pmbusmode)
++    pmbuspage(pmbuspage), pmbusmode(pmbusmode), thresholdTimer(io, this)
 +{
 +    std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
 +
@@ -221,6 +223,7 @@ index 0000000..71c0345
 +        objectServer.add_interface( dbusPath, "org.openbmc.Associations");
 +        
 +    setInitialProperties(conn);
++    setupPowerMatch(conn);
 +    setupRead();
 +}
 +
@@ -236,6 +239,24 @@ index 0000000..71c0345
 +
 +void VRSensor::setupRead(void)
 +{
++    // VR sensor belongs to power-on type sensor
++    if (!isPowerOn())
++    {
++        updateValueInvalid(true);
++        // updateValue(0);
++
++        waitTimer.expires_from_now(boost::posix_time::milliseconds(sensorPollMs));
++        waitTimer.async_wait([&](const boost::system::error_code & ec) {
++        if (ec == boost::asio::error::operation_aborted)
++        {
++            return; // we're being canceled
++        }
++            setupRead();
++        });
++
++        return;
++    }
++
 +    bool res = visitVRReg();
 +    if( res != true)
 +    {
@@ -251,6 +272,13 @@ index 0000000..71c0345
 +
 +bool VRSensor::visitVRReg(void)
 +{
++    if (!isPowerOn())
++    {
++        updateValueInvalid(true);
++        // updateValue(0);
++        return false;
++    }
++
 +    int fd = -1;
 +    int res = -1;
 +    std::vector<char> filename;
@@ -339,7 +367,8 @@ index 0000000..71c0345
 +
 +    if (errCount >= warnAfterErrorCount)
 +    {
-+        updateValue(0);
++        updateValueInvalid(true);
++        // updateValue(0);
 +    }
 +    else
 +    {
@@ -347,6 +376,8 @@ index 0000000..71c0345
 +        {
 +            updateValue(senValue);
 +        }
++
++        updateValueInvalid(false);
 +    }
 +
 +    waitTimer.expires_from_now(boost::posix_time::milliseconds(sensorPollMs));
@@ -361,15 +392,15 @@ index 0000000..71c0345
 +
 +void VRSensor::checkThresholds(void)
 +{
-+    thresholds::checkThresholds(this);
++    // thresholds::checkThresholds(this);
++    thresholds::checkThresholdsPowerDelay(this, thresholdTimer);
 +}
-\ No newline at end of file
 diff --git a/src/VRSensorMain.cpp b/src/VRSensorMain.cpp
 new file mode 100644
-index 0000000..0eac88d
+index 0000000..bad1b69
 --- /dev/null
 +++ b/src/VRSensorMain.cpp
-@@ -0,0 +1,296 @@
+@@ -0,0 +1,297 @@
 +/*
 +// Copyright (c) 2019 Wiwynn Corporation
 +//
@@ -400,8 +431,9 @@ index 0000000..0eac88d
 +static constexpr bool DEBUG = false;
 +
 +namespace fs = std::filesystem;
-+static constexpr std::array<const char*, 3> sensorTypes = {
++static constexpr std::array<const char*, 4> sensorTypes = {
 +    "xyz.openbmc_project.Configuration.PXE1610",
++    "xyz.openbmc_project.Configuration.PXE1110",
 +    "xyz.openbmc_project.Configuration.SLUSC47B",
 +    "xyz.openbmc_project.Configuration.IR38163"
 +    };

@@ -1,6 +1,6 @@
-From ce9aaab5fb2fe5d5f7ec2d213067dd1473de8f85 Mon Sep 17 00:00:00 2001
+From 74745f765ccda195335674a9a015ef9be63044ca Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Fri, 29 Nov 2019 14:55:34 +0800
+Date: Sun, 15 Mar 2020 22:16:46 +0800
 Subject: [PATCH] Add to support NIC temperature sensor
 
 ---
@@ -16,38 +16,38 @@ Subject: [PATCH] Add to support NIC temperature sensor
  create mode 100644 src/NICSensorMain.cpp
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b89b5b1..99938c9 100644
+index 8141c31..4e94102 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -44,6 +44,7 @@ option (DISABLE_HWMON_TEMP "Disable installing hwmon temp sensor" OFF)
+@@ -43,6 +43,7 @@ option (DISABLE_FAN "Disable installing fan sensor" OFF)
+ option (DISABLE_HWMON_TEMP "Disable installing hwmon temp sensor" OFF)
  option (DISABLE_VR "Disable installing VR sensor" OFF)
  option (DISABLE_EVENT "Disable installing EVENT sensor" OFF)
- option (DISABLE_NVME "Disable installing NVME sensor" OFF)
 +option (DISABLE_NIC "Disable installing NIC sensor" OFF)
  option (DISABLE_INTRUSION "Disable installing intrusion sensor" OFF)
  option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
  option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" OFF)
-@@ -75,6 +76,8 @@ set (EVENT_SRC_FILES src/Utils.cpp src/EventSensor.cpp)
+@@ -73,6 +74,8 @@ set (VR_SRC_FILES src/Utils.cpp src/VRSensor.cpp src/Thresholds.cpp)
  
- set (NVME_SRC_FILES src/Utils.cpp src/NVMESensor.cpp src/Thresholds.cpp)
+ set (EVENT_SRC_FILES src/Utils.cpp src/EventSensor.cpp)
  
 +set (NIC_SRC_FILES src/Utils.cpp src/NICSensor.cpp src/Thresholds.cpp)
 +
  set (INTRUSION_SRC_FILES src/Utils.cpp src/ChassisIntrusionSensor.cpp)
  
  set (IPMB_SRC_FILES src/Utils.cpp src/Thresholds.cpp)
-@@ -197,6 +200,10 @@ add_executable (nvmesensor src/NVMESensorMain.cpp ${NVME_SRC_FILES})
+@@ -219,6 +222,10 @@ add_executable (nvmesensor src/NVMESensorMain.cpp ${NVME_SRC_FILES})
  add_dependencies (nvmesensor sdbusplus-project)
- target_link_libraries (nvmesensor ${SENSOR_LINK_LIBS})
+ target_link_libraries (nvmesensor ${SENSOR_LINK_LIBS} -lboost_filesystem)
  
 +add_executable (nicsensor src/NICSensorMain.cpp ${NIC_SRC_FILES})
 +add_dependencies (nicsensor sdbusplus-project)
 +target_link_libraries (nicsensor ${SENSOR_LINK_LIBS})
 +
- add_executable (intrusionsensor src/IntrusionSensorMain.cpp
-                 ${INTRUSION_SRC_FILES})
- add_dependencies (intrusionsensor sdbusplus-project)
-@@ -225,6 +232,7 @@ if (NOT YOCTO)
+ if (NOT YOCTO)
+     add_dependencies (adcsensor ${EXTERNAL_PACKAGES})
+     add_dependencies (cpusensor ${EXTERNAL_PACKAGES})
+@@ -228,6 +235,7 @@ if (NOT YOCTO)
      add_dependencies (vrsensor ${EXTERNAL_PACKAGES})
      add_dependencies (eventsensor ${EXTERNAL_PACKAGES})
      add_dependencies (nvmesensor ${EXTERNAL_PACKAGES})
@@ -55,10 +55,11 @@ index b89b5b1..99938c9 100644
      add_dependencies (intrusionsensor ${EXTERNAL_PACKAGES})
      add_dependencies (ipmbsensor ${EXTERNAL_PACKAGES})
      add_dependencies (mcutempsensor ${EXTERNAL_PACKAGES})
-@@ -299,6 +307,15 @@ if (NOT DISABLE_NVME)
-     )
+@@ -330,3 +338,12 @@ if (NOT DISABLE_NVME)
+                  ${SERVICE_FILE_SRC_DIR}/xyz.openbmc_project.nvmesensor.service
+                  DESTINATION ${SERVICE_FILE_INSTALL_DIR})
  endif ()
- 
++
 +if (NOT DISABLE_NIC)
 +    install (TARGETS nicsensor DESTINATION bin)
 +    install (
@@ -67,10 +68,6 @@ index b89b5b1..99938c9 100644
 +            DESTINATION ${SERVICE_FILE_INSTALL_DIR}
 +    )
 +endif ()
-+
- if (NOT DISABLE_INTRUSION)
-     install (TARGETS intrusionsensor DESTINATION bin)
-     install (
 diff --git a/include/NICSensor.hpp b/include/NICSensor.hpp
 new file mode 100644
 index 0000000..3c6905e
@@ -643,5 +640,5 @@ index 0000000..72d27b9
 +    io.run();
 +}
 -- 
-2.22.0
+2.24.1
 

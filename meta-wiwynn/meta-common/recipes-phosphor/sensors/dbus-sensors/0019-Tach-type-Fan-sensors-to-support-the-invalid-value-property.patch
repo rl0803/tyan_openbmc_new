@@ -1,17 +1,17 @@
-From d00f9ad87cd8396fab484c358b41a0c5411530e6 Mon Sep 17 00:00:00 2001
+From a689fe1fb811123f9f4576673450b71d410ebfa8 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 23 Dec 2019 17:44:26 +0800
+Date: Sun, 15 Mar 2020 22:33:40 +0800
 Subject: [PATCH] Tach-type Fan sensors to support the invalid value property
 
 ---
- src/TachSensor.cpp | 44 +++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 41 insertions(+), 3 deletions(-)
+ src/TachSensor.cpp | 43 ++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 40 insertions(+), 3 deletions(-)
 
 diff --git a/src/TachSensor.cpp b/src/TachSensor.cpp
-index 91a08c1..73f4c7f 100644
+index cc9d37d..0dd90b4 100644
 --- a/src/TachSensor.cpp
 +++ b/src/TachSensor.cpp
-@@ -36,7 +36,7 @@
+@@ -37,7 +37,7 @@
  #include <utility>
  #include <vector>
  
@@ -20,14 +20,13 @@ index 91a08c1..73f4c7f 100644
  static constexpr size_t warnAfterErrorCount = 10;
  
  TachSensor::TachSensor(const std::string& path, const std::string& objectType,
-@@ -123,10 +123,45 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+@@ -124,10 +124,44 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
  {
      if (err == boost::system::errc::bad_file_descriptor)
      {
 +        updateValueInvalid(true);
          return; // we're being destroyed
      }
-+
      bool missing = false;
      size_t pollTime = pwmPollMs;
 +
@@ -66,7 +65,7 @@ index 91a08c1..73f4c7f 100644
      if (presence)
      {
          if (!presence->getValue())
-@@ -153,6 +188,7 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+@@ -154,6 +188,7 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
                      updateValue(nvalue);
                  }
                  errCount = 0;
@@ -74,7 +73,7 @@ index 91a08c1..73f4c7f 100644
              }
              catch (const std::invalid_argument&)
              {
-@@ -164,7 +200,8 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+@@ -165,7 +200,8 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
              if (!isPowerOn())
              {
                  errCount = 0;
@@ -84,7 +83,7 @@ index 91a08c1..73f4c7f 100644
              }
              else
              {
-@@ -180,7 +217,8 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+@@ -181,7 +217,8 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
                  std::cerr << "Failure to read sensor " << name << " at " << path
                            << " ec:" << err << "\n";
              }

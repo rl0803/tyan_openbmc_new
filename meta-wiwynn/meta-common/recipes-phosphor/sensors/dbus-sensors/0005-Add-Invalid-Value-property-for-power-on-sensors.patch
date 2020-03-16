@@ -1,25 +1,25 @@
-From b250889fc60e7954493c64c156015db8c5497cdf Mon Sep 17 00:00:00 2001
+From 7deccbcab104fd818afe368275e8f36a5155b04a Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 16 Dec 2019 15:13:01 +0800
+Date: Sun, 15 Mar 2020 16:15:54 +0800
 Subject: [PATCH] Add Invalid Value dbus sensor property for power-on sensors
 
 ---
- include/sensor.hpp | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+ include/sensor.hpp | 25 +++++++++++++++++++++++--
+ 1 file changed, 23 insertions(+), 2 deletions(-)
 
 diff --git a/include/sensor.hpp b/include/sensor.hpp
-index 263cbfb..755a656 100644
+index e298677..2169c2e 100644
 --- a/include/sensor.hpp
 +++ b/include/sensor.hpp
-@@ -36,6 +36,7 @@ struct Sensor
+@@ -37,6 +37,7 @@ struct Sensor
      std::shared_ptr<sdbusplus::asio::dbus_interface> thresholdInterfaceCritical;
      std::shared_ptr<sdbusplus::asio::dbus_interface> association;
      double value = std::numeric_limits<double>::quiet_NaN();
 +    bool invalidValue = false;
      bool overriddenState = false;
      bool internalSet = false;
-     double hysteresis;
-@@ -57,6 +58,14 @@ struct Sensor
+     double hysteresisTrigger;
+@@ -59,6 +60,14 @@ struct Sensor
          return 1;
      }
  
@@ -34,34 +34,38 @@ index 263cbfb..755a656 100644
      void
          setInitialProperties(std::shared_ptr<sdbusplus::asio::connection>& conn)
      {
-@@ -67,6 +76,12 @@ struct Sensor
+@@ -70,6 +79,10 @@ struct Sensor
              "Value", value, [&](const double& newValue, double& oldValue) {
                  return setSensorValue(newValue, oldValue);
              });
-+
-+         sensorInterface->register_property(
++        sensorInterface->register_property(
 +            "InvalidValue", invalidValue, [&](const bool& newState, bool& oldState) {
 +                return setSensorValueInvalid(newState, oldState);
 +            });
-+
          for (auto& threshold : thresholds)
          {
              std::shared_ptr<sdbusplus::asio::dbus_interface> iface;
-@@ -152,12 +167,24 @@ struct Sensor
-                 std::cerr << "error setting property to " << newValue << "\n";
-             }
-             internalSet = false;
-+
-+            /*
-             double diff = std::abs(value - newValue);
-             if (std::isnan(diff) || diff > hysteresis)
-             {
-                 value = newValue;
-             }
-+            */
-+            value = newValue;
-             checkThresholds();
+@@ -159,7 +172,7 @@ struct Sensor
+         {
+             return;
          }
+-
++#if 1
+         bool isChanged = false;
+ 
+         // Avoid floating-point equality comparison,
+@@ -188,7 +201,7 @@ struct Sensor
+         {
+             return;
+         }
+-
++#endif
+         // The value will be changed, keep track of it for next time
+         value = newValue;
+ 
+@@ -207,4 +220,12 @@ struct Sensor
+         // in all current implementations of sensors that have thresholds.
+         checkThresholds();
      }
 +
 +    void updateValueInvalid(const bool& newState)

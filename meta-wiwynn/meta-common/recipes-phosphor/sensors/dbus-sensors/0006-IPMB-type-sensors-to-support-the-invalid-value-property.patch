@@ -1,28 +1,30 @@
-From 7268cc59bc4c9ec0285a46dab80b0b20b078037c Mon Sep 17 00:00:00 2001
+From 9687b3a723802781cff67dc1c3c3073105549cf8 Mon Sep 17 00:00:00 2001
 From: Frederick Lee <Frederick_Lee@wiwynn.com>
-Date: Mon, 11 Nov 2019 14:41:10 +0800
-Subject: [PATCH 2/2] IPMB-type sensors to support the invalid value property
+Date: Sun, 15 Mar 2020 20:35:01 +0800
+Subject: [PATCH] IPMB-type sensors to support the invalid value property
 
 ---
- src/IpmbSensor.cpp | 4 ++++
- 1 file changed, 4 insertions(+)
+ src/IpmbSensor.cpp | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/src/IpmbSensor.cpp b/src/IpmbSensor.cpp
-index 946c060..1e10cbe 100644
+index 9f591ac..796d52a 100644
 --- a/src/IpmbSensor.cpp
 +++ b/src/IpmbSensor.cpp
-@@ -224,6 +224,7 @@ void IpmbSensor::read(void)
+@@ -248,7 +248,8 @@ void IpmbSensor::read(void)
          }
          if (!isPowerOn() && readState != PowerState::always)
          {
+-            updateValue(0);
 +            updateValueInvalid(true);
-             updateValue(0);
++            // updateValue(0);
              read();
              return;
-@@ -241,12 +242,14 @@ void IpmbSensor::read(void)
-                                   << "\n";
-                         firstError = false;
-                     }
+         }
+@@ -259,13 +260,15 @@ void IpmbSensor::read(void)
+                 if (ec || status)
+                 {
+                     processError();
 +                    updateValueInvalid(true);
                      updateValue(0);
                      read();
@@ -30,18 +32,20 @@ index 946c060..1e10cbe 100644
                  }
                  if (!isPowerOn() && readState != PowerState::always)
                  {
+-                    updateValue(0);
 +                    updateValueInvalid(true);
-                     updateValue(0);
++                    // updateValue(0);
                      read();
                      return;
-@@ -343,6 +346,7 @@ void IpmbSensor::read(void)
+                 }
+@@ -341,6 +344,7 @@ void IpmbSensor::read(void)
                  /* Adjust value as per scale and offset */
                  value = (value * scaleVal) + offsetVal;
                  updateValue(value);
 +                updateValueInvalid(false);
                  read();
-                 firstError = true; // success
+                 errorCount = 0; // success
              },
 -- 
-2.22.0
+2.24.1
 
