@@ -354,4 +354,6 @@
 
 &peci0 {
     status = "okay";
+	msg-timing = <5>;
+	addr-timing = <5>;
 };
