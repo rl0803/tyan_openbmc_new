@@ -7,6 +7,7 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0005-Add-a-flash-layout-dtsi-for-a-64MB-mtd-device.patch \
             file://0006-Change-default-fan-PWM-to-80.patch \
             file://0007-Modify-WDT2-timeout-from-30s-to-65s.patch \
+            file://0008-Export-all-DIMMs-during-initialization.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
