@@ -203,9 +203,9 @@
             "updateThermalsTime": 1000,
             "pids": [
                 {
-                    "name": "fan0-5",
+                    "name": "fan0-1",
                     "type": "fan",
-                    "inputs": ["SYS_FAN0", "SYS_FAN1", "SYS_FAN2", "SYS_FAN3", "SYS_FAN4", "SYS_FAN5"],
+                    "inputs": ["SYS_FAN0", "SYS_FAN1"],
                     "setpoint": 0.0,
                     "pid": {
                         "samplePeriod": 1,
@@ -232,155 +232,35 @@
                         "samplePeriod": 1,
                         "isCeiling": false,
                         "reading": {
-                            "0": 0.0,
+                            "0": 1.0,
                             "1": 20.0,
-                            "2": 21.0,
-                            "3": 22.0,
-                            "4": 23.0,
-                            "5": 24.0,
-                            "6": 25.0,
-                            "7": 26.0,
-                            "8": 27.0,
-                            "9": 28.0,
-                            "10": 29.0,
-                            "11": 30.0,
-                            "12": 31.0,
-                            "13": 32.0,
-                            "14": 33.0,
-                            "15": 34.0,
-                            "16": 35.0,
-                            "17": 36.0,
-                            "18": 37.0,
-                            "19": 38.0,
-                            "20": 39.0,
-                            "21": 40.0
+                            "2": 22.0,
+                            "3": 24.0,
+                            "4": 26.0,
+                            "5": 28.0,
+                            "6": 30.0,
+                            "7": 32.0,
+                            "8": 34.0,
+                            "9": 36.0,
+                            "10": 38.0,
+                            "11": 40.0
                         },
                         "output": {
-                            "0": 29.0,
-                            "1": 29.0,
-                            "2": 30.0,
-                            "3": 32.0,
-                            "4": 33.0,
-                            "5": 36.0,
-                            "6": 37.0,
-                            "7": 38.0,
-                            "8": 39.0,
-                            "9": 40.0,
-                            "10": 41.0,
-                            "11": 42.0,
-                            "12": 43.0,
-                            "13": 44.0,
-                            "14": 46.0,
-                            "15": 47.0,
-                            "16": 49.0,
-                            "17": 55.0,
-                            "18": 60.0,
-                            "19": 65.0,
-                            "20": 70.0,
-                            "21": 80.0
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 15.0,
+                            "3": 15.0,
+                            "4": 16.0,
+                            "5": 17.0,
+                            "6": 18.0,
+                            "7": 19.0,
+                            "8": 19.0,
+                            "9": 20.0,
+                            "10": 22.0,
+                            "11": 24.0
                         },
                         "positiveHysteresis": 0,
-                        "negativeHysteresis": 0
-                    }
-                },
-                {
-                    "name": "Linear_Mezz_NIC_Temp",
-                    "type": "linear",
-                    "inputs": ["Mezz_NIC_Temp"],
-                    "setpoint": 0.0,
-                    "pid": {
-                        "samplePeriod": 1,
-                        "isCeiling": false,
-                        "reading": {
-                            "0": 0.0,
-                            "1": 85.0,
-                            "2": 86.0,
-                            "3": 87.0,
-                            "4": 88.0,
-                            "5": 89.0,
-                            "6": 90.0,
-                            "7": 91.0,
-                            "8": 92.0,
-                            "9": 93.0,
-                            "10": 101.0,
-                            "11": 102.0
-                        },
-                        "output": {
-                            "0": 29.0,
-                            "1": 29.0,
-                            "2": 31.0,
-                            "3": 33.0,
-                            "4": 35.0,
-                            "5": 40.0,
-                            "6": 46.0,
-                            "7": 53.0,
-                            "8": 61.0,
-                            "9": 68.0,
-                            "10": 68.0,
-                            "11": 100.0
-                        },
-                        "positiveHysteresis": 0,
-                        "negativeHysteresis": 0
-                    }
-                },
-                {
-                    "name": "Linear_NVMe_Temp",
-                    "type": "linear",
-                    "inputs": ["NVMe_0_Temp","NVMe_1_Temp","NVMe_2_Temp","NVMe_3_Temp"],
-                    "setpoint": 0.0,
-                    "pid": {
-                        "samplePeriod": 1,
-                        "isCeiling": false,
-                        "reading": {
-                            "0": 0.0,
-                            "1": 61.0,
-                            "2": 63.0,
-                            "3": 65.0,
-                            "4": 67.0,
-                            "5": 69.0
-                        },
-                        "output": {
-                            "0": 29.0,
-                            "1": 29.0,
-                            "2": 50.0,
-                            "3": 70.0,
-                            "4": 87.0,
-                            "5": 100.0
-                        },
-                        "positiveHysteresis": 0,
-                        "negativeHysteresis": 0
-                    }
-                },
-                {
-                    "name": "Linear_DIMM_Temp",
-                    "type": "linear",
-                    "inputs": [
-                        "DIMM_A_Temp","DIMM_B_Temp","DIMM_C_Temp","DIMM_D_Temp",
-                        "DIMM_E_Temp","DIMM_F_Temp","DIMM_G_Temp","DIMM_H_Temp",
-                        "DIMM_J_Temp","DIMM_K_Temp","DIMM_L_Temp","DIMM_M_Temp"
-                    ],
-                    "setpoint": 0.0,
-                    "pid": {
-                        "samplePeriod": 1,
-                        "isCeiling": false,
-                        "reading": {
-                            "0": 0.0,
-                            "1": 67.0,
-                            "2": 69.0,
-                            "3": 71.0,
-                            "4": 73.0,
-                            "5": 75.0
-                        },
-                        "output": {
-                            "0": 29.0,
-                            "1": 29.0,
-                            "2": 40.0,
-                            "3": 50.0,
-                            "4": 60.0,
-                            "5": 80.0
-                        },
-                        "positiveHysteresis": 0,
-                        "negativeHysteresis": 0
+                        "negativeHysteresis": 1
                     }
                 },
                 {
@@ -392,40 +272,36 @@
                         "samplePeriod": 1,
                         "isCeiling": false,
                         "reading": {
-                            "0": -92.0,
-                            "1": -30.0,
-                            "2": -28.0,
-                            "3": -26.0,
-                            "4": -24.0,
-                            "5": -22.0,
-                            "6": -20.0,
-                            "7": -3.0,
-                            "8": -2.0
+                            "0": -96.0,
+                            "1": -26.0,
+                            "2": -24.0,
+                            "3": -22.0,
+                            "4": -20.0,
+                            "5": -3.0,
+                            "6": -2.0
                         },
                         "output": {
-                            "0": 29.0,
-                            "1": 29.0,
-                            "2": 31.0,
-                            "3": 34.0,
-                            "4": 38.0,
-                            "5": 43.0,
-                            "6": 49.0,
-                            "7": 49.0,
-                            "8": 100.0
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 23.0,
+                            "5": 23.0,
+                            "6": 100.0
                         },
                         "positiveHysteresis": 0,
-                        "negativeHysteresis": 0
+                        "negativeHysteresis": 2
                     }
                 },
                 {
                     "name": "Pid_CPU0_Temp",
                     "type": "temp",
                     "inputs": ["CPU0_Temp"],
-                    "setpoint": -16,
+                    "setpoint": -17,
                     "pid": {
                         "samplePeriod": 1,
-                        "proportionalCoeff": 4.5,
-                        "integralCoeff": 0.12,
+                        "proportionalCoeff": 7.0,
+                        "integralCoeff": 0.03,
                         "derivativeCoeff": 0.0,
                         "feedFwdOffsetCoeff": 0.0,
                         "feedFwdGainCoeff": 0.0,
@@ -437,6 +313,77 @@
                         "slewPos": 0.0,
                         "positiveHysteresis": 0,
                         "negativeHysteresis": 2
+                    }
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "failsafePercent": 100.0,
+            "minThermalOutput": 0.0,
+            "cycleTimeBase": 100,
+            "checkFanFailuresTime": 10000,
+            "updateThermalsTime": 1000,
+            "pids": [
+                {
+                    "name": "fan3-4",
+                    "type": "fan",
+                    "inputs": ["SYS_FAN3", "SYS_FAN4"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 0.0,
+                        "integralCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 1.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 0.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 0
+                    }
+                },
+                {
+                    "name": "Linear_FP_Inlet",
+                    "type": "linear",
+                    "inputs": ["FP_Inlet"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 20.0,
+                            "2": 22.0,
+                            "3": 24.0,
+                            "4": 26.0,
+                            "5": 28.0,
+                            "6": 30.0,
+                            "7": 32.0,
+                            "8": 34.0,
+                            "9": 36.0,
+                            "10": 38.0,
+                            "11": 40.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 15.0,
+                            "3": 15.0,
+                            "4": 16.0,
+                            "5": 17.0,
+                            "6": 18.0,
+                            "7": 19.0,
+                            "8": 19.0,
+                            "9": 20.0,
+                            "10": 22.0,
+                            "11": 24.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 1
                     }
                 },
                 {
@@ -448,40 +395,36 @@
                         "samplePeriod": 1,
                         "isCeiling": false,
                         "reading": {
-                            "0": -92.0,
-                            "1": -30.0,
-                            "2": -28.0,
-                            "3": -26.0,
-                            "4": -24.0,
-                            "5": -22.0,
-                            "6": -20.0,
-                            "7": -3.0,
-                            "8": -2.0
+                            "0": -96.0,
+                            "1": -26.0,
+                            "2": -24.0,
+                            "3": -22.0,
+                            "4": -20.0,
+                            "5": -3.0,
+                            "6": -2.0
                         },
                         "output": {
-                            "0": 29.0,
-                            "1": 29.0,
-                            "2": 31.0,
-                            "3": 34.0,
-                            "4": 38.0,
-                            "5": 43.0,
-                            "6": 49.0,
-                            "7": 49.0,
-                            "8": 100.0
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 23.0,
+                            "5": 23.0,
+                            "6": 100.0
                         },
                         "positiveHysteresis": 0,
-                        "negativeHysteresis": 0
+                        "negativeHysteresis": 2
                     }
                 },
                 {
                     "name": "Pid_CPU1_Temp",
                     "type": "temp",
                     "inputs": ["CPU1_Temp"],
-                    "setpoint": -16,
+                    "setpoint": -17,
                     "pid": {
                         "samplePeriod": 1,
-                        "proportionalCoeff": 4.5,
-                        "integralCoeff": 0.12,
+                        "proportionalCoeff": 7.0,
+                        "integralCoeff": 0.03,
                         "derivativeCoeff": 0.0,
                         "feedFwdOffsetCoeff": 0.0,
                         "feedFwdGainCoeff": 0.0,
@@ -493,6 +436,77 @@
                         "slewPos": 0.0,
                         "positiveHysteresis": 0,
                         "negativeHysteresis": 2
+                    }
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "failsafePercent": 100.0,
+            "minThermalOutput": 0.0,
+            "cycleTimeBase": 100,
+            "checkFanFailuresTime": 10000,
+            "updateThermalsTime": 1000,
+            "pids": [
+                {
+                    "name": "fan2-5",
+                    "type": "fan",
+                    "inputs": ["SYS_FAN2", "SYS_FAN5"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 0.0,
+                        "integralCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 1.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 0.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 0
+                    }
+                },
+                {
+                    "name": "Linear_FP_Inlet",
+                    "type": "linear",
+                    "inputs": ["FP_Inlet"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 20.0,
+                            "2": 22.0,
+                            "3": 24.0,
+                            "4": 26.0,
+                            "5": 28.0,
+                            "6": 30.0,
+                            "7": 32.0,
+                            "8": 34.0,
+                            "9": 36.0,
+                            "10": 38.0,
+                            "11": 40.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 15.0,
+                            "3": 15.0,
+                            "4": 16.0,
+                            "5": 17.0,
+                            "6": 18.0,
+                            "7": 19.0,
+                            "8": 19.0,
+                            "9": 20.0,
+                            "10": 22.0,
+                            "11": 24.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 1
                     }
                 }
             ]
