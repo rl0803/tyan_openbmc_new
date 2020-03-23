@@ -3,6 +3,7 @@ Description=Phosphor Multi GPIO monitor
 After=xyz.openbmc_project.EntityManager.service
 Before=xyz.openbmc_project.adcsensor.service
 Before=xyz.openbmc_project.cpusensor.service
+Before=xyz.openbmc_project.eventsensor.service
 Before=xyz.openbmc_project.fpgasensor.service
 Before=xyz.openbmc_project.hwmontempsensor.service
 Before=xyz.openbmc_project.fansensor.service

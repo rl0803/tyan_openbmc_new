@@ -16,6 +16,8 @@ SRC_URI += "file://toggle_identify_led.sh \
             file://end-of-post-event.service \
             file://SetPowerGoodPropertyOff.service \
             file://SetPowerGoodPropertyOn.service \
+            file://caterr-event.sh \
+            file://caterr-event.service \
            "
 
 do_install() {
@@ -23,9 +25,11 @@ do_install() {
         install -d ${D}${sbindir}
         install -m 0755 ${WORKDIR}/toggle_identify_led.sh ${D}${bindir}/toggle_identify_led.sh
         install -m 0755 ${WORKDIR}/end-of-post-event.sh ${D}${sbindir}/end-of-post-event.sh
+        install -m 0755 ${WORKDIR}/caterr-event.sh ${D}${sbindir}/caterr-event.sh
 }
 
 SYSTEMD_SERVICE_${PN} += "id-button-pressed.service"
 SYSTEMD_SERVICE_${PN} += "end-of-post-event.service"
 SYSTEMD_SERVICE_${PN} += "SetPowerGoodPropertyOff.service"
 SYSTEMD_SERVICE_${PN} += "SetPowerGoodPropertyOn.service"
+SYSTEMD_SERVICE_${PN} += "caterr-event.service"

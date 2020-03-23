@@ -40,5 +40,18 @@
             ]
         },
         "Continue": true
+    },
+    {
+        "Name": "CatErr",
+        "ChipId": "0",
+        "GpioNum": 41,
+        "EventMon": "FALLING",
+        "Target":
+        {
+            "FALLING": [
+                "caterr-event.service"
+            ]
+        },
+        "Continue": true
     }
 ]

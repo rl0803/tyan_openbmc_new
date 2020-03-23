@@ -70,5 +70,29 @@
           "sensorNumber" : 236,
           "sensorType" : "0xC",
           "sensorName" : "CPU1 DIMM_M STS"
+     },
+     {
+          "ownerId" : "0x21",
+          "sensorNumber" : 208,
+          "sensorType" : "0x7",
+          "sensorName" : "CPU0_State"
+     },
+     {
+          "ownerId" : "0x21",
+          "sensorNumber" : 209,
+          "sensorType" : "0x7",
+          "sensorName" : "CPU1_Stat1"
+     },
+     {
+          "ownerId" : "0x1",
+          "sensorNumber" : 238,
+          "sensorType" : "0x13",
+          "sensorName" : "Critical IRQ"
+     },
+     {
+          "ownerId" : "0x21",
+          "sensorNumber" : 245,
+          "sensorType" : "0xC",
+          "sensorName" : "MRC Error"
      }
 ]
