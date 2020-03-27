@@ -332,7 +332,9 @@
                     "DIMM_C1" : "DIMM_C_Temp",
                     "DIMM_D1" : "DIMM_D_Temp",
                     "DIMM_E1" : "DIMM_E_Temp",
-                    "DIMM_F1" : "DIMM_F_Temp"
+                    "DIMM_F1" : "DIMM_F_Temp",
+                    "Tjmax" : "CPU0_DTSmax",
+                    "Margin" : "CPU0_Margin"
                 }
             ],
             "Thresholds": [
@@ -408,7 +410,9 @@
                     "DIMM_C1" : "DIMM_J_Temp",
                     "DIMM_D1" : "DIMM_K_Temp",
                     "DIMM_E1" : "DIMM_L_Temp",
-                    "DIMM_F1" : "DIMM_M_Temp"
+                    "DIMM_F1" : "DIMM_M_Temp",
+                    "Tjmax" : "CPU1_DTSmax",
+                    "Margin" : "CPU1_Margin"
                 }
             ],
             "Thresholds": [

@@ -14,6 +14,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0022-Set-non-blocking-sync-read-to-PECI-type-sensors.patch \
             file://0023-Set-the-sensor-value-of-absent-DIMM-as-invalid.patch \
             file://0024-Add-to-support-CATERR-event-handler.patch \
+            file://0025-Remove-Tjmax-from-hiddenProps-for-sensor-creation.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
