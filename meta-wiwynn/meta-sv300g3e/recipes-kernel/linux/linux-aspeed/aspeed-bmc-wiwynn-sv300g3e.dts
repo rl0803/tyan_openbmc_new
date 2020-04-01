@@ -230,6 +230,12 @@
         compatible = "ti,lm75";
         reg = <0x4d>;
     };
+
+	/* Fan Power */
+    ina219@40 {
+        compatible = "ti,ina219";
+        reg = <0x40>;
+    };
 };
 
 &i2c3 {

@@ -16,12 +16,14 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0024-Add-to-support-CATERR-event-handler.patch \
             file://0025-Remove-Tjmax-from-hiddenProps-for-sensor-creation.patch \
             file://0026-Set-the-tach-sensor-value-to-0-when-failing-to-read.patch \
+            file://0027-Add-to-support-Fan-power-sensor.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
                           xyz.openbmc_project.eventsensor.service \
                           xyz.openbmc_project.nvmesensor.service \
                           xyz.openbmc_project.nicsensor.service \
+                          xyz.openbmc_project.fanextsensor.service \
                          "
 
 DEPENDS += "obmc-libi2c \

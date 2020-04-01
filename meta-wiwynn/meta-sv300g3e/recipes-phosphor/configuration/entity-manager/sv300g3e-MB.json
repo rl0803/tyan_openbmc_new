@@ -602,6 +602,33 @@
             "Type": "AspeedFan"
         },
         {
+            "Name": "FAN Voltage",
+            "Bus": 2,
+            "Address": "0x40",
+            "SensorType": "volt",
+            "MaxValue": 18,
+            "MinValue": 0,
+            "Type": "INA219"
+        },
+        {
+            "Name": "FAN Current",
+            "Bus": 2,
+            "Address": "0x40",
+            "SensorType" : "curr",
+            "MaxValue": 1,
+            "MinValue": 0,
+            "Type": "INA219"
+        },
+        {
+            "Name": "FAN Power",
+            "Bus": 2,
+            "Address": "0x40",
+            "SensorType" : "power",
+            "MaxValue": 15,
+            "MinValue": 0,
+            "Type": "INA219"
+        },
+        {
             "Name":"CPU0 VccIN VOUT",
             "Bus": 5,
             "Address": "0x78",
