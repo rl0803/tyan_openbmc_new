@@ -602,7 +602,7 @@
             "Type": "AspeedFan"
         },
         {
-            "Name": "FAN Voltage",
+            "Name": "Fan Voltage",
             "Bus": 2,
             "Address": "0x40",
             "SensorType": "volt",
@@ -611,20 +611,20 @@
             "Type": "INA219"
         },
         {
-            "Name": "FAN Current",
+            "Name": "Fan Current",
             "Bus": 2,
             "Address": "0x40",
             "SensorType" : "curr",
-            "MaxValue": 1,
+            "MaxValue": 4,
             "MinValue": 0,
             "Type": "INA219"
         },
         {
-            "Name": "FAN Power",
+            "Name": "Fan Power",
             "Bus": 2,
             "Address": "0x40",
             "SensorType" : "power",
-            "MaxValue": 15,
+            "MaxValue": 50,
             "MinValue": 0,
             "Type": "INA219"
         },
