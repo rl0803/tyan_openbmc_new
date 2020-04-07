@@ -22,6 +22,7 @@
 static constexpr ipmi_netfn_t netFnSv300g3eOEM1 = 0x2E;
 static constexpr ipmi_netfn_t netFnSv300g3eOEM2 = 0x30;
 static constexpr ipmi_netfn_t netFnSv300g3eOEM3 = 0x3E;
+static constexpr ipmi_netfn_t netFnSv300g3eOEM4 = 0x3C;
 
 static const size_t maxPatternLen = 256;
 static const uint8_t maxLbaThresholdNum = 3;
@@ -42,10 +43,27 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_GET_LBA_RELATIVE_CNT = 0xB7,
 };
 
+enum ipmi_sv300g3e_oem4_cmds : uint8_t
+{
+    CMD_GET_VR_VERSION = 0x51,
+};
+
 enum
 {
     FSC_MODE_MANUAL = 0x00,
     FSC_MODE_AUTO = 0x01,
+};
+
+enum vr_type : uint8_t
+{
+    CPU0_VCCIN = 0x00,
+    CPU1_VCCIN,
+    CPU0_DIMM0,
+    CPU0_DIMM1,
+    CPU1_DIMM0,
+    CPU1_DIMM1,
+    CPU0_VCCIO,
+    CPU1_VCCIO,
 };
 
 typedef struct
@@ -124,3 +142,13 @@ typedef struct
     uint32_t relativeCnt;
 }__attribute__((packed)) GetLbaRelativeCntRes;
 
+typedef struct
+{
+    uint8_t vrType;
+}__attribute__((packed)) GetVrVersionCmdReq;
+
+typedef struct
+{
+    uint16_t verData0;
+    uint16_t verData1;
+}__attribute__((packed)) GetVrVersionCmdRes;

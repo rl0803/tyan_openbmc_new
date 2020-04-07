@@ -37,6 +37,7 @@
 #include <vector>
 #include "oemcommands.hpp"
 #include "Utils.hpp"
+#include "openbmc/libobmci2c.h"
 
 const static constexpr char* solPatternService = "xyz.openbmc_project.SolPatternSensor";
 const static constexpr char* solPatternInterface = "xyz.openbmc_project.Sensor.SOLPattern";
@@ -632,6 +633,158 @@ ipmi_ret_t ipmiGetLbaRelativeCnt(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/*
+    Get VR FW version func
+    NetFn: 0x3C / CMD: 0x51
+*/
+static const uint8_t vrI2cBusNum = 5;
+static const uint8_t vrCmdSwitchPage = 0x0;
+static const uint8_t vrGetUserCodePage = 0x2f;
+static const uint8_t vrCmdGetUserCode0 = 0x0c;
+static const uint8_t vrCmdGetUserCode1 = 0x0d;
+static const uint8_t vrFWVersionLength = 4;
+
+ipmi_ret_t ipmiGetVrVersion(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                            ipmi_request_t request, ipmi_response_t response,
+                            ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    GetVrVersionCmdReq* reqData = reinterpret_cast<GetVrVersionCmdReq*>(request);
+    GetVrVersionCmdRes* resData = reinterpret_cast<GetVrVersionCmdRes*>(response);
+
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    if(reqDataLen != 1)
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    int fd = -1;
+    int res = -1;
+    uint8_t slaveaddr;
+    std::vector<char> filename;
+    filename.assign(32, 0);
+
+    switch(reqData->vrType)
+    {
+        case CPU0_VCCIN:
+            slaveaddr = 0x78;
+            break;
+        case CPU1_VCCIN:
+            slaveaddr = 0x58;
+            break;
+        case CPU0_DIMM0:
+            slaveaddr = 0x7a;
+            break;
+        case CPU0_DIMM1:
+            slaveaddr = 0x6a;
+            break;
+        case CPU1_DIMM0:
+            slaveaddr = 0x5a;
+            break;
+        case CPU1_DIMM1:
+            slaveaddr = 0x4a;
+            break;
+        case CPU0_VCCIO:
+            slaveaddr = 0x3a;
+            break;
+        case CPU1_VCCIO:
+            slaveaddr = 0x2a;
+            break;
+        default:
+            sd_journal_print(LOG_ERR,
+                            "IPMI Get VR Version invalid field request, "
+                            "received = 0x%x, required = 0x00 - 0x07\n",
+                            reqData->vrType);
+            return IPMI_CC_PARM_OUT_OF_RANGE;
+    }
+
+    fd = open_i2c_dev(vrI2cBusNum, filename.data(), filename.size(), 0);
+    if (fd < 0)
+    {
+        sd_journal_print(LOG_CRIT, "Fail to open I2C device:[%d]\n", __LINE__);
+        return IPMI_CC_BUSY;
+    }
+
+    std::vector<uint8_t> cmdData;
+    std::vector<uint8_t> userCode0;
+    std::vector<uint8_t> userCode1;
+
+    // Select page to get User Code 0
+    cmdData.assign(2, 0);
+    cmdData.at(0) = vrCmdSwitchPage;
+    cmdData.at(1) = vrGetUserCodePage;
+
+    res = i2c_master_write(fd, slaveaddr, cmdData.size(), cmdData.data());
+
+    if (res < 0)
+    {
+        sd_journal_print(LOG_CRIT, "i2c_master_write failed:[%d]\n", __LINE__);
+        close_i2c_dev(fd);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    // Get VR User Code 0
+    cmdData.assign(1, vrCmdGetUserCode0);
+    userCode0.assign(2, 0x0);
+
+    res = i2c_master_write_read(fd, slaveaddr, cmdData.size(), cmdData.data(),
+                                userCode0.size(), userCode0.data());
+    if (res < 0)
+    {
+        sd_journal_print(LOG_CRIT, "i2c_master_write_read failed:[%d]\n", __LINE__);
+        close_i2c_dev(fd);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    // Select page to get User Code 1
+    cmdData.assign(2, 0);
+    cmdData.at(0) = vrCmdSwitchPage;
+    cmdData.at(1) = vrGetUserCodePage;
+
+    res = i2c_master_write(fd, slaveaddr, cmdData.size(), cmdData.data());
+
+    if (res < 0)
+    {
+        sd_journal_print(LOG_CRIT, "i2c_master_write failed:[%d]\n", __LINE__);
+        close_i2c_dev(fd);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    //  Get VR User Code 1
+    cmdData.assign(1, vrCmdGetUserCode1);
+    userCode1.assign(2, 0x0);
+
+    res = i2c_master_write_read(fd, slaveaddr, cmdData.size(), cmdData.data(),
+                                userCode1.size(), userCode1.data());
+    if (res < 0)
+    {
+        sd_journal_print(LOG_CRIT, "i2c_master_write_read failed:[%d]\n", __LINE__);
+        close_i2c_dev(fd);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    memcpy(&(resData->verData0), userCode0.data(), userCode0.size());
+    memcpy(&(resData->verData1), userCode1.data(), userCode1.size());
+
+    int32_t resDataLen = (int32_t)(userCode0.size() + userCode1.size());
+
+    if (resDataLen != vrFWVersionLength)
+    {
+        sd_journal_print(LOG_CRIT, "Invalid VR version length\n");
+        close_i2c_dev(fd);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    *data_len = resDataLen;
+
+    close_i2c_dev(fd);
+
+    return IPMI_CC_OK;
+}
+
 static void register_oem_functions(void)
 {
     // <Set Fan PWM>
@@ -665,4 +818,8 @@ static void register_oem_functions(void)
     // <Get Relative Correctable ECC Counter Value>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_LBA_RELATIVE_CNT,
                            NULL, ipmiGetLbaRelativeCnt, PRIVILEGE_USER);
+
+    // <Get VR Version>
+    ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,
+                           NULL, ipmiGetVrVersion, PRIVILEGE_USER);
 }
