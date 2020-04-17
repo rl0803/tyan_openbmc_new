@@ -87,6 +87,7 @@
 			 linux,code = <ASPEED_GPIO(A, 2)>;
 		};
 */
+/*
 		prochot0 {
 			label = "prochot0";
 			gpios = <&gpio ASPEED_GPIO(C, 6) GPIO_ACTIVE_LOW>;
@@ -97,6 +98,7 @@
 			gpios = <&gpio ASPEED_GPIO(C, 7) GPIO_ACTIVE_LOW>;
 			linux,code = <ASPEED_GPIO(C, 7)>;
 		};
+*/
 		thermtrip0 {
 			label = "thermtrip0";
 			gpios = <&gpio ASPEED_GPIO(F, 2) GPIO_ACTIVE_LOW>;
