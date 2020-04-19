@@ -23,6 +23,7 @@
 #include <sdbusplus/asio/object_server.hpp>
 #include <boost/process.hpp>
 #include <nlohmann/json.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 static const std::string sensorPathPrefix = "/xyz/openbmc_project/sensors/";
 static const std::string solValueInterface = "xyz.openbmc_project.Sensor.Value";
@@ -49,7 +50,7 @@ class SolPatternSensor
 
     private:
         sdbusplus::asio::object_server& objServer;
-        boost::asio::deadline_timer waitTimer;
+        boost::asio::steady_timer waitTimer;
         std::shared_ptr<sdbusplus::asio::dbus_interface> sensorInterface;
         std::shared_ptr<sdbusplus::asio::dbus_interface> patternInterface;
         std::string patternName;

@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         createPatternSensors(io, objectServer, sensors, systemBus);
     });
 
-    boost::asio::deadline_timer filterTimer(io);
+    // boost::asio::steady_timer filterTimer(io);
 
     io.run();
 

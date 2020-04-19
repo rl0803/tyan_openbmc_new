@@ -18,7 +18,6 @@
 #include <PatternMatch.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <iostream>
 #include <fstream>
 #include <limits>
@@ -28,7 +27,7 @@
 #include <systemd/sd-journal.h>
 
 static const std::string solLogFile = "/var/log/obmc-console.log";
-static constexpr unsigned int sensorPollMs = 5000;
+static constexpr unsigned int sensorPollSec = 5;
 static constexpr size_t warnAfterErrorCount = 10;
 
 SolPatternSensor::SolPatternSensor(
@@ -197,7 +196,7 @@ void SolPatternSensor::handleResponse()
         }
     }
 
-    waitTimer.expires_from_now(boost::posix_time::milliseconds(sensorPollMs));
+    waitTimer.expires_from_now(boost::asio::chrono::seconds(sensorPollSec));
     waitTimer.async_wait([&](const boost::system::error_code& ec) {
         if (ec == boost::asio::error::operation_aborted)
         {
