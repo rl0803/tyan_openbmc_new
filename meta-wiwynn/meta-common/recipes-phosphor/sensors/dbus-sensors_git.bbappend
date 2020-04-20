@@ -28,6 +28,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0036-Change-to-steady_timer-used-in-FanTach-sensor.patch \
             file://0037-Change-to-steady_timer-used-in-VR-sensor.patch \
             file://0038-Change-to-steady_timer-used-in-PSU-sensor.patch \
+            file://0039-Support-CATERR-LED-feature.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \

@@ -168,7 +168,7 @@ index 6ee846d..cedebb0 100644
 +
 +                // MCERR
 +                if ((MCAErrSrcLog & maskMcerr) ||
-+		            (MCAErrSrcLog & maskMcerr))
++		            (MCAErrSrcLog & maskMsmiMcerr))
 +                {
 +                    eventData[0] = 0xc;
 +                    errorType = "MCERR";

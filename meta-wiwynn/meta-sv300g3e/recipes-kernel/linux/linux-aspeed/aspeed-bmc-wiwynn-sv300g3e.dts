@@ -52,6 +52,7 @@
 
 		caterr {
 			gpios = <&gpio ASPEED_GPIO(F, 6) GPIO_ACTIVE_LOW>;
+			default-state = "off";
 		};
 
 		identify {

@@ -2,7 +2,7 @@
     {
         "Name": "PowerGood",
         "GpioNum": 101,
-        "ChipId": "gpiochip0",
+        "ChipId": "0",
         "EventMon": "BOTH",
         "Target":
         {
