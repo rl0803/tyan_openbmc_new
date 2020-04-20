@@ -17,6 +17,17 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0025-Remove-Tjmax-from-hiddenProps-for-sensor-creation.patch \
             file://0026-Set-the-tach-sensor-value-to-0-when-failing-to-read.patch \
             file://0027-Add-to-support-Fan-power-sensor.patch \
+            file://0028-Change-to-steady_timer-used-in-ThresholdTimer.patch \
+            file://0029-Change-to-steady_timer-used-in-ADC-sensor.patch \
+            file://0030-Change-to-steady_timer-used-in-CPU-sensor.patch \
+            file://0031-Change-to-steady_timer-used-in-FanExt-sensor.patch \
+            file://0032-Change-to-steady_timer-used-in-HwmonTemp-sensor.patch \
+            file://0033-Change-to-steady_timer-used-in-Ipmb-sensor.patch \
+            file://0034-Change-to-steady_timer-used-in-NIC-sensor.patch \
+            file://0035-Change-to-steady_timer-used-in-NVME-sensor.patch \
+            file://0036-Change-to-steady_timer-used-in-FanTach-sensor.patch \
+            file://0037-Change-to-steady_timer-used-in-VR-sensor.patch \
+            file://0038-Change-to-steady_timer-used-in-PSU-sensor.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
