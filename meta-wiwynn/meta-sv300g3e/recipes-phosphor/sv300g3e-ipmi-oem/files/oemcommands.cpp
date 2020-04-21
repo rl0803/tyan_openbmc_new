@@ -51,6 +51,16 @@ static const std::string dimmObjPathPrefix = "/xyz/openbmc_project/leaky_bucket/
 const static constexpr char* eccErrorInterface = "xyz.openbmc_project.DimmEcc.Count";
 const std::string dimmConfigPath = "/etc/leaky-bucket-dimm.json";
 
+const static constexpr char* propertyInterface = "org.freedesktop.DBus.Properties";
+
+const static constexpr char* settingMgtService = "xyz.openbmc_project.Settings";
+const static constexpr char* timeSyncMethodPath = "/xyz/openbmc_project/time/sync_method";
+const static constexpr char* timeSyncMethodIntf = "xyz.openbmc_project.Time.Synchronization";
+
+const static constexpr char* systemdTimeService = "org.freedesktop.timedate1";
+const static constexpr char* systemdTimePath = "/org/freedesktop/timedate1";
+const static constexpr char* systemdTimeInterface = "org.freedesktop.timedate1";
+
 static void register_oem_functions() __attribute__((constructor));
 
 /**
@@ -633,6 +643,81 @@ ipmi_ret_t ipmiGetLbaRelativeCnt(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+*   Set BMC Time Sync Mode
+*   NetFn: 0x3E / CMD: 0xB8
+*   @param[in]: Time sync mode
+*               - 0: Manual
+*               - 1: NTP
+**/
+
+const std::vector<std::string> timeSyncMethod = {
+    "xyz.openbmc_project.Time.Synchronization.Method.Manual",
+    "xyz.openbmc_project.Time.Synchronization.Method.NTP"
+};
+
+ipmi_ret_t ipmiSetBmcTimeSyncMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                  ipmi_request_t request, ipmi_response_t response,
+                                  ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    /* Data Length - Time sync mode (1) */
+    if (reqDataLen != sizeof(SetBmcTimeSyncModeReq))
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    SetBmcTimeSyncModeReq* reqData = reinterpret_cast<SetBmcTimeSyncModeReq*>(request);
+
+    /* Time Sync Mode Check */
+    if ((reqData->syncMode) >= timeSyncMethod.size())
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid bmc time sync mode %d\n",
+                         __FUNCTION__, reqData->syncMode);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    std::string modeProperty = timeSyncMethod.at(reqData->syncMode);
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+
+    // Set TimeSyncMethod Property
+    try
+    {
+        ipmi::setDbusProperty(*dbus, settingMgtService, timeSyncMethodPath,
+                            timeSyncMethodIntf, "TimeSyncMethod", modeProperty);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR, "[%s] failed to set TimeSyncMethod Property\n",
+                         __FUNCTION__);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    bool isNtp = (modeProperty == "xyz.openbmc_project.Time.Synchronization.Method.NTP");
+
+    // Set systemd NTP method
+    auto method = dbus->new_method_call(systemdTimeService, systemdTimePath,
+                                        systemdTimeInterface, "SetNTP");
+    method.append(isNtp, false);
+
+    try
+    {
+        dbus->call_noreply(method);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR, "[%s] failed to call systemd NTP set method\n",
+                         __FUNCTION__);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    return IPMI_CC_OK;
+}
+
 /*
     Get VR FW version func
     NetFn: 0x3C / CMD: 0x51
@@ -818,6 +903,10 @@ static void register_oem_functions(void)
     // <Get Relative Correctable ECC Counter Value>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_LBA_RELATIVE_CNT,
                            NULL, ipmiGetLbaRelativeCnt, PRIVILEGE_USER);
+
+    // <Set BMC Time Sync Mode>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_BMC_TIMESYNC_MODE,
+                           NULL, ipmiSetBmcTimeSyncMode, PRIVILEGE_USER);
 
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,

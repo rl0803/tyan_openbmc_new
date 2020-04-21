@@ -41,6 +41,7 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_GET_LBA_THRESHOLD = 0xB5,
     CMD_GET_LBA_TOTAL_CNT = 0xB6,
     CMD_GET_LBA_RELATIVE_CNT = 0xB7,
+    CMD_SET_BMC_TIMESYNC_MODE = 0xB8,
 };
 
 enum ipmi_sv300g3e_oem4_cmds : uint8_t
@@ -141,6 +142,11 @@ typedef struct
 {
     uint32_t relativeCnt;
 }__attribute__((packed)) GetLbaRelativeCntRes;
+
+typedef struct
+{
+    uint8_t syncMode;
+}__attribute__((packed)) SetBmcTimeSyncModeReq;
 
 typedef struct
 {
