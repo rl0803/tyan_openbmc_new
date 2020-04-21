@@ -343,14 +343,7 @@
                     "Label": "Die",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 102
-                },
-                {
-                    "Direction": "greater than",
-                    "Label": "Die",
-                    "Name": "upper non critical",
-                    "Severity": 0,
-                    "Value": 98
+                    "Value": 95
                 },
                 {
                     "Direction": "greater than",
@@ -421,14 +414,7 @@
                     "Label": "Die",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 102.0
-                },
-                {
-                    "Direction": "greater than",
-                    "Label": "Die",
-                    "Name": "upper non critical",
-                    "Severity": 0,
-                    "Value": 98
+                    "Value": 95
                 },
                 {
                     "Direction": "greater than",
@@ -662,7 +648,7 @@
             "Page" : 0,
             "SensorType" : "curr",
             "Mode" : "Linear",
-            "MaxValue": 200,
+            "MaxValue": 248,
             "MinValue": 0,
             "Thresholds": [
                 {
@@ -702,7 +688,7 @@
             "Page" : 0,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 100,
+            "MaxValue": 467,
             "MinValue": 0,
             "Type": "PXE1610"
         },
@@ -714,7 +700,7 @@
             "Page" : 0,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 320,
+            "MaxValue": 420,
             "MinValue": 0,
             "Thresholds": [
                 {
@@ -932,7 +918,7 @@
             "Page" : 1,
             "SensorType" : "curr",
             "Mode" : "Linear",
-            "MaxValue": 25,
+            "MaxValue": 27,
             "MinValue": 0,
             "Thresholds": [
                 {
@@ -964,7 +950,7 @@
             "Page" : 1,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 100,
+            "MaxValue": 200,
             "MinValue": 0,
             "Type": "PXE1610"
         },
@@ -976,7 +962,7 @@
             "Page" : 1,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 30,
+            "MaxValue": 32,
             "MinValue": 0,
             "Type": "PXE1610"
         },
@@ -1014,7 +1000,7 @@
             "Page" : 0,
             "SensorType" : "curr",
             "Mode" : "Linear",
-            "MaxValue": 200,
+            "MaxValue": 248,
             "MinValue": 0,
             "Thresholds": [
                 {
@@ -1054,7 +1040,7 @@
             "Page" : 0,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 100,
+            "MaxValue": 467,
             "MinValue": 0,
             "Type": "PXE1610"
         },
@@ -1066,7 +1052,7 @@
             "Page" : 0,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 320,
+            "MaxValue": 420,
             "MinValue": 0,
             "Thresholds": [
                 {
@@ -1284,7 +1270,7 @@
             "Page" : 1,
             "SensorType" : "curr",
             "Mode" : "Linear",
-            "MaxValue": 25,
+            "MaxValue": 27,
             "MinValue": 0,
             "Thresholds": [
                 {
@@ -1316,7 +1302,7 @@
             "Page" : 1,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 100,
+            "MaxValue": 200,
             "MinValue": 0,
             "Type": "PXE1610"
         },
@@ -1328,7 +1314,7 @@
             "Page" : 1,
             "SensorType" : "power",
             "Mode" : "Linear",
-            "MaxValue": 30,
+            "MaxValue": 32,
             "MinValue": 0,
             "Type": "PXE1610"
         }
