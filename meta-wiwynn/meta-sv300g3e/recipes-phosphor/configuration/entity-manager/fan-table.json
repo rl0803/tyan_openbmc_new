@@ -314,6 +314,710 @@
                         "positiveHysteresis": 0,
                         "negativeHysteresis": 2
                     }
+                },
+                {
+                    "name": "Linear_NVMe_0_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_0_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_0_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_0_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_1_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_1_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_1_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_1_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_A_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_A_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_A_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_A_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_B_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_B_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_B_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_B_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_C_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_C_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_C_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_C_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_D_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_D_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_D_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_D_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_E_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_E_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_E_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_E_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_F_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_F_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_F_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_F_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_G_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_G_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_G_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_G_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_H_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_H_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_H_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_H_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_J_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_J_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_J_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_J_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_K_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_K_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_K_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_K_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_L_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_L_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_L_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_L_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_M_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_M_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_M_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_M_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
                 }
             ]
         },
@@ -437,6 +1141,710 @@
                         "positiveHysteresis": 0,
                         "negativeHysteresis": 2
                     }
+                },
+                {
+                    "name": "Linear_NVMe_2_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_2_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_2_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_2_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_3_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_3_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_3_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_3_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_A_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_A_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_A_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_A_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_B_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_B_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_B_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_B_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_C_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_C_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_C_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_C_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_D_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_D_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_D_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_D_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_E_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_E_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_E_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_E_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_F_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_F_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_F_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_F_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_G_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_G_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_G_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_G_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_H_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_H_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_H_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_H_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_J_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_J_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_J_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_J_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_K_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_K_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_K_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_K_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_L_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_L_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_L_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_L_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_M_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_M_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_M_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_M_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
                 }
             ]
         },
@@ -507,6 +1915,864 @@
                         },
                         "positiveHysteresis": 0,
                         "negativeHysteresis": 1
+                    }
+                },
+                {
+                    "name": "Linear_Mezz_NIC_Temp",
+                    "type": "linear",
+                    "inputs": ["Mezz_NIC_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 85.0,
+                            "2": 87.0,
+                            "3": 89.0,
+                            "4": 101.0,
+                            "5": 102.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_Mezz_NIC_Temp",
+                    "type": "temp",
+                    "inputs": ["Mezz_NIC_Temp"],
+                    "setpoint": 93,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 4.0,
+                        "integralCoeff": 0.015,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_0_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_0_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_0_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_0_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_1_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_1_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_1_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_1_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_2_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_2_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_2_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_2_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_NVMe_3_Temp",
+                    "type": "linear",
+                    "inputs": ["NVMe_3_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 1.0,
+                            "1": 57.0,
+                            "2": 59.0,
+                            "3": 61.0,
+                            "4": 63.0,
+                            "5": 68.0,
+                            "6": 69.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 17.0,
+                            "2": 21.0,
+                            "3": 26.0,
+                            "4": 32.0,
+                            "5": 32.0,
+                            "6": 80.0
+                        },
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_NVMe_3_Temp",
+                    "type": "temp",
+                    "inputs": ["NVMe_3_Temp"],
+                    "setpoint": 65,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 10.0,
+                        "integralCoeff": 0.03,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 0,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_A_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_A_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_A_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_A_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_B_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_B_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_B_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_B_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_C_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_C_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_C_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_C_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_D_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_D_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_D_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_D_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_E_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_E_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_E_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_E_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_F_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_F_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_F_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_F_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_G_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_G_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_G_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_G_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_H_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_H_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_H_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_H_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_J_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_J_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_J_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_J_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_K_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_K_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_K_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_K_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_L_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_L_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_L_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_L_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Linear_DIMM_M_Temp",
+                    "type": "linear",
+                    "inputs": ["DIMM_M_Temp"],
+                    "setpoint": 0.0,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "isCeiling": false,
+                        "reading": {
+                            "0": 62.0,
+                            "1": 64.0,
+                            "2": 66.0,
+                            "3": 68.0,
+                            "4": 76.0,
+                            "5": 77.0
+                        },
+                        "output": {
+                            "0": 14.0,
+                            "1": 14.0,
+                            "2": 16.0,
+                            "3": 19.0,
+                            "4": 19.0,
+                            "5": 80.0
+                        },
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
+                    }
+                },
+                {
+                    "name": "Pid_DIMM_M_Temp",
+                    "type": "temp",
+                    "inputs": ["DIMM_M_Temp"],
+                    "setpoint": 70,
+                    "pid": {
+                        "samplePeriod": 1,
+                        "proportionalCoeff": 3.0,
+                        "integralCoeff": 0.01,
+                        "derivativeCoeff": 0.0,
+                        "feedFwdOffsetCoeff": 0.0,
+                        "feedFwdGainCoeff": 0.0,
+                        "integralLimit_min": 0.0,
+                        "integralLimit_max": 100.0,
+                        "outLim_min": 0.0,
+                        "outLim_max": 100.0,
+                        "slewNeg": 0.0,
+                        "slewPos": 0.0,
+                        "positiveHysteresis": 2,
+                        "negativeHysteresis": 2
                     }
                 }
             ]
