@@ -295,6 +295,93 @@ ipmi_ret_t IpmiSetFscMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+ *  @brief Function of getting system LED status.
+ *  @brief NetFn: 0x30, Cmd: 0x16
+ *
+ *  @param[in] None.
+ *
+ *  @return Size of command response - Completion Code, system LED status.
+ **/
+ipmi_ret_t IpmiGetSystemLedStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                  ipmi_request_t request, ipmi_response_t response,
+                                  ipmi_data_len_t dataLen, ipmi_context_t context)
+{
+    if (*dataLen != 0)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetSystemLedStatus request data len invalid, "
+                         "received: %d, required: %d\n",
+                         *dataLen, 0);
+        *dataLen = 0;
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    *dataLen = 0;
+
+    GetSystemLedStatusRes* resData = reinterpret_cast<GetSystemLedStatusRes*>(response);
+
+    constexpr auto ledInterface    = "xyz.openbmc_project.Led.Physical";
+    constexpr auto greenLedObjPath = "/xyz/openbmc_project/led/physical/status_green";
+    constexpr auto greenLedService = "xyz.openbmc_project.LED.Controller.status_green";
+    constexpr auto amberLedObjPath = "/xyz/openbmc_project/led/physical/status_amber";
+    constexpr auto amberLedService = "xyz.openbmc_project.LED.Controller.status_amber";
+
+    std::string greenLedStatus;
+    std::string amberLedStatus;
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+
+    /* Get system LED State property */
+    try
+    {
+        auto value = ipmi::getDbusProperty(*dbus, greenLedService, greenLedObjPath,
+                               ledInterface, "State");
+        greenLedStatus = std::get<std::string>(value);
+
+        value = ipmi::getDbusProperty(*dbus, amberLedService, amberLedObjPath,
+                               ledInterface, "State");
+        amberLedStatus = std::get<std::string>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI getSystemLedStatus Failed in call method, %s\n",
+                         e.what());
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    *dataLen = 1;
+
+    /* Determine the system LED status as below.
+     *  Green Blink + Amber off - 0x00 (system power off)
+     *  Green On    + Amber off - 0x01 (system power on)
+     *  Green Off   + Amber On  - 0x02 (error event(s) asserted)
+     *  Others                  - 0xFF (LED status error)
+     */
+    if ((greenLedStatus == "xyz.openbmc_project.Led.Physical.Action.Blink") &&
+                (amberLedStatus == "xyz.openbmc_project.Led.Physical.Action.Off"))
+    {
+        resData->sysLedStatus = 0x00;
+    }
+    else if ((greenLedStatus == "xyz.openbmc_project.Led.Physical.Action.On") &&
+                (amberLedStatus == "xyz.openbmc_project.Led.Physical.Action.Off"))
+    {
+        resData->sysLedStatus = 0x01;
+    }
+    else if ((greenLedStatus == "xyz.openbmc_project.Led.Physical.Action.Off") &&
+                (amberLedStatus == "xyz.openbmc_project.Led.Physical.Action.Blink"))
+    {
+        resData->sysLedStatus = 0x02;
+    }
+    else
+    {
+        resData->sysLedStatus = 0xFF;
+    }
+
+    return IPMI_CC_OK;
+}
+
 /*
     Set SOL pattern func
     NetFn: 0x3E / CMD: 0xB2
@@ -879,6 +966,10 @@ static void register_oem_functions(void)
     // <Set FSC Mode>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_SET_FSC_MODE,
                            NULL, IpmiSetFscMode, PRIVILEGE_USER);
+
+    // <Get System LED Status>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_SYSTEM_LED_STATUS,
+                           NULL, IpmiGetSystemLedStatus, PRIVILEGE_USER);
 
     // <Set SOL Pattern>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_SOL_PATTERN,

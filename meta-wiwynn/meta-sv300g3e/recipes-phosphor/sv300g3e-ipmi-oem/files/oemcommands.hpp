@@ -31,6 +31,7 @@ enum ipmi_sv300g3e_oem2_cmds : uint8_t
 {
     CMD_SET_FAN_PWM = 0x11,
     CMD_SET_FSC_MODE = 0x12,
+    CMD_GET_SYSTEM_LED_STATUS = 0x16,
 };
 
 enum ipmi_sv300g3e_oem3_cmds : uint8_t
@@ -72,6 +73,11 @@ typedef struct
     uint8_t mode; // 00h Manual, 01h Auto
 
 }__attribute__((packed)) SetFscModeCmdRequest;
+
+typedef struct
+{
+    uint8_t sysLedStatus;
+}__attribute__((packed)) GetSystemLedStatusRes;
 
 /**
  *  Maintain the request data pwmIndex(which pwm we are going to write)
