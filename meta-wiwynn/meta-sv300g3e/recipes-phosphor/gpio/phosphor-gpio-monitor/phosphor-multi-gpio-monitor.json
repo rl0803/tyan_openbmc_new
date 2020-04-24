@@ -44,7 +44,7 @@
     {
         "Name": "CatErr",
         "ChipId": "0",
-        "GpioNum": 41,
+        "GpioNum": 211,
         "EventMon": "FALLING",
         "Target":
         {
