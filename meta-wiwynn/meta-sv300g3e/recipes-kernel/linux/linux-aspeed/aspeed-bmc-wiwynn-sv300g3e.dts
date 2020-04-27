@@ -367,3 +367,8 @@
 	msg-timing = <5>;
 	addr-timing = <5>;
 };
+
+&lpc_snoop {
+    status = "okay";
+    snoop-ports = <0x80>;
+};

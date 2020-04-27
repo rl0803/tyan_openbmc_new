@@ -26,9 +26,11 @@ static constexpr ipmi_netfn_t netFnSv300g3eOEM4 = 0x3C;
 
 static const size_t maxPatternLen = 256;
 static const uint8_t maxLbaThresholdNum = 3;
+static const size_t retPostCodeLen = 20;
 
 enum ipmi_sv300g3e_oem2_cmds : uint8_t
 {
+    CMD_GET_POST_CODE = 0x10,
     CMD_SET_FAN_PWM = 0x11,
     CMD_SET_FSC_MODE = 0x12,
     CMD_GET_SYSTEM_LED_STATUS = 0x16,
@@ -67,6 +69,11 @@ enum vr_type : uint8_t
     CPU0_VCCIO,
     CPU1_VCCIO,
 };
+
+typedef struct
+{
+    uint8_t postCode[retPostCodeLen];
+}__attribute__((packed)) GetPostCodeRes;
 
 typedef struct
 {

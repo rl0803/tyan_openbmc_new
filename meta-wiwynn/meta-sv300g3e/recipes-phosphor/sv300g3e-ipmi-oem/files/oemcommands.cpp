@@ -64,6 +64,85 @@ const static constexpr char* systemdTimeInterface = "org.freedesktop.timedate1";
 static void register_oem_functions() __attribute__((constructor));
 
 /**
+ *  @brief Get the latest 20 BIOS post codes
+ *  @brief NetFn: 0x30, Cmd: 0x10
+ *
+ *  @return Size of command response
+ *          - Completion Code, 20 post codes
+ **/
+ipmi_ret_t IpmiGetPostCode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                           ipmi_request_t request, ipmi_response_t response,
+                           ipmi_data_len_t dataLen, ipmi_context_t context)
+{
+    if (*dataLen != 0)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetPostCode request data len invalid, "
+                         "received: %d, required: %d\n",
+                         *dataLen, 0);
+        *dataLen = 0;
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetPostCodeRes* resData = reinterpret_cast<GetPostCodeRes*>(response);
+
+    constexpr auto postCodeInterface = "xyz.openbmc_project.State.Boot.PostCode";
+    constexpr auto postCodeObjPath   = "/xyz/openbmc_project/State/Boot/PostCode";
+    constexpr auto postCodeService   = "xyz.openbmc_project.State.Boot.PostCode";
+
+    uint16_t bootCycleIndex = 0;
+    std::vector<uint64_t> tmpBuffer;
+    int tmpBufferIndex = 0;
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+
+    try
+    {
+        /* Get CurrentBootCycleIndex property */
+        auto value = ipmi::getDbusProperty(*dbus, postCodeService, postCodeObjPath,
+                               postCodeInterface, "CurrentBootCycleIndex");
+        bootCycleIndex = std::get<uint16_t>(value);
+
+        /* Set the argument for method call */
+        auto msg = dbus->new_method_call(postCodeService, postCodeObjPath,
+                                         postCodeInterface, "GetPostCodes");
+        msg.append(bootCycleIndex);
+
+        /* Get the post code of CurrentBootCycleIndex */
+        auto reply = dbus->call(msg);
+        reply.read(tmpBuffer);
+
+        int tmpBufferSize = tmpBuffer.size();
+        // Set command return length to return the last 20 post code.
+        if (tmpBufferSize > retPostCodeLen)
+        {
+            *dataLen = retPostCodeLen;
+            tmpBufferIndex = tmpBufferSize - retPostCodeLen;
+        }
+        else
+        {
+            *dataLen = tmpBufferSize;
+            tmpBufferIndex = 0;
+        }
+
+        /* Get post code data */
+        for (int i = 0; ((i < retPostCodeLen) && (tmpBufferIndex < tmpBufferSize)); i++, tmpBufferIndex++)
+        {
+            resData->postCode[i] = tmpBuffer[tmpBufferIndex];
+        }
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetPostCode Failed in call method, %s\n",
+                         e.what());
+        *dataLen = 0;
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    return IPMI_CC_OK;
+}
+
+/**
  *  @brief Function of setting fan speed duty.
  *  @brief NetFn: 0x30, Cmd: 0x11
  *
@@ -959,6 +1038,10 @@ ipmi_ret_t ipmiGetVrVersion(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
 
 static void register_oem_functions(void)
 {
+    // <Get Post Code>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_POST_CODE,
+                           NULL, IpmiGetPostCode, PRIVILEGE_USER);
+
     // <Set Fan PWM>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_SET_FAN_PWM,
                            NULL, IpmiSetPwm, PRIVILEGE_USER);
