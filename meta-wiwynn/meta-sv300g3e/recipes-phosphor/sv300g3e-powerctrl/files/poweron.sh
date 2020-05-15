@@ -23,8 +23,9 @@ if [ ${pwrstatus} -eq 0 ]; then
         echo "${CHECK} - Failed to disable WDT."
         (( CHECK=CHECK+1 ))
     done
-
+    echo "[SV300G3-E][P] System Power on"
+else
+    echo "[SV300G3-E][P] System Power already on"
 fi
 
-echo "[SV300G3-E][P] System Power on"
 exit 0;

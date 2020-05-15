@@ -5,6 +5,7 @@ SRC_URI += "file://0001-Add-to-support-IPMI-Set-Power-Cycle-Interval-command.pat
             file://0003-Add-IPMI-SDR-Type-03h-Event-Only-sensor-data-record.patch \
             file://0004-Configure-IPMI-unspecified-IP-source-to-DHCP.patch \
             file://0005-Support-to-set-system-boot-option-UEFI-boot-type.patch \
+            file://0006-Remove-the-IPMI-OEM-command-handler-used-by-NetFn-0x2E.patch \
            "
 
 do_install_append(){

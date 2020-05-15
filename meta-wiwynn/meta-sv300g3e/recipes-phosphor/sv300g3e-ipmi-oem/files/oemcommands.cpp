@@ -56,12 +56,150 @@ const static constexpr char* propertyInterface = "org.freedesktop.DBus.Propertie
 const static constexpr char* settingMgtService = "xyz.openbmc_project.Settings";
 const static constexpr char* timeSyncMethodPath = "/xyz/openbmc_project/time/sync_method";
 const static constexpr char* timeSyncMethodIntf = "xyz.openbmc_project.Time.Synchronization";
+const static constexpr char* pwrRestorePolicyObjPath =
+                                    "/xyz/openbmc_project/control/host0/power_restore_policy";
+const static constexpr char* pwrRestorePolicyIntf =
+                                    "xyz.openbmc_project.Control.Power.RestorePolicy";
 
 const static constexpr char* systemdTimeService = "org.freedesktop.timedate1";
 const static constexpr char* systemdTimePath = "/org/freedesktop/timedate1";
 const static constexpr char* systemdTimeInterface = "org.freedesktop.timedate1";
 
 static void register_oem_functions() __attribute__((constructor));
+
+const std::string pwrRestoreNoDelay("xyz.openbmc_project.Control.Power.RestorePolicy.Delay.Disable");
+const std::string pwrRestoreIn1min("xyz.openbmc_project.Control.Power.RestorePolicy.Delay.In1min");
+const std::string pwrRestoreIn3min("xyz.openbmc_project.Control.Power.RestorePolicy.Delay.In3min");
+/**
+ *  @brief Get random power on status
+ *  @brief NetFn: 0x2e, Cmd: 0x15
+ *
+ *  @return - Byte 1: Completion Code
+ *          - Byte 2: Random power on minutes
+ **/
+ipmi_ret_t IpmiGetRandomPwrOnStus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                  ipmi_request_t request, ipmi_response_t response,
+                                  ipmi_data_len_t dataLen, ipmi_context_t context)
+{
+    if (*dataLen != 0)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetRandomPwrOnStus request data len invalid, "
+                         "received: %d, required: %d\n",
+                         *dataLen, 0);
+        *dataLen = 0;
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetRandomPwrOnStusCmdRes* resData =
+                        reinterpret_cast<GetRandomPwrOnStusCmdRes*>(response);
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    std::string delayPolicy;
+
+    try
+    {
+        /* Get PowerRestoreDelay property */
+        auto value = ipmi::getDbusProperty(*dbus, settingMgtService, pwrRestorePolicyObjPath,
+                                           pwrRestorePolicyIntf, "PowerRestoreDelay");
+        delayPolicy = std::get<std::string>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR,
+                        "IPMI GetRandomPwrOnStus failed in call method, "
+                        "%s\n", e.what());
+        *dataLen = 0;
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    if (delayPolicy == pwrRestoreNoDelay)
+    {
+        resData->delayMin = NO_DELAY;
+    }
+    else if (delayPolicy == pwrRestoreIn1min)
+    {
+        resData->delayMin = IN_1MIN;
+    }
+    else if (delayPolicy == pwrRestoreIn3min)
+    {
+        resData->delayMin = IN_3MIN;
+    }
+    else
+    {
+        sd_journal_print(LOG_ERR, "[%s] Invalid delay policy \n", __FUNCTION__);
+
+        *dataLen = 0;
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    *dataLen = sizeof(GetRandomPwrOnStusCmdRes);
+    return IPMI_CC_OK;
+}
+
+/**
+ *  @brief Set random power on status
+ *  @brief NetFn: 0x2e, Cmd: 0x16
+ *
+ *  @param[In]: Delay policy
+ *
+ *  @return - Byte 1: Completion Code
+ *
+ **/
+ipmi_ret_t IpmiSetRandomPwrOnStus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                  ipmi_request_t request, ipmi_response_t response,
+                                  ipmi_data_len_t dataLen, ipmi_context_t context)
+{
+    if (*dataLen != sizeof(SetRandomPwrOnStusCmdReq))
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI SetRandomPwrOnStus request data len invalid, "
+                         "received: %d, required: %d\n",
+                         *dataLen, sizeof(SetRandomPwrOnStusCmdReq));
+        *dataLen = 0;
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    SetRandomPwrOnStusCmdReq* reqData =
+                        reinterpret_cast<SetRandomPwrOnStusCmdReq*>(request);
+    std::string delayPolicy;
+    *dataLen = 0;
+
+    if (reqData->delayMin == NO_DELAY)
+    {
+        delayPolicy = pwrRestoreNoDelay;
+    }
+    else if (reqData->delayMin == IN_1MIN)
+    {
+        delayPolicy = pwrRestoreIn1min;
+    }
+    else if (reqData->delayMin == IN_3MIN)
+    {
+        delayPolicy = pwrRestoreIn3min;
+    }
+    else
+    {
+        sd_journal_print(LOG_ERR, "[%s] Invalid delay policy \n", __FUNCTION__);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        /* Set PowerRestoreDelay property */
+        ipmi::setDbusProperty(*dbus, settingMgtService, pwrRestorePolicyObjPath,
+                              pwrRestorePolicyIntf, "PowerRestoreDelay", delayPolicy);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR,
+                        "IPMI SetRandomPwrOnStus failed in call method, "
+                        "%s\n", e.what());
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    return IPMI_CC_OK;
+}
 
 /**
  *  @brief Get the latest 20 BIOS post codes
@@ -1038,6 +1176,14 @@ ipmi_ret_t ipmiGetVrVersion(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
 
 static void register_oem_functions(void)
 {
+    // <Get Random Power On Status>
+    ipmi_register_callback(netFnSv300g3eOEM1, CMD_GET_RANDOM_PWRON_STUS,
+                           NULL, IpmiGetRandomPwrOnStus, PRIVILEGE_USER);
+
+    // <Set Random Power On Status>
+    ipmi_register_callback(netFnSv300g3eOEM1, CMD_SET_RANDOM_PWRON_STUS,
+                           NULL, IpmiSetRandomPwrOnStus, PRIVILEGE_USER);
+
     // <Get Post Code>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_POST_CODE,
                            NULL, IpmiGetPostCode, PRIVILEGE_USER);

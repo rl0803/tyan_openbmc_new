@@ -28,6 +28,12 @@ static const size_t maxPatternLen = 256;
 static const uint8_t maxLbaThresholdNum = 3;
 static const size_t retPostCodeLen = 20;
 
+enum ipmi_sv300g3e_oem1_cmds : uint8_t
+{
+    CMD_GET_RANDOM_PWRON_STUS = 0x15,
+    CMD_SET_RANDOM_PWRON_STUS = 0x16,
+};
+
 enum ipmi_sv300g3e_oem2_cmds : uint8_t
 {
     CMD_GET_POST_CODE = 0x10,
@@ -69,6 +75,23 @@ enum vr_type : uint8_t
     CPU0_VCCIO,
     CPU1_VCCIO,
 };
+
+enum delay_policy : uint8_t
+{
+    NO_DELAY = 0,
+    IN_1MIN = 1,
+    IN_3MIN = 3,
+};
+
+typedef struct
+{
+    uint8_t delayMin;
+}__attribute__((packed)) GetRandomPwrOnStusCmdRes;
+
+typedef struct
+{
+    uint8_t delayMin;
+}__attribute__((packed)) SetRandomPwrOnStusCmdReq;
 
 typedef struct
 {
