@@ -188,6 +188,7 @@
             "Address": "0x4d",
             "Bus": 2,
             "Name": "FP Inlet",
+            "HysteresisVal": 3,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -202,6 +203,7 @@
             "Address": "0x4c",
             "Bus": 2,
             "Name": "SYS Inlet",
+            "HysteresisVal": 3,
             "Thresholds": [
                 {
                     "Direction": "greater than",
