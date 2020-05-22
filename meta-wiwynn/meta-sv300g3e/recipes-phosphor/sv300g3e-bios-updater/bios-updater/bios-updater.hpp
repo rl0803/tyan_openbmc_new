@@ -20,6 +20,8 @@
 #define BIOS_SPI "1e630000.spi"
 #define BIOS_DRIVER_PATH "/sys/bus/platform/drivers/aspeed-smc/"
 
+constexpr int MAX_RETRY_RECOVERY_MODE = 3;
+
 // phosphor-dbus-interfaces
 namespace State = sdbusplus::xyz::openbmc_project::State::server;
 
@@ -49,4 +51,6 @@ private:
     int8_t setMeToRecoveryMode();
     int8_t resetMeToBoot();
     int8_t setBiosMtdDevice(uint8_t state);
+    int8_t checkMeToRecoveryMode();
+    bool isRecoveryMode;
 };

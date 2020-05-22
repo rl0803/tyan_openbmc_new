@@ -4,4 +4,5 @@ Description=Flash BIOS image %I to Host
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/usr/sbin/bios-updater /run/initramfs/%i
+ExecStart=/usr/sbin/bios-updater %i
+StandardOutput=journal+console

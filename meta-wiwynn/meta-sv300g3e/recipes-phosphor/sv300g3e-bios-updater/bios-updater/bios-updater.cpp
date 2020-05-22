@@ -89,6 +89,50 @@ int8_t BiosUpdateManager::setMeToRecoveryMode()
     return 0;
 }
 
+int8_t BiosUpdateManager::checkMeToRecoveryMode()
+{
+    uint8_t commandAddress = 1;
+    uint8_t netfn = 0x06;
+    uint8_t command = 0x04;
+
+    std::vector<uint8_t> commandData = {};
+
+    std::tuple<int, uint8_t, uint8_t, uint8_t, uint8_t, std::vector<uint8_t>>
+        response_data;
+
+    isRecoveryMode = false;
+
+    auto bus = sdbusplus::bus::new_default_system();
+    try
+    {
+        auto method = bus.new_method_call(IPMB_BRIDGE_OBJ, IPMB_BRIDGE_PATH,
+                                          IPMB_BRIDGE_INTERFACE, "sendRequest");
+        method.append(commandAddress, netfn, lun, command, commandData);
+        auto ret = bus.call(method);
+        ret.read(response_data);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << "Error in " << __func__ <<", error code : "<<e.what()<< "\n";
+        return -1;
+    }
+
+    std::vector<uint8_t> data_received(2,0);
+    int status = -1;
+    uint8_t netFn = 0, lun = 0, cmd = 0, cc = 0;
+
+    std::tie(status, netFn, lun, cmd, cc, data_received) = response_data;
+
+    // Byte 1 : 81h = Firmware entered recovery boot-loader mode
+    // Byte 2 : 02h = Recovery mode entered by IPMI command "Force ME Recovery"
+    if (data_received.at(0) == 0x81 && data_received.at(1) == 0x02)
+    {
+        isRecoveryMode = true;
+    }
+
+    return 0;
+}
+
 int8_t BiosUpdateManager::resetMeToBoot()
 {
     uint8_t commandAddress = 1;
@@ -231,17 +275,41 @@ int8_t BiosUpdateManager::biosUpdatePwrCtl(uint8_t state)
 int8_t BiosUpdateManager::biosUpdatePrepare()
 {
     int ret = 0;
+    int retry = 0;
 
     std::cout << "Wait for 15 seconds...\n";
     sleep(15);
 
     std::cout << "Set ME to recovery mode\n";
-    ret = setMeToRecoveryMode();
-    if (ret < 0)
+
+    while (retry < MAX_RETRY_RECOVERY_MODE)
     {
-        std::cerr << "Fail to set ME to recovery mode\n";
-        return -1;
+        ret = setMeToRecoveryMode();
+        if (ret < 0)
+        {
+            std::cerr << "Fail to set ME to recovery mode\n";
+        }
+
+        sleep(2);
+
+        // check ME status using get self-test result command.
+        ret = checkMeToRecoveryMode();
+        if (ret == 0 && isRecoveryMode)
+        {
+            std::cout << "ME is in recovery mode\n";
+            break;
+        }
+
+        std::cout << "Failed to set ME to recovery mode, Retry!!\n";
+        retry++;
+        sleep(5);
     }
+
+    if (retry == MAX_RETRY_RECOVERY_MODE)
+    {
+        std::cerr << "Force to Update\n";
+    }
+
     sleep(5);
 
     // Set BIOS SPI MUX path to BMC (H) 
