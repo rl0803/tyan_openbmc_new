@@ -31,6 +31,8 @@ int i2c_master_write(int file, uint8_t slave_addr,
                      uint8_t tx_cnt, uint8_t* tx_buf);
 uint8_t i2cEEPROMGet(const char* i2cbus, const char* i2caddr, uint32_t offset,
                      uint8_t len, uint8_t* buffer);
+uint8_t i2cEEPROMSet(const char* i2cbus, const char* i2caddr, uint32_t offset,
+                     uint8_t len, uint8_t* buffer);
 #ifdef  __cplusplus
 }
 #endif

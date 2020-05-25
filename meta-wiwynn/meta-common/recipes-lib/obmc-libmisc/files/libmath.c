@@ -21,7 +21,7 @@ uint8_t Get_Linear_Data_Format(double *real_value, uint32_t raw_value) {
     return 1;
 }
 
-/* Func: PMBus VID Format Conversion 
+/* Func: PMBus VID Format Conversion
 */
 int Get_VID_Data_Format(double *real_value, uint32_t raw_value, uint8_t code_type) {
     
@@ -50,4 +50,20 @@ int Get_VID_Data_Format(double *real_value, uint32_t raw_value, uint8_t code_typ
     }
 
     return 0;
+}
+
+/* Func: Zero Checksum Calculation
+*/
+uint8_t zeroChecksum(void *data, int size)
+{
+    int i = 0;
+    uint8_t checksum = 0;
+    uint8_t *array = data;
+
+    for(i = 0; i < size; i++)
+    {
+        checksum += array[i];
+    }
+
+    return (~checksum)+1;
 }

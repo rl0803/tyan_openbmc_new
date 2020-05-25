@@ -113,7 +113,6 @@ uint8_t i2cEEPROMGet(const char* i2cbus, const char* i2caddr, uint32_t offset,
     uint8_t status = SUCCESS;
     char eeprom_path[64] = {0};
     FILE *eeprom_fp;
-    uint8_t c, n = 0;
     uint8_t* ptr = NULL;
     uint8_t result, unit = 1;
 
@@ -137,7 +136,6 @@ uint8_t i2cEEPROMGet(const char* i2cbus, const char* i2caddr, uint32_t offset,
         return FAILURE;
     }
 
-    // Locate the system GUID in EEPROM
     fseek(eeprom_fp, offset, SEEK_SET);
 
     result = fread(ptr, unit, len, eeprom_fp);
@@ -153,6 +151,59 @@ uint8_t i2cEEPROMGet(const char* i2cbus, const char* i2caddr, uint32_t offset,
     }
 
     memcpy(buffer, ptr, len);
+
+    fclose(eeprom_fp);
+
+    free(ptr);
+
+    return status;
+}
+
+uint8_t i2cEEPROMSet(const char* i2cbus, const char* i2caddr, uint32_t offset,
+                     uint8_t len, uint8_t* buffer)
+{
+    uint8_t status = SUCCESS;
+
+    char eeprom_path[64] = {0};
+    FILE *eeprom_fp;
+    uint8_t* ptr = NULL;
+    uint8_t result, unit = 1;
+
+    ptr = (uint8_t*)malloc(sizeof(uint8_t)*len);
+    if (NULL == ptr)
+    {
+        fprintf(stderr, "Failed to allocate memory.\n");
+        return FAILURE;
+    }
+
+    memcpy(ptr, buffer, len);
+
+    sprintf(eeprom_path, "/sys/bus/i2c/devices/%s-00%s/eeprom", i2cbus, i2caddr);
+
+    // Open EEPROM bin file
+    eeprom_fp = fopen(eeprom_path, "wb");
+    if (NULL == eeprom_fp)
+    {
+        fprintf(stderr, "eeprom_fp: Unable to open the file %s\n", eeprom_path);
+
+        free(ptr);
+
+        return FAILURE;
+    }
+
+    fseek(eeprom_fp, offset, SEEK_SET);
+
+    result = fwrite(ptr, unit, len, eeprom_fp);
+    if (result != (len * unit))
+    {
+        fprintf(stderr, "Failed to write EEPROM.\n");
+
+        fclose(eeprom_fp);
+
+        free(ptr);
+
+        return FAILURE;
+    }
 
     fclose(eeprom_fp);
 

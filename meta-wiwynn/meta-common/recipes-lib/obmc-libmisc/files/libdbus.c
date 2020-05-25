@@ -1,5 +1,5 @@
 #include "libmisc.h"
-
+#if 0
 uint8_t Set_Dbus_Property(double value, char *object_str, char *path_str, char *interface_str,char *value_str){ 
     int32_t ret = 0;
     sd_bus_error error = SD_BUS_ERROR_NULL;
@@ -31,3 +31,4 @@ finish:
     
     return 0;
 }
+#endif
