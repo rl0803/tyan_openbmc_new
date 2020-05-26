@@ -56,6 +56,7 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
 enum ipmi_sv300g3e_oem4_cmds : uint8_t
 {
     CMD_GET_VR_VERSION = 0x51,
+    CMD_ACCESS_CPLD_JTAG = 0x88,
 };
 
 enum
@@ -81,6 +82,11 @@ enum delay_policy : uint8_t
     NO_DELAY = 0,
     IN_1MIN = 1,
     IN_3MIN = 3,
+};
+
+enum cpld_operation : uint8_t
+{
+    GET_USERCODE = 0x03,
 };
 
 typedef struct
@@ -194,3 +200,13 @@ typedef struct
     uint16_t verData0;
     uint16_t verData1;
 }__attribute__((packed)) GetVrVersionCmdRes;
+
+typedef struct
+{
+    uint8_t cpldOp;
+}__attribute__((packed)) AccessCpldJtagCmdReq;
+
+typedef struct
+{
+    uint32_t result;
+}__attribute__((packed)) AccessCpldJtagCmdRes;

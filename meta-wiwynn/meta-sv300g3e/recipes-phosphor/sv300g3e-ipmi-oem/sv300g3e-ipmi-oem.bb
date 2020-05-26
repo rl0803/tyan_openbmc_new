@@ -10,8 +10,10 @@ DEPENDS += "phosphor-ipmi-host"
 DEPENDS += "phosphor-logging"
 DEPENDS += "systemd"
 DEPENDS += "obmc-libi2c"
+DEPENDS += "obmc-libjtag"
 
 RDEPENDS_${PN} += "obmc-libi2c"
+RDEPENDS_${PN} += "obmc-libjtag"
 
 inherit cmake obmc-phosphor-ipmiprovider-symlink
 EXTRA_OECMAKE= "-DENABLE_TEST=0 -DYOCTO=1"

@@ -38,6 +38,7 @@
 #include "oemcommands.hpp"
 #include "Utils.hpp"
 #include "openbmc/libobmci2c.h"
+#include "openbmc/libobmccpld.hpp"
 
 const static constexpr char* solPatternService = "xyz.openbmc_project.SolPatternSensor";
 const static constexpr char* solPatternInterface = "xyz.openbmc_project.Sensor.SOLPattern";
@@ -1174,6 +1175,57 @@ ipmi_ret_t ipmiGetVrVersion(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/*
+    Access CPLD JTAG func
+    NetFn: 0x3C / CMD: 0x88
+*/
+ipmi_ret_t ipmiAccessCpldJtag(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                              ipmi_request_t request, ipmi_response_t response,
+                              ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    AccessCpldJtagCmdReq* reqData = reinterpret_cast<AccessCpldJtagCmdReq*>(request);
+    AccessCpldJtagCmdRes* resData = reinterpret_cast<AccessCpldJtagCmdRes*>(response);
+
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    if(reqDataLen != sizeof(AccessCpldJtagCmdReq))
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    uint32_t buffer = 0;
+    int res = -1;
+
+    switch (reqData->cpldOp)
+    {
+        case GET_USERCODE:
+        {
+            res = getCpldUserCode(LATTICE, &buffer);
+            break;
+        }
+
+        default:
+            sd_journal_print(LOG_ERR,
+                            "Invalid CPLD JTAG operation, "
+                            "received = 0x%x\n", reqData->cpldOp);
+            return IPMI_CC_PARM_OUT_OF_RANGE;
+    }
+
+    if (res < 0)
+    {
+        sd_journal_print(LOG_CRIT, "[%d] Failed to access CPLD via JTAG\n", reqData->cpldOp);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    memcpy(&(resData->result), &buffer, sizeof(uint32_t));
+    *data_len = sizeof(AccessCpldJtagCmdRes);
+
+    return IPMI_CC_OK;
+}
+
 static void register_oem_functions(void)
 {
     // <Get Random Power On Status>
@@ -1231,4 +1283,8 @@ static void register_oem_functions(void)
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,
                            NULL, ipmiGetVrVersion, PRIVILEGE_USER);
+
+    // <Access CPLD JTAG>
+    ipmi_register_callback(netFnSv300g3eOEM4, CMD_ACCESS_CPLD_JTAG,
+                           NULL, ipmiAccessCpldJtag, PRIVILEGE_USER);
 }
