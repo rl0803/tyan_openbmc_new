@@ -9,6 +9,7 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0007-Modify-WDT2-timeout-from-30s-to-65s.patch \
             file://0008-Export-all-DIMMs-during-initialization.patch \
             file://0009-Support-CPU-margin-reading.patch \
+            file://0010-Add-AST2500-JTAG-driver-support.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

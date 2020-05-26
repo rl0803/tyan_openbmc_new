@@ -372,3 +372,7 @@
     status = "okay";
     snoop-ports = <0x80>;
 };
+
+&jtag {
+    status = "okay";
+};
