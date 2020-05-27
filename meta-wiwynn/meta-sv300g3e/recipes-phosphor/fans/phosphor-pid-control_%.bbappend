@@ -10,6 +10,8 @@ SRC_URI += " file://0001-Add-fan-control-linear.patch \
              file://0008-Refer-to-linear-result-for-PID-PWM-calculation.patch \
              file://0009-Add-NVMe-NIC-and-DIMM-fan-tables-to-FSC-algorithm.patch \
              file://0010-Fix-CPU-temp-sensor-slow-ready-issue.patch \
+             file://0011-Add-sensor-failed-function-for-CPU-NIC-and-FP-inlet.patch \
+             file://0012-Fix-for-PWM-accumulation.patch \
              file://writePwm.sh \
              file://phosphor-pid-control.sh \
            "

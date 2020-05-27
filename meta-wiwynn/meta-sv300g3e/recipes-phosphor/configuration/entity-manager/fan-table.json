@@ -196,7 +196,7 @@
     "zones" : [
         {
             "id": 1,
-            "failsafePercent": 100.0,
+            "failsafePercent": 90.0,
             "minThermalOutput": 0.0,
             "cycleTimeBase": 100,
             "checkFanFailuresTime": 10000,
@@ -1023,7 +1023,7 @@
         },
         {
             "id": 2,
-            "failsafePercent": 100.0,
+            "failsafePercent": 90.0,
             "minThermalOutput": 0.0,
             "cycleTimeBase": 100,
             "checkFanFailuresTime": 10000,
@@ -1850,7 +1850,7 @@
         },
         {
             "id": 3,
-            "failsafePercent": 100.0,
+            "failsafePercent": 90.0,
             "minThermalOutput": 0.0,
             "cycleTimeBase": 100,
             "checkFanFailuresTime": 10000,
