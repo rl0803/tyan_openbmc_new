@@ -7,7 +7,11 @@ SRC_URI += "file://0001-Add-to-support-IPMI-Set-Power-Cycle-Interval-command.pat
             file://0005-Support-to-set-system-boot-option-UEFI-boot-type.patch \
             file://0006-Remove-the-IPMI-OEM-command-handler-used-by-NetFn-0x2E.patch \
             file://0007-Support-IPMI-power-reset-command.patch \
+            file://master_write_read_white_list.json \
            "
+
+FILES_${PN} += " ${datadir}/ipmi-providers/master_write_read_white_list.json \
+               "
 
 do_install_append(){
   install -d ${D}${includedir}/phosphor-ipmi-host
@@ -16,4 +20,6 @@ do_install_append(){
   install -m 0644 -D ${S}/sensorhandler.hpp ${D}${includedir}/phosphor-ipmi-host
   install -m 0644 -D ${S}/selutility.hpp ${D}${includedir}/phosphor-ipmi-host
   install -m 0644 -D ${S}/storageaddsel.hpp ${D}${includedir}/phosphor-ipmi-host
+  install -d ${D}${datadir}/ipmi-providers
+  install -m 0644 -D ${WORKDIR}/master_write_read_white_list.json ${D}${datadir}/ipmi-providers/master_write_read_white_list.json
 }
