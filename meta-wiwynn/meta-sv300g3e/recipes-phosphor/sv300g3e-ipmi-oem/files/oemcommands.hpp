@@ -40,6 +40,8 @@ enum ipmi_sv300g3e_oem2_cmds : uint8_t
     CMD_SET_FAN_PWM = 0x11,
     CMD_SET_FSC_MODE = 0x12,
     CMD_GET_SYSTEM_LED_STATUS = 0x16,
+    CMD_SET_GPIO = 0x17,
+    CMD_GET_GPIO = 0x18,
 };
 
 enum ipmi_sv300g3e_oem3_cmds : uint8_t
@@ -114,6 +116,24 @@ typedef struct
 {
     uint8_t sysLedStatus;
 }__attribute__((packed)) GetSystemLedStatusRes;
+
+typedef struct
+{
+    uint8_t pin_number;
+    uint8_t pin_direction;
+    uint8_t pin_value;
+}__attribute__((packed)) SetGpioCmdReq;
+
+typedef struct
+{
+    uint8_t pin_number;
+}__attribute__((packed)) GetGpioCmdReq;
+
+typedef struct
+{
+    uint8_t pin_direction;
+    uint8_t pin_value;
+}__attribute__((packed)) GetGpioCmdRes;
 
 /**
  *  Maintain the request data pwmIndex(which pwm we are going to write)

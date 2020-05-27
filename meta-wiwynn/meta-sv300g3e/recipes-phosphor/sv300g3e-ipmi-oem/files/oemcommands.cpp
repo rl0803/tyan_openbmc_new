@@ -600,6 +600,122 @@ ipmi_ret_t IpmiGetSystemLedStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+ *  @brief Function of GPIO Set
+ *  @brief NetFn: 0x30, Cmd: 0x17
+ *
+ *  @param[in] GPIO Number
+ *  @param[in] Direction
+ *  @param[in] Level
+ *
+ *  @return GPIO direction and data.
+ **/
+ipmi_ret_t IpmiSetGpio(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                       ipmi_request_t request, ipmi_response_t response,
+                       ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+     *data_len = 0;
+
+    if (reqDataLen != sizeof(SetGpioCmdReq))
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    SetGpioCmdReq* reqData = reinterpret_cast<SetGpioCmdReq*>(request);
+
+    int32_t ret = -1;
+
+    ret = Export_GPIO(reqData->pin_number + GPIO_BASE);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    ret = Set_GPIO_Direction(reqData->pin_number + GPIO_BASE,
+                             reqData->pin_direction);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    ret = Set_GPIO_Value(reqData->pin_number + GPIO_BASE,
+                         reqData->pin_value);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    ret = Unexport_GPIO(reqData->pin_number + GPIO_BASE);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    return IPMI_CC_OK;
+}
+
+/**
+ *  @brief Function of GPIO Get
+ *  @brief NetFn: 0x30, Cmd: 0x18
+ *
+ *  @param[in] GPIO Number
+ *
+ *  @return GPIO direction and data.
+ **/
+ipmi_ret_t IpmiGetGpio(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                       ipmi_request_t request, ipmi_response_t response,
+                       ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+     *data_len = 0;
+
+    if (reqDataLen != sizeof(GetGpioCmdReq))
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetGpioCmdReq* reqData = reinterpret_cast<GetGpioCmdReq*>(request);
+    GetGpioCmdRes* resData = reinterpret_cast<GetGpioCmdRes*>(response);
+
+    int32_t ret = -1;
+    uint8_t value;
+    uint8_t direction;
+
+    ret = Export_GPIO(reqData->pin_number + GPIO_BASE);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    ret = Get_GPIO_Direction(reqData->pin_number + GPIO_BASE, &direction);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    ret = Get_GPIO_Value(reqData->pin_number + GPIO_BASE, &value);
+    if (ret < 0) {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    ret = Unexport_GPIO(reqData->pin_number + GPIO_BASE);
+    if (ret < 0)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    resData->pin_direction = direction;
+    resData->pin_value = value;
+    *data_len = sizeof(GetGpioCmdRes);
+
+    return IPMI_CC_OK;
+}
+
 /*
     Set SOL pattern func
     NetFn: 0x3E / CMD: 0xB2
@@ -1251,6 +1367,14 @@ static void register_oem_functions(void)
     // <Get System LED Status>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_SYSTEM_LED_STATUS,
                            NULL, IpmiGetSystemLedStatus, PRIVILEGE_USER);
+
+    // <Set GPIO>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_SET_GPIO,
+                           NULL, IpmiSetGpio, PRIVILEGE_USER);
+
+    // <Get GPIO>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_GPIO,
+                           NULL, IpmiGetGpio, PRIVILEGE_USER);
 
     // <Set SOL Pattern>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_SOL_PATTERN,

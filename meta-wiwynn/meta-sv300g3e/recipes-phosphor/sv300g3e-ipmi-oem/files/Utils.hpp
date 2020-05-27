@@ -68,3 +68,28 @@ DbusSubTree getSubTree(sdbusplus::bus::bus& bus, const std::string& pathRoot,
 *   @return - Successful or Not
 **/
 bool getDimmConfig(std::vector<uint8_t>& dimmConfig, const std::string& path);
+
+/*
+    GPIO Set/Get Value/Direction Control
+*/
+static constexpr int GPIO_BASE = 280;
+
+enum GPIO_DIR : uint8_t
+{
+    in_direction = 0x0,
+    out_direction = 0x1,
+};
+
+enum GPIO_VALUE : uint8_t
+{
+    low_value = 0x0,
+    high_value = 0x1,
+};
+
+void msleep(int32_t msec);
+int32_t Export_GPIO(int gpio_num);
+int32_t Unexport_GPIO(int gpio_num);
+int32_t Get_GPIO_Value(uint16_t gpio_num, uint8_t *value);
+int32_t Get_GPIO_Direction(uint16_t gpio_num, uint8_t *direction);
+int32_t Set_GPIO_Value(uint16_t gpio_num, uint8_t value);
+int32_t Set_GPIO_Direction(uint16_t gpio_num, uint8_t direction);
