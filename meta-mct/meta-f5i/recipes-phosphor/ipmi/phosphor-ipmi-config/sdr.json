@@ -124,6 +124,12 @@
          "sensorNumber" : "0x80",
          "sensorType" : "0x21",
          "sensorName" : "USB_Status"
+     },
+     {
+         "ownerId" : "0x20",
+         "sensorNumber" : "0xfe",
+         "sensorType" : "0x2b",
+         "sensorName" : "IB BMC FW UPDATE"
      }
 
 ]
