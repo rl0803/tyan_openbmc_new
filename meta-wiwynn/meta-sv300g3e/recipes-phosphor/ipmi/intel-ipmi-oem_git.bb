@@ -21,6 +21,7 @@ SRC_URI = "git://github.com/openbmc/intel-ipmi-oem \
            file://0016-Correct-the-response-of-in-band-bridge-IPMB-command.patch \
            file://0017-Enhance-the-precision-of-sensor-reading-conversion.patch \
            file://0018-Support-Set-SEL-Time-command.patch \
+           file://0019-Support-SEL-entry-for-IPMI-SEL-clear-event.patch \
           "
 # SRCREV = "ba9c1765f5edc2f0891e012f33b3059a0dbd7ff1"
 SRCREV = "147daec5fcfcdacd8813eab6a7735d0f1b615c8a"
