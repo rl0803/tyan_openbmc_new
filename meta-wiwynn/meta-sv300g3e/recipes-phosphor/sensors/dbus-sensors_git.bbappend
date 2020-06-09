@@ -47,3 +47,5 @@ DEPENDS += "obmc-libi2c \
 RDEPENDS_${PN} += "obmc-libi2c \
                    obmc-libmisc \
                   "
+# Disable the CPU sensor Tcontrol threshold setting
+EXTRA_OECMAKE_append += " -DBMC_CPU_SENSOR_TCONTROL=OFF"
