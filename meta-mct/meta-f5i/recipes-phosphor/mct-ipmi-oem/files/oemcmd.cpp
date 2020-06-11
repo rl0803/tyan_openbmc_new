@@ -1286,7 +1286,79 @@ ipmi::RspType<> ipmi_RelinkLan()
 
     return ipmi::responseSuccess();
 }
+//=================================================================
+const static constexpr char* solPatternService = "xyz.openbmc_project.SolPatternSensor";
+const static constexpr char* solPatternInterface = "xyz.openbmc_project.Sensor.SOLPattern";
+const static constexpr char* solPatternObjPrefix = "/xyz/openbmc_project/sensors/pattern/Pattern";
 
+/*
+    Set SOL pattern func
+    NetFn: 0x3E / CMD: 0xB2
+*/
+ipmi::RspType<> ipmiSetSolPattern(uint8_t patternNum, std::vector<uint8_t> patternData)
+{
+    /* Pattern Number */
+    if((patternNum < 1) || (patternNum > 4))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid pattern number %d\n",
+                         __FUNCTION__, patternNum);
+        return ipmi::responseParmOutOfRange();;
+    }
+
+    /* Set pattern to dbus */
+    std::string solPatternObjPath = solPatternObjPrefix + std::to_string((patternNum));
+    std::string s(patternData.begin(), patternData.end());
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        ipmi::setDbusProperty(*dbus, solPatternService, solPatternObjPath,
+                               solPatternInterface, "Pattern", s);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+
+    return ipmi::responseSuccess();
+}
+
+//=================================================================
+/*
+    Get SOL pattern func
+    NetFn: 0x3E / CMD: 0xB3
+*/
+ipmi::RspType<std::vector<uint8_t>> ipmiGetSolPattern(uint8_t patternNum)
+{
+
+    /* Pattern Number */
+    if((patternNum < 1) || (patternNum > 4))
+    {
+        sd_journal_print(LOG_CRIT, "[%s] invalid pattern number %d\n",
+                         __FUNCTION__, patternNum);
+        return ipmi::responseParmOutOfRange();;
+    }
+
+    /* Get pattern to dbus */
+    std::string solPatternObjPath = solPatternObjPrefix + std::to_string((patternNum));
+    std::string patternData;
+
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    try
+    {
+        auto value = ipmi::getDbusProperty(*dbus, solPatternService, solPatternObjPath,
+                               solPatternInterface, "Pattern");
+        patternData = std::get<std::string>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+    
+    std::vector<uint8_t> v(patternData.begin(), patternData.end());
+    return ipmi::responseSuccess(v);
+}
+
+//=======================================================================
 void register_netfn_mct_oem()
 {
     ipmi_register_callback(NETFUN_TWITTER_OEM, IPMI_CMD_ClearCmos, NULL, ipmiOpmaClearCmos, PRIVILEGE_ADMIN);
@@ -1305,5 +1377,7 @@ void register_netfn_mct_oem()
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GetService, ipmi::Privilege::Admin, ipmi_GetService);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GetPostCode, ipmi::Privilege::Admin, ipmi_GetPostCode);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_RelinkLan, ipmi::Privilege::Admin, ipmi_RelinkLan);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiGetSolPattern);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_SET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiSetSolPattern);
 }
 }

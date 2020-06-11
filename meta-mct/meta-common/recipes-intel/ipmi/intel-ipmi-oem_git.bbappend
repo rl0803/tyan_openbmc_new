@@ -15,5 +15,6 @@ SRC_URI += "file://0001-s7106-disable-Intel-OEM-command.patch \
             file://0022-IPMB-support-for-NM-commands.patch \
             file://0023-f5i-ignore-return-check-when-updating-hash-list.patch \
             file://0024-Support-watchdog2-sensor-type.patch \
+            file://0025-sol-pettern-sensor-support.patch \
             "
 
