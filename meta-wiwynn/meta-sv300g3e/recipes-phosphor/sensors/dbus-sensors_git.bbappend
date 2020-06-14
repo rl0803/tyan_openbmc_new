@@ -31,6 +31,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0039-Support-CATERR-LED-feature.patch \
             file://0040-Fix-sensor-hysteresis-issue.patch \
             file://0041-Add-an-event-only-sensor-for-SEL-entry-event.patch \
+            file://0042-Stop-the-threshold-check-delay-timer-when-the-event-is-deasserted.patch \
            "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
