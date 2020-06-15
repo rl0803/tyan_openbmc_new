@@ -738,7 +738,7 @@ ipmi::RspType<> ipmi_setFruField(uint8_t fruId, uint4_t field, uint4_t area, std
             break;
         case 1:
             // chassis information are
-            snprintf(command,sizeof(command),"echo c %d %s >> /usr/sbin/fruWrite",(int)field,string);
+            snprintf(command,sizeof(command),"echo c %d %s >> /usr/sbin/fruWrite",(int)field-1,string);
             break;
         case 2:
             // board information area
