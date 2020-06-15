@@ -50,7 +50,7 @@ index 7d40356..5949dc4 100644
 +    }
 +
 +    // Wait for the rsyslog reload
-+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
++    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 +
 +    // Add SEL clear SEL entry
 +    uint16_t genId = 0x20;
