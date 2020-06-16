@@ -27,4 +27,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_sv300g3e += " entity-manager \
                                               phosphor-post-code-manager \
                                               phosphor-host-postd \
                                               guid-generator \
+                                              sv300g3e-bmc-update-sel \
                                             "
