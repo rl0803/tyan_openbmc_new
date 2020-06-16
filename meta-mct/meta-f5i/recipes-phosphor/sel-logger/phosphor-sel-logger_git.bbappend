@@ -7,5 +7,6 @@ EXTRA_OECMAKE += "-DREDFISH_LOG_MONITOR_PULSE_EVENTS=ON"
 
 SRC_URI += "file://0001-Change-ipmi_sel-location-to-persistent-folder.patch \
             file://0002-f5i-alert-led-when-happen-warning.patch \
+            file://0003-fix-sensor-reading-not-match-assert-value-issue.patch \
             "
 

@@ -160,6 +160,7 @@
             "Name": "PVCCIN_CPU0",
             "PowerState": "On",
             "ScaleFactor": 0.7505,
+            "MaxReading": 3,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -181,6 +182,7 @@
             "Name": "PVCCIO_CPU0",
             "PowerState": "On",
             "ScaleFactor": 1,
+            "MaxReading": 2,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -202,6 +204,7 @@
             "Name": "PVDDQ_CPU0",
             "PowerState": "On",
             "ScaleFactor": 1,
+            "MaxReading": 2,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -223,6 +226,7 @@
             "Name": "PVPP_CPU0",
             "PowerState": "On",
             "ScaleFactor": 0.5417,
+            "MaxReading": 5,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -244,6 +248,7 @@
             "Name": "PVCCIN_CPU1",
             "PowerState": "On",
             "ScaleFactor": 0.7505,
+            "MaxReading": 3,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -265,6 +270,7 @@
             "Name": "PVCCIO_CPU1",
             "PowerState": "On",
             "ScaleFactor": 1,
+            "MaxReading": 2,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -286,6 +292,7 @@
             "Name": "PVDDQ_CPU1",
             "PowerState": "On",
             "ScaleFactor": 1,
+            "MaxReading": 2,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -307,6 +314,7 @@
             "Name": "PVPP_CPU1",
             "PowerState": "On",
             "ScaleFactor": 0.5417,
+            "MaxReading": 5,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -349,6 +357,7 @@
             "Name": "P5V",
             "PowerState": "On",
             "ScaleFactor": 0.2667,
+            "MaxReading": 10,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -370,6 +379,7 @@
             "Name": "P3V3",
             "PowerState": "On",
             "ScaleFactor": 0.4052,
+            "MaxReading": 5,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -391,6 +401,7 @@
             "Name": "P3V3_AUX",
             "PowerState": "Always",
             "ScaleFactor": 0.4052,
+            "MaxReading": 5,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -412,6 +423,7 @@
             "Name": "P1V8_PCH_AUX",
             "PowerState": "Always",
             "ScaleFactor": 0.75,
+            "MaxReading": 3,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -433,6 +445,7 @@
             "Name": "PVNN_PCH_AUX",
             "PowerState": "Always",
             "ScaleFactor": 1,
+            "MaxReading": 2,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -454,6 +467,7 @@
             "Name": "P1V05_PCH_AUX",
             "PowerState": "Always",
             "ScaleFactor": 1,
+            "MaxReading": 2,
             "Thresholds": [
                 {
                     "Direction": "greater than",
@@ -475,6 +489,7 @@
             "Name": "RTC_BAT",
             "PowerState": "Always",
             "ScaleFactor": 0.3333,
+            "MaxReading": 5,
             "Thresholds": [
                 {
                     "Direction": "greater than",
