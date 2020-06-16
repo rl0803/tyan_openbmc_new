@@ -33,6 +33,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0041-Add-an-event-only-sensor-for-SEL-entry-event.patch \
             file://0042-Stop-the-threshold-check-delay-timer-when-the-event-is-deasserted.patch \
             file://0043-Implement-BMC-Update-SEL.patch \
+            file://0044-Set-event-only-sensor-service-to-wait-for-dbus-sel-logging-object.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
