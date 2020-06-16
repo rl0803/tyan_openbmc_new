@@ -29,6 +29,18 @@
                                 "Value": 10
                             }
                         ]
+                    },
+                    {
+                        "InterfaceName": "org.openbmc.control.PostComplete",
+                        "InterfaceInfo": [
+                            {
+                                "Name": "postcomplete",
+                                "Type": "property",
+                                "Signature": "i",
+                                "ChipId": "gpiochip0",
+                                "GpioNum": 2
+                            }
+                        ]
                     }
                 ]
             }
