@@ -521,7 +521,7 @@ ipmi::RspType<std::optional<uint8_t>, // T1
 {
 
     constexpr const char* leakyBucktPath =
-        "/xyz/openbmc_project/sensors/leakyBucket/HOST_DIMM_ECC";
+        "/xyz/openbmc_project/leakyBucket/HOST_DIMM_ECC";
     constexpr const char* leakyBucktIntf =
         "xyz.openbmc_project.Sensor.Value";
     std::shared_ptr<sdbusplus::asio::connection> busp = getSdBus();
