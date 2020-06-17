@@ -39,6 +39,9 @@
 #include "Utils.hpp"
 #include "openbmc/libobmci2c.h"
 #include "openbmc/libobmccpld.hpp"
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
 
 const static constexpr char* solPatternService = "xyz.openbmc_project.SolPatternSensor";
 const static constexpr char* solPatternInterface = "xyz.openbmc_project.Sensor.SOLPattern";
@@ -327,6 +330,8 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         return IPMI_CC_UNSPECIFIED_ERROR;
     }
 
+    double scaledPwmValue = 0;
+
     // Determine which pwm file we are going to write
     if (req->pwmIndex == pwmFileTable.size())
     {
@@ -352,7 +357,6 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
             }
 
             // Scale input pwm value from 0~100 to 0~255
-            double scaledPwmValue = 0;
             if ((req->pwmValue >= 10) && (req->pwmValue <= 100))
             {
                 scaledPwmValue = ((req->pwmValue * 255) / 100);
@@ -401,7 +405,6 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         }
 
         // Scale input pwm value from 0~100 to 0~255
-        double scaledPwmValue = 0;
         if ((req->pwmValue >= 10) && (req->pwmValue <= 100))
         {
             scaledPwmValue = ((req->pwmValue * 255) / 100);
@@ -427,6 +430,28 @@ ipmi_ret_t IpmiSetPwm(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
 
         fout.close();
     }
+
+    // Open manual mode file
+    std::ofstream manualFile(manualModeFilePath);
+    if (manualFile.is_open() != 1)
+    {
+        sd_journal_print(
+                        LOG_ERR,
+                        "IPMI SetPwm fail to create fan control mode file\n");
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    // Write current PWM valut to manual mode file
+    manualFile << static_cast<int64_t>(scaledPwmValue);
+    if (manualFile.fail())
+    {
+        sd_journal_print(LOG_ERR,
+                        "IPMI SetPwm failed to write the manual file\n");
+        manualFile.close();
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+    manualFile.close();
+
     return IPMI_CC_OK;
 }
 
@@ -473,14 +498,91 @@ ipmi_ret_t IpmiSetFscMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         return IPMI_CC_UNSPECIFIED_ERROR;
     }
 
+    constexpr auto parentPwmDir = "/sys/devices/platform/ahb/ahb:apb/"
+                                  "1e786000.pwm-tacho-controller/hwmon/";
+
+    // Find the directory that stores pwm file
+    auto pwmDirVec = getDirFiles(parentPwmDir, "hwmon[0-9]+");
+    if (pwmDirVec.size() == 0)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI SetPwm failed in getting pwm file directory."
+                         "Pwm directory not found\n");
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+    else if (pwmDirVec.size() > 1)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI SetPwm failed in getting pwm file directory."
+                         "Found more than one pwm directory\n");
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    // Use the PWM in one pwm file to stand for manual PWM value
+    auto pwmFile = pwmFileTable.find(0x0);
+    if (pwmFile == pwmFileTable.end())
+    {
+        sd_journal_print(LOG_ERR,
+                        "IPMI SetPwm invalid field request(pwm1)\n");
+        return IPMI_CC_PARM_OUT_OF_RANGE;
+    }
+    auto pwmFilePath = pwmDirVec[0] + "/" + pwmFile->second;
+
+    // Open the pwm file
+    std::ifstream fout(pwmFilePath);
+    if (fout.fail())
+    {
+        sd_journal_print(LOG_ERR, "IPMI SetPwm Failed in open pwm file\n");
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    // Read current PWM value
+    int64_t currentPwmValue = 0;
+    fout >> currentPwmValue;
+    if (fout.fail())
+    {
+        sd_journal_print(LOG_ERR,
+                        "IPMI CtrlFanSpeed failed to read the current PWM\n");
+        fout.close();
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+    fout.close();
+
+    // Open manual mode file
+    std::ofstream manualFile(manualModeFilePath);
+
     // Value to open/close manual mode
     sdbusplus::message::variant<bool> value;
     if (req->mode == FSC_MODE_MANUAL)
     {
+        if (manualFile.is_open() != 1)
+        {
+            sd_journal_print(
+                            LOG_ERR,
+                            "IPMI CtrlFanSpeed fail to create fan control mode file\n");
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+
+        // Write current PWM valut to manual mode file
+        manualFile << currentPwmValue;
+        if (manualFile.fail())
+        {
+            sd_journal_print(
+                            LOG_ERR,
+                            "IPMI CtrlFanSpeed failed to write the manual file\n");
+            manualFile.close();
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+
+        manualFile.close();
+
         value = true;
     }
     else if (req->mode == FSC_MODE_AUTO)
     {
+        manualFile.close();
+        std::remove(manualModeFilePath);
+
         value = false;
     }
     else
@@ -489,6 +591,7 @@ ipmi_ret_t IpmiSetFscMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
                          "IPMI SetFSCMode invalid field request, "
                          "received: %d, require: 0x00(Manual) or 0x01(Auto)\n",
                          req->mode);
+        manualFile.close();
         return IPMI_CC_INVALID_FIELD_REQUEST;
     }
 

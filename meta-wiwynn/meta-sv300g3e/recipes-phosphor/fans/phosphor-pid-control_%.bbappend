@@ -12,6 +12,7 @@ SRC_URI += " file://0001-Add-fan-control-linear.patch \
              file://0010-Fix-CPU-temp-sensor-slow-ready-issue.patch \
              file://0011-Add-sensor-failed-function-for-CPU-NIC-and-FP-inlet.patch \
              file://0012-Fix-for-PWM-accumulation.patch \
+             file://0013-Fix-fan-mode-switch-issue-and-keep-fan-mode-after-dc.patch \
              file://writePwm.sh \
              file://phosphor-pid-control.sh \
            "

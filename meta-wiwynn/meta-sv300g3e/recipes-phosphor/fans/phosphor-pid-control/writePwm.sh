@@ -8,6 +8,10 @@ else
     pwmPercent=$1
 fi
 
+if [ $pwmPercent -gt 100 ]; then
+    pwmPercent=100
+fi
+
 pwmValue=$(($pwmMax * $pwmPercent / 100))
 
 IFS=$'\n' read -rd '' -a pwmPath <<< "$(ls /sys/devices/platform/ahb/ahb:apb/1e786000.pwm-tacho-controller/hwmon/**/pwm*)"

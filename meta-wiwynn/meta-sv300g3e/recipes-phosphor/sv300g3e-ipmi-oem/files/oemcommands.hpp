@@ -145,6 +145,7 @@ std::map<uint8_t, std::string> pwmFileTable =
     {0x02, "pwm3"}, {0x03, "pwm4"},
     {0x04, "pwm5"}, {0x05, "pwm6"},
 };
+constexpr auto manualModeFilePath = "/tmp/fanCtrlManual";
 
 typedef struct
 {
