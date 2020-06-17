@@ -101,14 +101,14 @@
                         "Label": "fan1",
                         "Name": "upper critical",
                         "Severity": 1,
-                        "Value": 13500
+                        "Value": 19800
                     },
                     {
                         "Direction": "less than",
                         "Label": "fan1",
                         "Name": "lower critical",
                         "Severity": 1,
-                        "Value": 800
+                        "Value": 2000
                     }
                 ],
                 "Type": "pmbus"

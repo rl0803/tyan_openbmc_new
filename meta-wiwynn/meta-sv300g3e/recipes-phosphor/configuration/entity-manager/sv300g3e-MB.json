@@ -657,7 +657,7 @@
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 159.36
+                    "Value": 220
                 }
             ],
             "Type": "PXE1610"
@@ -1009,7 +1009,7 @@
                     "Direction": "greater than",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 159.36
+                    "Value": 220
                 }
             ],
             "Type": "PXE1610"
