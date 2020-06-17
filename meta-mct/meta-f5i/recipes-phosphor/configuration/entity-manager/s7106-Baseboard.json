@@ -644,6 +644,7 @@
             "Bus": 14,
             "Name": "OCP_TEMP",
             "Name1": "NIC_Temp",
+            "OffsetValue": 23,
             "Thresholds": [
                 {
                     "Direction": "greater than",

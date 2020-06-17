@@ -1359,6 +1359,40 @@ ipmi::RspType<std::vector<uint8_t>> ipmiGetSolPattern(uint8_t patternNum)
 }
 
 //=======================================================================
+/* Get OCP card status
+NetFun: 0x30
+Cmd : 0x14
+Request:
+    Byte 1 : Status
+        01h : E810-CQDA1 100G OCP card
+Response:
+
+*/
+ipmi::RspType<> ipmi_GetOcpCard(uint8_t status)
+{
+
+    std::cerr << " set OCP card status to " << (int)status << '\n';
+
+    char command[100];
+    std::fstream file;
+
+    // Get Current OCP Card Status
+    file.open("/usr/sbin/ocpCard",std::ios::in);
+    if(!file)
+    {
+        memset(command,0,sizeof(command));
+        sprintf(command, "touch /usr/sbin/ocpCard");
+        system(command);
+    }
+    file.close();
+
+    memset(command,0,sizeof(command));
+    snprintf(command,sizeof(command),"echo %d > /usr/sbin/ocpCard",(int)status);
+    system(command);
+
+    return ipmi::responseSuccess();
+}
+
 void register_netfn_mct_oem()
 {
     ipmi_register_callback(NETFUN_TWITTER_OEM, IPMI_CMD_ClearCmos, NULL, ipmiOpmaClearCmos, PRIVILEGE_ADMIN);
@@ -1379,5 +1413,6 @@ void register_netfn_mct_oem()
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_RelinkLan, ipmi::Privilege::Admin, ipmi_RelinkLan);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiGetSolPattern);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_SET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiSetSolPattern);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GetOcpCard, ipmi::Privilege::Admin, ipmi_GetOcpCard);
 }
 }
