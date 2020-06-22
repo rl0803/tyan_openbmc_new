@@ -94,5 +94,11 @@
           "sensorNumber" : 245,
           "sensorType" : "0xC",
           "sensorName" : "MRC Error"
+     },
+     {
+          "ownerId" : "0x20",
+          "sensorNumber" : 254,
+          "sensorType" : "0x2b",
+          "sensorName" : "IB BMC FW UPDATE"
      }
 ]
