@@ -9,6 +9,7 @@ DEPENDS += "boost"
 DEPENDS += "phosphor-ipmi-host"
 DEPENDS += "phosphor-logging"
 DEPENDS += "systemd"
+DEPENDS += "libgpiod"
 DEPENDS += "obmc-libi2c"
 DEPENDS += "obmc-libjtag"
 

@@ -82,6 +82,7 @@ target_link_libraries (zsv300g3eoemcmds phosphor_logging)
 target_link_libraries (zsv300g3eoemcmds -luserlayer)
 target_link_libraries (zsv300g3eoemcmds -lchannellayer)
 target_link_libraries (zsv300g3eoemcmds ${OPENSSL_CRYPTO_LIBRARY})
+target_link_libraries (zsv300g3eoemcmds -lgpiod)
 target_link_libraries (zsv300g3eoemcmds -lobmci2c)
 target_link_libraries (zsv300g3eoemcmds -lobmcjtag)
 

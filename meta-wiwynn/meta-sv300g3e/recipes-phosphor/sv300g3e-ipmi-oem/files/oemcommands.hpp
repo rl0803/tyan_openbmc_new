@@ -53,6 +53,7 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_GET_LBA_TOTAL_CNT = 0xB6,
     CMD_GET_LBA_RELATIVE_CNT = 0xB7,
     CMD_SET_BMC_TIMESYNC_MODE = 0xB8,
+    CMD_SET_ASD_SERVICE_MODE = 0xB9,
 };
 
 enum ipmi_sv300g3e_oem4_cmds : uint8_t
@@ -89,6 +90,18 @@ enum delay_policy : uint8_t
 enum cpld_operation : uint8_t
 {
     GET_USERCODE = 0x03,
+};
+
+enum asd_mode : uint8_t
+{
+    ASD_STOP = 0x0,
+    ASD_START = 0x1,
+};
+
+enum asd_jtag_mux : uint8_t
+{
+    JTAG_to_CPLD = 0x0,
+    JTAG_to_CPU = 0x1,
 };
 
 typedef struct
@@ -210,6 +223,11 @@ typedef struct
 {
     uint8_t syncMode;
 }__attribute__((packed)) SetBmcTimeSyncModeReq;
+
+typedef struct
+{
+    uint8_t asdMode;
+}__attribute__((packed)) SetAsdServiceMode;
 
 typedef struct
 {

@@ -42,6 +42,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <gpiod.h>
 
 const static constexpr char* solPatternService = "xyz.openbmc_project.SolPatternSensor";
 const static constexpr char* solPatternInterface = "xyz.openbmc_project.Sensor.SOLPattern";
@@ -68,6 +69,11 @@ const static constexpr char* pwrRestorePolicyIntf =
 const static constexpr char* systemdTimeService = "org.freedesktop.timedate1";
 const static constexpr char* systemdTimePath = "/org/freedesktop/timedate1";
 const static constexpr char* systemdTimeInterface = "org.freedesktop.timedate1";
+
+const static constexpr char* systemdBusName = "org.freedesktop.systemd1";
+const static constexpr char* systemdObjPath = "/org/freedesktop/systemd1";
+const static constexpr char* systemdMagIface = "org.freedesktop.systemd1.Manager";
+const static constexpr char* systemdUnitIface = "org.freedesktop.systemd1.Unit";
 
 static void register_oem_functions() __attribute__((constructor));
 
@@ -1242,6 +1248,120 @@ ipmi_ret_t ipmiSetBmcTimeSyncMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+*   Set Intel-ASD Service mode
+*   NetFn: 0x3E / CMD: 0xB9
+*   @param[in]: Intel-ASD Service mode
+*               - 0: Stop (Disable)
+*               - 1: Start (Enable)
+**/
+static const int jtagCpuCpldMuxCtrlGpio = 103;
+const static constexpr char* asdServiceObject =
+                            "/org/freedesktop/systemd1/unit/intel_2easd_2eservice";
+const std::string asdServiceName = "intel.asd.service";
+const static std::map<std::string, uint8_t>
+            asdUnitStates{{"inactive",     0},
+                          {"failed",       0},
+                          {"deactivating", 0},
+                          {"active",       1},
+                          {"reloading",    1},
+                          {"activating",   1}};
+ipmi_ret_t ipmiSetAsdServiceMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                  ipmi_request_t request, ipmi_response_t response,
+                                  ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    /* Data Length - Time sync mode (1) */
+    if (reqDataLen != sizeof(SetAsdServiceMode))
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    SetAsdServiceMode* reqData = reinterpret_cast<SetAsdServiceMode*>(request);
+
+    /* Intel ASD Service Mode Check */
+    if (reqData->asdMode >= 2)
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid Intel ASD service mode %d\n",
+                         __FUNCTION__, reqData->asdMode);
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    /* Get ASD service status */
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    std::string state;
+    try
+    {
+        /* Get ActiveState property */
+        auto value = ipmi::getDbusProperty(*dbus, systemdBusName, asdServiceObject,
+                                           systemdUnitIface, "ActiveState");
+        state = std::get<std::string>(value);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR,
+                        "Failed to get ActiveState property, "
+                        "%s\n", e.what());
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    auto findStates = asdUnitStates.find(state);
+    if (findStates == asdUnitStates.end())
+    {
+        sd_journal_print(LOG_ERR, "Invalid ActiveState value: [%s] \n", state.c_str());
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+    uint8_t stateValue = findStates->second;
+
+    if (stateValue != reqData->asdMode)
+    {
+        std::string action = "StopUnit";
+        if(reqData->asdMode == ASD_START)
+        {
+            action = "StartUnit";
+        }
+
+        auto method = dbus->new_method_call(systemdBusName, systemdObjPath,
+                                        systemdMagIface, action.c_str());
+        method.append(asdServiceName, "replace");
+
+        try
+        {
+            dbus->call_noreply(method);
+        }
+        catch (const sdbusplus::exception::SdBusError& e)
+        {
+            sd_journal_print(LOG_ERR, "[%s] Failed to star/stop Intel-ASD service\n", action.c_str());
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+    }
+    else
+    {
+        sd_journal_print(LOG_INFO, "Service is already in [%s] state!\n", state.c_str());
+    }
+
+    // Switch the JTAG MUX to CPLD(0) / CPU(1)
+    int setValue = JTAG_to_CPLD;
+    if(reqData->asdMode == ASD_START)
+    {
+        setValue = JTAG_to_CPU;
+    }
+
+    int res = gpiod_ctxless_set_value("0", jtagCpuCpldMuxCtrlGpio, setValue,
+                                      false, "intel-asd", NULL, NULL);
+    if (res != 0)
+    {
+        sd_journal_print(LOG_ERR, "[%d] Failed to control JTAG MUX.\n", setValue);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    return IPMI_CC_OK;
+}
+
 /*
     Get VR FW version func
     NetFn: 0x3C / CMD: 0x51
@@ -1506,6 +1626,10 @@ static void register_oem_functions(void)
     // <Set BMC Time Sync Mode>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_BMC_TIMESYNC_MODE,
                            NULL, ipmiSetBmcTimeSyncMode, PRIVILEGE_USER);
+
+    // <Set Intel-ASD Service Mode>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_ASD_SERVICE_MODE,
+                           NULL, ipmiSetAsdServiceMode, PRIVILEGE_USER);
 
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,
