@@ -12,7 +12,6 @@ OBMC_IMAGE_EXTRA_INSTALL_append_f5i =   " libgpiod \
                                           obmc-ikvm \ 
                                           intel-ipmi-oem \
                                           phosphor-sel-logger \
-                                          pattern-matching \
                                           phosphor-pid-control \
                                           id-button \
                                           pwr-button \
