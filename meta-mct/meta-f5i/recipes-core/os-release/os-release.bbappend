@@ -2,8 +2,8 @@
 # These file add version 
 
 python() {
-        d.setVar('VERSION', "v0.13-00-s7106")
-        d.setVar('VERSION_ID', "v0.13-00-s7106")
+        d.setVar('VERSION', "v0.14-00-s7106")
+        d.setVar('VERSION_ID', "v0.14-00-s7106")
         d.setVar('BMC_NAME', "GT62I-B7106")
 }
 
