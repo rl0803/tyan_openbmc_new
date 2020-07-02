@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import shutil
 import tarfile
+import time
 import os, sys
 from obmc.dbuslib.bindings import get_dbus, DbusProperties, DbusObjectManager
 
@@ -29,7 +30,7 @@ IPMB_CALL="sendRequest yyyyay"
 ME_CMD_RECOVER="1 0x2e 0 0xdf 4 0x57 0x01 0x00 0x01"
 ME_CMD_RESET="1 6 0 0x2 0"
 
-UPDATE_PATH = '/run/initramfs'
+UPDATE_PATH = '/tmp'
 
 def doExtract(members, files):
     for tarinfo in members:
@@ -168,7 +169,7 @@ class BiosFlashControl(DbusProperties, DbusObjectManager):
         else:
             files = ""
             for file in os.listdir(UPDATE_PATH):
-                if file.startswith('image-'):
+                if file.startswith('bios'):
                     files = files + file
             if files == "":
                 msg = "Apply Complete.  Reboot to take effect."
@@ -248,9 +249,10 @@ class BiosFlashControl(DbusProperties, DbusObjectManager):
         # connect BMC to SPI Flash 
         subprocess.Popen('gpioset gpiochip0 72=0', shell=True)
         subprocess.Popen('gpioset gpiochip0 73=1', shell=True)
-
+        # Waiting for gpio set
+        time.sleep(2)
         # Load the ASpeed SMC driver
-        subprocess.Popen('echo 1e630000.spi > /sys/bus/platform/drivers/aspeed-smc/bind', shell=True)
+        subprocess.Popen('echo -n 1e630000.spi > /sys/bus/platform/drivers/aspeed-smc/bind', shell=True)
 
         self.Set(DBUS_NAME, "status", "Prepare Update BIOS")
 
@@ -258,7 +260,7 @@ class BiosFlashControl(DbusProperties, DbusObjectManager):
         DBUS_NAME, in_signature='', out_signature='')
     def RestoreSPIInterface(self):
         # unLoad the ASpeed SMC driver
-        subprocess.Popen('echo 1e630000.spi > /sys/bus/platform/drivers/aspeed-smc/unbind', shell=True)
+        subprocess.Popen('echo -n 1e630000.spi > /sys/bus/platform/drivers/aspeed-smc/unbind', shell=True)
         
         # connect PCH to SPI Flash 
         subprocess.Popen('gpioget gpiochip0 72', shell=True)
