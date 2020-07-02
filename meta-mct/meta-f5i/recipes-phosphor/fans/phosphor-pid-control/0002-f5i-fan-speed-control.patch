@@ -1,4 +1,4 @@
-From 0148b8966a8a7e2cef5cb8449dd708a3dd17a71a Mon Sep 17 00:00:00 2001
+From 38017bab79eb638be7d1f372a703c24892d48348 Mon Sep 17 00:00:00 2001
 From: "wendy.shi" <wendy.shi@mic.com.tw>
 Date: Tue, 10 Dec 2019 10:13:38 +0800
 Subject: [PATCH] f5i fan speed control
@@ -15,10 +15,10 @@ Subject: [PATCH] f5i fan speed control
  pid/ec/fsc.cpp                  |  44 +++++
  pid/ec/fsc.hpp                  |  40 +++++
  pid/fancontroller.cpp           |   2 +
- pid/fsccontroller.cpp           | 360 ++++++++++++++++++++++++++++++++++++++++
- pid/fsccontroller.hpp           |  59 +++++++
+ pid/fsccontroller.cpp           | 361 ++++++++++++++++++++++++++++++++++++++++
+ pid/fsccontroller.hpp           |  60 +++++++
  pid/zone.cpp                    |   1 +
- 14 files changed, 753 insertions(+), 10 deletions(-)
+ 14 files changed, 755 insertions(+), 10 deletions(-)
  mode change 100644 => 100755 Makefile.am
  mode change 100644 => 100755 conf.hpp
  mode change 100644 => 100755 dbus/dbusconfiguration.cpp
@@ -613,10 +613,10 @@ index dd26d16..d43d753 100644
      percent /= 100;
 diff --git a/pid/fsccontroller.cpp b/pid/fsccontroller.cpp
 new file mode 100755
-index 0000000..2d54851
+index 0000000..6eb8f0b
 --- /dev/null
 +++ b/pid/fsccontroller.cpp
-@@ -0,0 +1,360 @@
+@@ -0,0 +1,361 @@
 +/*
 +// Copyright (c) 2019
 +//
@@ -692,55 +692,56 @@ index 0000000..2d54851
 +    pos = _id.find("FSC_CPU");
 +    if(pos != std::string::npos)
 +    {
-+        str = _id.substr(pos+7);
-+        memset(path,0,sizeof(path));
-+        snprintf(path,sizeof(path),"/sys/bus/peci/devices/peci-0/0-3%s/peci-cputemp.%s/hwmon",str.c_str(),str.c_str());
-+
-+        file.open(path,std::ios::in);
-+        if(!file)
++        if(std::isnan(tcontrol))
 +        {
-+            std::cout << path << " path doesn't exisit " << "\n";
-+        }
-+        else
-+        {
-+            file.close();
-+
-+            fs::path p1(path);
-+            for( fs::directory_iterator it = fs::directory_iterator(p1);
-+                    it != fs::directory_iterator(); ++ it )
-+            {
-+                PATH = it->path();
-+            }
-+
++            str = _id.substr(pos+7);
 +            memset(path,0,sizeof(path));
-+            snprintf(path,sizeof(path),"%s%s",PATH.c_str(),"/temp3_input");
++            snprintf(path,sizeof(path),"/sys/bus/peci/devices/peci-0/0-3%s/peci-cputemp.%s/hwmon",str.c_str(),str.c_str());
 +
 +            file.open(path,std::ios::in);
 +            if(!file)
 +            {
-+                std::cout << " can't open " << path << " file to read Tcontrol value" << "\n";
++                std::cout << path << " path doesn't exisit " << "\n";
 +            }
 +            else
 +            {
-+                file.read(Tcontrol,sizeof(Tcontrol));
-+                value = strtol(Tcontrol,NULL,10);
 +                file.close();
 +
-+                memset(Object,0,sizeof(Object));
-+                snprintf(Object,sizeof(Object),"%s%s",PID_OBJECTPATH,_id.c_str());
-+
-+                // CPU Thigh = Tcontrol -5
-+                if(info.setPointH == 5000)
++                fs::path p1(path);
++                for( fs::directory_iterator it = fs::directory_iterator(p1);
++                        it != fs::directory_iterator(); ++ it )
 +                {
-+                    info.setPointH = (value-info.setPointH)/1000;
-+                    setProperty(bus,Object,"SetPointH",info.setPointH);
++                    PATH = it->path();
 +                }
 +
-+                // CPU Tlow = Tcontrol -10
-+                if(info.setPointL == 10000)
++                memset(path,0,sizeof(path));
++                snprintf(path,sizeof(path),"%s%s",PATH.c_str(),"/temp3_input");
++
++                file.open(path,std::ios::in);
++                if(!file)
 +                {
-+                    info.setPointL = (value-info.setPointL)/1000;
-+                    setProperty(bus,Object,"SetPointL",info.setPointL);
++                    std::cout << " can't open " << path << " file to read Tcontrol value" << "\n";
++                }
++                else
++                {
++                    file.read(Tcontrol,sizeof(Tcontrol));
++                    value = strtol(Tcontrol,NULL,10);
++                    file.close();
++
++                    memset(Object,0,sizeof(Object));
++                    snprintf(Object,sizeof(Object),"%s%s",PID_OBJECTPATH,_id.c_str());
++
++                    // Make sure the Tcontrol reading is between 50 and 150
++                    if((value >= 50000) && (value <= 150000))
++                    {
++                        //calculate CPU Thigh(Tcontrol -5) and Tlow(Tcontrol -10) and update property
++                        info.setPointH = (value-5000)/1000;
++                        info.setPointL = (value-10000)/1000;
++                        setProperty(bus,Object,"SetPointH",info.setPointH);
++                        setProperty(bus,Object,"SetPointL",info.setPointL);
++                        tcontrol = value;
++                        std::cerr << "update " << _id.c_str() << " setPointH(" << info.setPointH << ") and setPointL(" << info.setPointL << ")" << '\n';
++                    }
 +                }
 +            }
 +        }
@@ -979,10 +980,10 @@ index 0000000..2d54851
 +}
 diff --git a/pid/fsccontroller.hpp b/pid/fsccontroller.hpp
 new file mode 100755
-index 0000000..6d696aa
+index 0000000..f67cb0b
 --- /dev/null
 +++ b/pid/fsccontroller.hpp
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,60 @@
 +#pragma once
 +
 +#include "controller.hpp"
@@ -1041,6 +1042,7 @@ index 0000000..6d696aa
 +    double delayTime = std::numeric_limits<double>::quiet_NaN();
 +    double updateDir = std::numeric_limits<double>::quiet_NaN();
 +    double maxDuty = std::numeric_limits<double>::quiet_NaN();
++    double tcontrol = std::numeric_limits<double>::quiet_NaN();
 +};
 diff --git a/pid/zone.cpp b/pid/zone.cpp
 old mode 100644
