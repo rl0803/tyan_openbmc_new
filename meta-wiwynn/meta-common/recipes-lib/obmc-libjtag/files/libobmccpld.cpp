@@ -40,6 +40,9 @@ int getCpldUserCode(uint8_t part, uint32_t* buffer)
         return -1;
     }
 
+    // Reset to idle/run-test state and stay in 2 tcks
+    jtag_interface_end_tap_state(jtagFd, 1, JTAG_STATE_IDLE, 2);
+
     int ret = -1;
     ret = jtag_interface_xfer(jtagFd, JTAG_SIR_XFER, JTAG_WRITE_XFER,
                               JTAG_STATE_IDLE, jtagIrWtLen, &jtagCmd);
@@ -50,10 +53,11 @@ int getCpldUserCode(uint8_t part, uint32_t* buffer)
          return -1;
     }
 
-    sleep(1);
+    // Go to idle/run-test state and stay in 2 tcks
+    jtag_interface_end_tap_state(jtagFd, 0, JTAG_STATE_IDLE, 2);
 
     uint32_t result = 0;
-    ret = jtag_interface_xfer(jtagFd, JTAG_SDR_XFER, JTAG_WRITE_XFER,
+    ret = jtag_interface_xfer(jtagFd, JTAG_SDR_XFER, JTAG_READ_XFER,
                               JTAG_STATE_IDLE, jtagDrRdLen, &result);
     if (ret < 0)
     {
