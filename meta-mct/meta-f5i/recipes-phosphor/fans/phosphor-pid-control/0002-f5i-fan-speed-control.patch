@@ -1,4 +1,4 @@
-From 38017bab79eb638be7d1f372a703c24892d48348 Mon Sep 17 00:00:00 2001
+From 44fab82353b6bf5b8bfec6becefb43cba616fe98 Mon Sep 17 00:00:00 2001
 From: "wendy.shi" <wendy.shi@mic.com.tw>
 Date: Tue, 10 Dec 2019 10:13:38 +0800
 Subject: [PATCH] f5i fan speed control
@@ -9,8 +9,8 @@ Subject: [PATCH] f5i fan speed control
  dbus/dbusconfiguration.cpp      | 149 ++++++++++++++++-
  dbus/dbuspassive.cpp            |   4 +-
  dbus/dbuswrite.cpp              |  33 +++-
- phosphor-pid-control.service.in |   2 +
- pid/builder.cpp                 |  12 ++
+ phosphor-pid-control.service.in |   5 +
+ pid/builder.cpp                 |  16 +-
  pid/buildjson.cpp               |  48 +++++-
  pid/ec/fsc.cpp                  |  44 +++++
  pid/ec/fsc.hpp                  |  40 +++++
@@ -18,7 +18,8 @@ Subject: [PATCH] f5i fan speed control
  pid/fsccontroller.cpp           | 361 ++++++++++++++++++++++++++++++++++++++++
  pid/fsccontroller.hpp           |  60 +++++++
  pid/zone.cpp                    |   1 +
- 14 files changed, 755 insertions(+), 10 deletions(-)
+ sensors/builder.cpp             |   6 +-
+ 15 files changed, 763 insertions(+), 15 deletions(-)
  mode change 100644 => 100755 Makefile.am
  mode change 100644 => 100755 conf.hpp
  mode change 100644 => 100755 dbus/dbusconfiguration.cpp
@@ -31,6 +32,7 @@ Subject: [PATCH] f5i fan speed control
  create mode 100755 pid/fsccontroller.cpp
  create mode 100755 pid/fsccontroller.hpp
  mode change 100644 => 100755 pid/zone.cpp
+ mode change 100644 => 100755 sensors/builder.cpp
 
 diff --git a/Makefile.am b/Makefile.am
 old mode 100644
@@ -377,21 +379,24 @@ index 502b988..3ca7c41
 diff --git a/phosphor-pid-control.service.in b/phosphor-pid-control.service.in
 old mode 100644
 new mode 100755
-index aa29377..43f3c53
+index aa29377..0c171cd
 --- a/phosphor-pid-control.service.in
 +++ b/phosphor-pid-control.service.in
-@@ -1,5 +1,7 @@
+@@ -1,5 +1,10 @@
  [Unit]
  Description=Phosphor-Pid-Control Margin-based Fan Control Daemon
++After=xyz.openbmc_project.EntityManager.service
++After=xyz.openbmc_project.ObjectMapper.service
 +After=xyz.openbmc_project.fansensor.service
-+After=xyz.openbmc_project.cpusensor.service
++After=xyz.openbmc_project.hwmontempsensor.service
++After=disable-sw2.service
  
  [Service]
  Restart=always
 diff --git a/pid/builder.cpp b/pid/builder.cpp
 old mode 100644
 new mode 100755
-index 1fbfbd4..8e60192
+index 1fbfbd4..97773d3
 --- a/pid/builder.cpp
 +++ b/pid/builder.cpp
 @@ -21,6 +21,7 @@
@@ -402,7 +407,7 @@ index 1fbfbd4..8e60192
  
  #include <iostream>
  #include <memory>
-@@ -119,6 +120,17 @@ std::unordered_map<int64_t, std::unique_ptr<PIDZone>>
+@@ -119,13 +120,24 @@ std::unordered_map<int64_t, std::unique_ptr<PIDZone>>
                      zone.get(), name, inputs, info->stepwiseInfo);
                  zone->addThermalPID(std::move(stepwise));
              }
@@ -418,8 +423,17 @@ index 1fbfbd4..8e60192
 +                zone->addThermalPID(std::move(fsc));
 +            }
  
-             std::cerr << "inputs: ";
+-            std::cerr << "inputs: ";
++            /*std::cerr << "inputs: ";
              for (const auto& i : inputs)
+             {
+                 std::cerr << i << ", ";
+             }
+-            std::cerr << "\n";
++            std::cerr << "\n";*/
+         }
+ 
+         zone->emit_object_added();
 diff --git a/pid/buildjson.cpp b/pid/buildjson.cpp
 old mode 100644
 new mode 100755
@@ -613,7 +627,7 @@ index dd26d16..d43d753 100644
      percent /= 100;
 diff --git a/pid/fsccontroller.cpp b/pid/fsccontroller.cpp
 new file mode 100755
-index 0000000..6eb8f0b
+index 0000000..3ed8468
 --- /dev/null
 +++ b/pid/fsccontroller.cpp
 @@ -0,0 +1,361 @@
@@ -740,7 +754,7 @@ index 0000000..6eb8f0b
 +                        setProperty(bus,Object,"SetPointH",info.setPointH);
 +                        setProperty(bus,Object,"SetPointL",info.setPointL);
 +                        tcontrol = value;
-+                        std::cerr << "update " << _id.c_str() << " setPointH(" << info.setPointH << ") and setPointL(" << info.setPointL << ")" << '\n';
++                        //std::cerr << "update " << _id.c_str() << " setPointH(" << info.setPointH << ") and setPointL(" << info.setPointL << ")" << '\n';
 +                    }
 +                }
 +            }
@@ -1058,3 +1072,29 @@ index 6a63671..f27096a
  #include "pid/tuning.hpp"
  
  #include <algorithm>
+diff --git a/sensors/builder.cpp b/sensors/builder.cpp
+old mode 100644
+new mode 100755
+index 4da1cf2..879255f
+--- a/sensors/builder.cpp
++++ b/sensors/builder.cpp
+@@ -53,8 +53,8 @@ SensorManager
+         std::string name = it.first;
+         const struct conf::SensorConfig* info = &it.second;
+ 
+-        std::cerr << "Sensor: " << name << " " << info->type << " ";
+-        std::cerr << info->readPath << " " << info->writePath << "\n";
++        //std::cerr << "Sensor: " << name << " " << info->type << " ";
++        //std::cerr << info->readPath << " " << info->writePath << "\n";
+ 
+         IOInterfaceType rtype = getReadInterfaceType(info->readPath);
+         IOInterfaceType wtype = getWriteInterfaceType(info->writePath);
+@@ -153,7 +153,7 @@ SensorManager
+         {
+             // These sensors are read-only, but only for this application
+             // which only writes to fan sensors.
+-            std::cerr << info->type << " readPath: " << info->readPath << "\n";
++            //std::cerr << info->type << " readPath: " << info->readPath << "\n";
+ 
+             if (IOInterfaceType::EXTERNAL == rtype)
+             {

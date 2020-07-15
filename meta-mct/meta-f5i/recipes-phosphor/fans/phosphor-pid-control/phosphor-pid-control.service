@@ -2,6 +2,9 @@
 Description=Phosphor-Pid-Control Margin-based Fan Control Daemon
 After=xyz.openbmc_project.EntityManager.service
 After=xyz.openbmc_project.ObjectMapper.service
+After=xyz.openbmc_project.fansensor.service
+After=xyz.openbmc_project.hwmontempsensor.service
+After=disable-sw2.service
 
 [Service]
 Restart=always
@@ -11,4 +14,4 @@ StartLimitInterval=0
 Type=simple
 
 [Install]
-WantedBy=basic.target
+WantedBy=multi-user.target
