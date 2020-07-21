@@ -1,10 +1,10 @@
 [Unit]
 Description=Phosphor-Pid-Control Margin-based Fan Control Daemon
-After=xyz.openbmc_project.EntityManager.service
-After=xyz.openbmc_project.ObjectMapper.service
-After=xyz.openbmc_project.fansensor.service
-After=xyz.openbmc_project.hwmontempsensor.service
-After=disable-sw2.service
+Requires=multi-user.target
+Wants=obmc-power-on@0.target
+After=obmc-power-on@0.target
+Conflicts=obmc-host-stop@0.target
+Conflicts=obmc-chassis-poweroff@0.target
 
 [Service]
 Restart=always
@@ -14,4 +14,4 @@ StartLimitInterval=0
 Type=simple
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=obmc-chassis-poweron@0.target
