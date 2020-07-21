@@ -1,5 +1,7 @@
 KCS_DEVICE = "ipmi-kcs2"
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://0001-IPMB-support-for-NM-commands.patch"
+SRC_URI += "file://0001-IPMB-support-for-NM-commands.patch \
+            file://0002-Display-debug-messsage-for-KCS.patch \
+            "
 
