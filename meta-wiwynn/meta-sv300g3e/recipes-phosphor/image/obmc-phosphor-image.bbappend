@@ -31,4 +31,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_sv300g3e += " entity-manager \
                                               intel-asd \
                                               cpld-updater \
                                               system-watchdog \
+                                              button-handler \
                                             "

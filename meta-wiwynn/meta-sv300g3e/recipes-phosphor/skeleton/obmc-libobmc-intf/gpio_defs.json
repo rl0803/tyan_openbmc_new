@@ -2,7 +2,7 @@
     "gpio_configs": {
         "power_config": {
             "power_good_in": "PGOOD",
-            "power_up_outs": "POWER_UP_PIN",
+            "power_up_outs": "",
             "reset_outs": ""
         }
     },
@@ -12,26 +12,6 @@
             "name": "PGOOD",
             "pin": "M5",
             "direction": "in"
-        },
-        {
-            "name": "POWER_BUTTON",
-            "pin": "D2",
-            "direction": "both"
-        },
-        {
-            "name": "POWER_UP_PIN",
-            "pin": "D3",
-            "direction": "out"
-        },
-        {
-            "name": "RESET_BUTTON",
-            "pin": "D4",
-            "direction": "both"
-        },
-        {
-            "name": "RESET_OUT",
-            "pin": "D3",
-            "direction": "out"
         }
     ]
 }
