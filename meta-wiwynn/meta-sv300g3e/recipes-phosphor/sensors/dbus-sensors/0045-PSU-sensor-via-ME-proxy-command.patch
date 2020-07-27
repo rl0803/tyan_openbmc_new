@@ -1,0 +1,1270 @@
+From e1dc02feeae333c3ab57255a92d51f8a333de44c Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 27 Jul 2020 21:51:27 +0800
+Subject: [PATCH] PSU sensor via ME proxy command
+
+---
+ CMakeLists.txt                                |  18 +
+ include/PSUProxyMeSensor.hpp                  | 138 ++++++
+ ...z.openbmc_project.psuproxymesensor.service |  15 +
+ src/PSUEventProxyMeSensor.cpp                 | 338 ++++++++++++++
+ src/PSUProxyMeSensorMain.cpp                  | 418 ++++++++++++++++++
+ src/PSUThrdProxyMeSensor.cpp                  | 255 +++++++++++
+ 6 files changed, 1182 insertions(+)
+ create mode 100644 include/PSUProxyMeSensor.hpp
+ create mode 100644 service_files/xyz.openbmc_project.psuproxymesensor.service
+ create mode 100644 src/PSUEventProxyMeSensor.cpp
+ create mode 100644 src/PSUProxyMeSensorMain.cpp
+ create mode 100644 src/PSUThrdProxyMeSensor.cpp
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2b4e942..ab5d0b8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -50,6 +50,7 @@ option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
+ option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" OFF)
+ option (DISABLE_PSU "Disable installing PSU sensor" OFF)
+ option (DISABLE_NVME "Disable installing NVME sensor" OFF)
++option (DISABLE_PSUPROXYME "Disable installing PSU Proxy ME sensor" OFF)
+ option (BMC_CPU_SENSOR_TCONTROL "Enable Tcontrol Threshold setting" ON)
+ 
+ include ("cmake/HunterGate.cmake")
+@@ -90,6 +91,9 @@ set (PSU_SRC_FILES src/Utils.cpp src/PSUSensor.cpp src/Thresholds.cpp
+ 
+ set (NVME_SRC_FILES src/Utils.cpp src/NVMESensor.cpp src/Thresholds.cpp)
+ 
++set (PSUPROXYME_SRC_FILES src/Utils.cpp src/PSUEventProxyMeSensor.cpp
++     src/PSUThrdProxyMeSensor.cpp src/Thresholds.cpp)
++
+ set (EXTERNAL_PACKAGES Boost sdbusplus-project nlohmann-json)
+ set (SENSOR_LINK_LIBS -lsystemd -lobmci2c -lobmcmisc stdc++fs sdbusplus)
+ 
+@@ -233,6 +237,10 @@ add_executable (nicsensor src/NICSensorMain.cpp ${NIC_SRC_FILES})
+ add_dependencies (nicsensor sdbusplus-project)
+ target_link_libraries (nicsensor ${SENSOR_LINK_LIBS})
+ 
++add_executable (psuproxymesensor src/PSUProxyMeSensorMain.cpp ${PSUPROXYME_SRC_FILES})
++add_dependencies (psuproxymesensor sdbusplus-project)
++target_link_libraries (psuproxymesensor ${SENSOR_LINK_LIBS})
++
+ if (NOT YOCTO)
+     add_dependencies (adcsensor ${EXTERNAL_PACKAGES})
+     add_dependencies (cpusensor ${EXTERNAL_PACKAGES})
+@@ -248,6 +256,7 @@ if (NOT YOCTO)
+     add_dependencies (ipmbsensor ${EXTERNAL_PACKAGES})
+     add_dependencies (mcutempsensor ${EXTERNAL_PACKAGES})
+     add_dependencies (psusensor ${EXTERNAL_PACKAGES})
++    add_dependencies (psuproxymesensor ${EXTERNAL_PACKAGES})
+ endif ()
+ 
+ set (SERVICE_FILE_SRC_DIR ${PROJECT_SOURCE_DIR}/service_files)
+@@ -364,3 +373,12 @@ if (NOT DISABLE_NIC)
+             DESTINATION ${SERVICE_FILE_INSTALL_DIR}
+     )
+ endif ()
++
++if (NOT DISABLE_PSUPROXYME)
++    install (TARGETS psuproxymesensor DESTINATION bin)
++    install (
++        FILES
++            ${SERVICE_FILE_SRC_DIR}/xyz.openbmc_project.psuproxymesensor.service
++            DESTINATION ${SERVICE_FILE_INSTALL_DIR}
++    )
++endif ()
+diff --git a/include/PSUProxyMeSensor.hpp b/include/PSUProxyMeSensor.hpp
+new file mode 100644
+index 0000000..d9db3fa
+--- /dev/null
++++ b/include/PSUProxyMeSensor.hpp
+@@ -0,0 +1,138 @@
++#pragma once
++
++#include "sensor.hpp"
++#include "Thresholds.hpp"
++
++#include <unistd.h>
++#include <variant>
++#include <iostream>
++#include <systemd/sd-journal.h>
++#include <sdbusplus/asio/object_server.hpp>
++#include <boost/asio/steady_timer.hpp>
++#include <boost/chrono/chrono_io.hpp>
++
++namespace psuCommon
++{
++    static auto newBus = sdbusplus::bus::new_system();
++    static std::vector<uint8_t> dummy;
++
++    int sendPsuProxyMeCmd(const uint8_t transactionType, const uint8_t writeLen, const uint8_t readLen,
++                          const uint8_t pmbusCmd, std::vector<uint8_t>& resCmdData,
++                          std::vector<uint8_t>& appendCmdData = dummy);
++    void logSelPsuStatus(const uint8_t eventDir, const uint8_t eventData1,
++                         const uint8_t eventData2, const uint8_t eventData3);
++} // namespace psuCommon
++
++static constexpr unsigned int sensorPollMs = 1000;
++
++static constexpr uint8_t ipmbMeChannelNum = 0x01;
++static constexpr uint8_t reqNetFn = 0x2E;
++static constexpr uint8_t reqLun = 0x00;
++static constexpr uint8_t reqCmd = 0xD9;
++
++static constexpr uint8_t sendByte = 0x00;
++static constexpr uint8_t readByte = 0x02;
++static constexpr uint8_t readWord = 0x06;
++static constexpr uint8_t blockRead = 0x0A;
++
++static constexpr uint8_t failureDetected = 0x01;
++static constexpr uint8_t predictiveFailure = 0x02;
++static constexpr uint8_t inputLost = 0x03;
++
++static bool isLogSelPredictiveFailure = false;
++static bool isLogSelFailureDetected = false;
++static bool isLogSelInputLost = false;
++
++static constexpr uint8_t asssertionDir = 0x00;
++static constexpr uint8_t deasssertionDir = 0x80;
++
++static const std::string sensorPathPrefix = "/xyz/openbmc_project/sensors/";
++
++static constexpr char const *ipmbMeService = "xyz.openbmc_project.Ipmi.Channel.Ipmb";
++static constexpr char const *ipmbMeObjPath = "/xyz/openbmc_project/Ipmi/Channel/Ipmb";
++static constexpr char const *ipmbMeInterface = "org.openbmc.Ipmb";
++
++static constexpr char const *ipmiSelService = "xyz.openbmc_project.Logging.IPMI";
++static constexpr char const *ipmiSelPath = "/xyz/openbmc_project/Logging/IPMI";
++static constexpr char const *ipmiSelAddInterface = "xyz.openbmc_project.Logging.IPMI";
++static const std::string ipmiSelAddMessage = "SEL Entry";
++static const std::string psuStatusPath = "/xyz/openbmc_project/sensors/powersupply/PSU_STATUS";
++
++static constexpr uint8_t pmbusCmdClearFaultPec = 0x46;
++static constexpr uint8_t pmbusCmdSetPageToZero = 0xea;
++
++struct sensorTypeMap
++{
++    std::string sensorName;
++    std::string sensorType;
++};
++
++static const std::vector<struct sensorTypeMap> psuEventList = {
++    {.sensorName = "PSU_STATUS", .sensorType = "powersupply/"}
++};
++
++class PsuEventSensor
++{
++    public:
++        PsuEventSensor(sdbusplus::asio::object_server& objectServer,
++                                std::shared_ptr<sdbusplus::asio::connection>& conn,
++                                boost::asio::io_service& io, const std::string& sensorType,
++                                const std::string& sensorName);
++        ~PsuEventSensor();
++
++    private:
++        sdbusplus::asio::object_server& objServer;
++        std::string dbusPath;
++        std::shared_ptr<sdbusplus::asio::dbus_interface> psuProxyMeInterface;
++        boost::asio::steady_timer waitTimer;
++        double value;
++        std::string sn;
++        bool pageSet;
++
++        uint16_t statusWord;
++
++        bool updatePropertyStatusWord(const uint16_t& newValue);
++        bool setPropertyStatusWord(const uint16_t& newValue, uint16_t& oldValue);
++
++        void setupRead(void);
++        void monitorPsuStatus(void);
++        bool setPsuPageToZero(void);
++        bool checkPsuPmbusRevision(void);
++        bool checkPsuStatusWord(void);
++        bool checkPsuStatusRegister(const uint8_t pmbusCmd, const uint8_t predictiveFailureBit,
++                                    const uint8_t failureDetectedBit, const uint8_t inputLostBit);
++};
++
++class PsuThrdSensor : public Sensor
++{
++  public:
++    PsuThrdSensor(const std::string& objectType,
++              sdbusplus::asio::object_server& objectServer,
++              std::shared_ptr<sdbusplus::asio::connection>& conn,
++              boost::asio::io_service& io, const std::string& sensorName,
++              std::vector<thresholds::Threshold>&& thresholds,
++              const std::string& sensorConfiguration,
++              std::string& sensorTypeName, uint8_t pmbusCmd,
++              double max, double min, PowerState readState);
++    ~PsuThrdSensor();
++
++  private:
++    sdbusplus::asio::object_server& objServer;
++    boost::asio::steady_timer waitTimer;
++    size_t errCount;
++    uint8_t pmbusCmd;
++    uint8_t voutMode;
++    double nvalue;
++
++    std::string sn;
++    static constexpr size_t warnAfterErrorCount = 10;
++
++    // Power-on sensor
++    PowerState readState;
++    thresholds::ThresholdTimer thresholdTimer;
++
++    void setupRead(void);
++    void handleResponse(void);
++    void checkThresholds(void) override;
++    bool checkPsuSensorReading(void);
++};
+diff --git a/service_files/xyz.openbmc_project.psuproxymesensor.service b/service_files/xyz.openbmc_project.psuproxymesensor.service
+new file mode 100644
+index 0000000..c9cae54
+--- /dev/null
++++ b/service_files/xyz.openbmc_project.psuproxymesensor.service
+@@ -0,0 +1,15 @@
++[Unit]
++Description=PSU Proxy ME Sensor
++StopWhenUnneeded=false
++Requires=ipmb.service
++After=ipmb.service
++After=xyz.openbmc_project.EntityManager.service
++
++[Service]
++Restart=always
++RestartSec=5
++ExecStart=/usr/bin/psuproxymesensor
++SyslogIdentifier=psuproxymesensor
++
++[Install]
++WantedBy=multi-user.target
+diff --git a/src/PSUEventProxyMeSensor.cpp b/src/PSUEventProxyMeSensor.cpp
+new file mode 100644
+index 0000000..7b7ac86
+--- /dev/null
++++ b/src/PSUEventProxyMeSensor.cpp
+@@ -0,0 +1,338 @@
++/*
++// Copyright (c) 2020 Wiwynn Corporation
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//      http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++*/
++
++#include "PSUProxyMeSensor.hpp"
++
++#include <unistd.h>
++#include <boost/algorithm/string/predicate.hpp>
++#include <boost/algorithm/string/replace.hpp>
++#include <boost/date_time/posix_time/posix_time.hpp>
++#include <iostream>
++#include <limits>
++#include <sdbusplus/asio/connection.hpp>
++#include <sdbusplus/asio/object_server.hpp>
++#include <string>
++#include <openbmc/libmisc.h>
++#include <future>
++#include <systemd/sd-journal.h>
++#include <cmath>
++
++PsuEventSensor::PsuEventSensor(sdbusplus::asio::object_server& objectServer,
++                               std::shared_ptr<sdbusplus::asio::connection>& conn,
++                               boost::asio::io_service& io, const std::string& sensorType,
++                               const std::string& sensorName) :
++objServer(objectServer), waitTimer(io), statusWord(0), value(0), sn(sensorName), pageSet(false)
++{
++    dbusPath = sensorPathPrefix + sensorType + sensorName;
++
++    psuProxyMeInterface = objectServer.add_interface(
++        dbusPath, "xyz.openbmc_project.Sensor.Value");
++
++    psuProxyMeInterface->register_property("StatusWord", statusWord,
++                                            [&](const uint16_t& newValue, uint16_t& oldValue) {
++                                                 return setPropertyStatusWord(newValue, oldValue);
++                                            });
++    if (!psuProxyMeInterface->initialize())
++    {
++        std::cerr << "[PSU Proxy ME Sensor] error initializing value interface\n";
++    }
++
++    setupRead();
++}
++
++PsuEventSensor::~PsuEventSensor()
++{
++    waitTimer.cancel();
++    objServer.remove_interface(psuProxyMeInterface);
++}
++
++bool PsuEventSensor::updatePropertyStatusWord(const uint16_t& newValue)
++{
++    psuProxyMeInterface->set_property("StatusWord", newValue);
++    return true;
++}
++
++bool PsuEventSensor::setPropertyStatusWord(const uint16_t& newValue, uint16_t& oldValue)
++{
++    oldValue = newValue;
++    return true;
++}
++
++void PsuEventSensor::setupRead(void)
++{
++    monitorPsuStatus();
++
++    waitTimer.expires_from_now(boost::asio::chrono::milliseconds(sensorPollMs));
++    waitTimer.async_wait([&](const boost::system::error_code& ec) {
++        if (ec == boost::asio::error::operation_aborted)
++        {
++            return; // we're being canceled
++        }
++        setupRead();
++    });
++}
++
++void PsuEventSensor::monitorPsuStatus(void)
++{
++    if (pageSet == false)
++    {
++        std::cerr << "Set PSU page# to 0 (BMC)!\n";
++        pageSet = setPsuPageToZero();
++    }
++
++    checkPsuPmbusRevision();
++    checkPsuStatusWord();
++}
++
++bool PsuEventSensor::setPsuPageToZero(void)
++{
++    /* 00h - SET_PSU_PAGE */
++    // Set PSU PAGE to 0
++    uint8_t pmbusCmd = 0x00;
++    std::vector<uint8_t> resCmdData;
++    resCmdData.clear();
++
++    uint8_t writeLen = 0x03;
++    uint8_t readLen = 0x00;
++    std::vector<uint8_t> cmdData = {0x0, pmbusCmdSetPageToZero};
++    if (0 != psuCommon::sendPsuProxyMeCmd(sendByte, writeLen, readLen, pmbusCmd, resCmdData, cmdData))
++    {
++        std::cerr << "Fail to set PSU page number!\n";
++        return false;
++    }
++
++    // Get PSU PAGE to 0
++    writeLen = 0x01;
++    readLen = 0x01;
++    if (0 != psuCommon::sendPsuProxyMeCmd(blockRead, writeLen, readLen, pmbusCmd, resCmdData))
++    {
++        std::cerr << "Fail to get PSU page number!\n";
++        return false;
++    }
++
++    if ((0x0 != resCmdData.at(3)) && (0xff != resCmdData.at(3)))
++    {
++        sd_journal_print(LOG_ERR, "Invalid PSU Page [0x%x]\n", resCmdData.at(3));
++        return false;
++    }
++
++    return  true;
++}
++
++bool PsuEventSensor::checkPsuPmbusRevision(void)
++{
++    /* 98h - PMBUS_REVISION */
++    const uint8_t writeLen = 0x01, readLen = 0x01, pmbusCmd = 0x98;
++    std::vector<uint8_t> resCmdData;
++    uint8_t pmbusRev;
++    
++    if (0 != psuCommon::sendPsuProxyMeCmd(blockRead, writeLen, readLen, pmbusCmd, resCmdData))
++    {
++        return false;
++    }
++
++    pmbusRev = resCmdData.at(3);
++    //std::cerr << "PMBus Revision = " << unsigned(pmbusRev) << '\n';
++
++    switch (pmbusRev)
++    {
++        case 0x11:  /* 1.1 and 1.1 */
++        case 0x12:  /* 1.1 and 1.2 */
++        case 0x21:  /* 1.2 and 1.1 */
++        case 0x22:  /* 1.2 and 1.2 */
++            break;
++        default:
++            // std::cerr << "Incorrect PMBus Rev! PMBus Revision = " << unsigned(pmbusRev) << '\n';
++            return false;
++            break;
++    }
++
++    return true;
++}
++
++bool PsuEventSensor::checkPsuStatusWord(void)
++{
++    /* 79h - STATUS_WORD */
++    uint8_t writeLen = 0x01, readLen = 0x02, pmbusCmd = 0x79;
++    std::vector<uint8_t> resCmdData;
++    bool statusFlag = false;
++    
++    if (0 != psuCommon::sendPsuProxyMeCmd(blockRead, writeLen, readLen, pmbusCmd, resCmdData))
++    {
++        std::cerr << "Error in read PSU status word via ME proxy!\n";
++        return false;
++    }
++
++    uint16_t tmp;
++    tmp = (resCmdData.at(4) << 8) | resCmdData.at(3);
++    // std::cerr << "PSU statusWord = " << tmp << '\n';
++
++    if (tmp != statusWord)
++    {
++        statusWord = tmp;
++        updatePropertyStatusWord(statusWord);
++    }
++
++    /* Step 1: 7Ah - STATUS_VOUT failure */
++    if (statusWord & 0x8020)
++    {
++        /* predictiveFailureBit : 0x60 - VOUT_OV_WARNING, VOUT_UV_WARNING
++         * failureDetectedBit   : 0x90 - VOUT_OV_FAULT, VOUT_UV_FAULT
++         * inputLostBit         : 0x00 - NA
++         */
++        checkPsuStatusRegister(0x7A, 0x60, 0x90, 0x00);
++        statusFlag = true;
++    }
++
++    /* Step 2: 7Bh - STATUS_IOUT failure */
++    if (statusWord & 0x4010)
++    {
++        /* predictiveFailureBit : 0x21 - IOUT_OC_WARNING, POUT_OP_WARNING
++         * failureDetectedBit   : 0xDA - IOUT_OC_FAULT, IOUT_OC_LV_FAULT, IOUT_UC_FAULT, Current Share Fault, POUT_OP_FAULT
++         * inputLostBit         : 0x00 - NA
++         */
++        checkPsuStatusRegister(0x7B, 0x21, 0xDA, 0x00);
++        statusFlag = true;
++    }
++
++    /* Step 3: 7Ch - STATUS_INPUT failure */
++    if (statusWord & 0x2008)
++    {
++        /* predictiveFailureBit : 0x63 - VIN_OV_WARNING, VIN_UV_WARNING, IIN_OC_WARNING, PIN_OP_WARNING
++         * failureDetectedBit   : 0x94 - VIN_OV_FAULT, VIN_UV_FAULT, IIN_OC_FAULT
++         * inputLostBit         : 0x18 - VIN_UV_FAULT, Unit Off For Low Input Voltage
++         */
++        checkPsuStatusRegister(0x7C, 0x63, 0x94, 0x18);
++        statusFlag = true;
++    }
++
++    /* Step 4: 7Dh - STATUS_TEMPERATURE failure */
++    if (statusWord & 0x0004)
++    {
++        /* predictiveFailureBit : 0x60 - OT_WARNING, UT_WARNING
++         * failureDetectedBit   : 0x90 - OT_FAULT, UT_FAULT
++         * inputLostBit         : 0x00 - NA
++         */
++        checkPsuStatusRegister(0x7D, 0x60, 0x90, 0x00);
++        statusFlag = true;
++    }
++
++    /* Step 5: 81h - STATUS_FAN_1_2 failure */
++    if (statusWord & 0x0400)
++    {
++        /* predictiveFailureBit : 0x30 - Fan 1 Warning, Fan 2 Warning
++         * failureDetectedBit   : 0xC0 - Fan 1 Fault, Fan 2 Fault
++         * inputLostBit         : 0x00 - NA
++         */
++        checkPsuStatusRegister(0x81, 0x30, 0xC0, 0x00);
++        statusFlag = true;
++    }
++
++    /* Step 6: 7Eh - STATUS_CML failure */
++    if (statusWord & 0x0002)
++    {
++        statusFlag = true;
++    }
++
++    /* SEL deassertion event */
++    if ((0x00 == statusWord) && (isLogSelPredictiveFailure))
++    {
++        psuCommon::logSelPsuStatus(deasssertionDir, predictiveFailure, 0x00, 0x00);
++        isLogSelPredictiveFailure = false;
++    }
++
++    if ((0x00 == statusWord) && (isLogSelFailureDetected))
++    {
++        psuCommon::logSelPsuStatus(deasssertionDir, failureDetected, 0x00, 0x00);
++        isLogSelFailureDetected = false;
++    }
++
++    if ((0x00 == statusWord) && (isLogSelInputLost))
++    {
++        psuCommon::logSelPsuStatus(deasssertionDir, inputLost, 0x00, 0x00);
++        isLogSelInputLost = false;
++    }
++
++    /* CLEAR_FAULTS */
++    if (true == statusFlag)
++    {
++        std::cerr << "PSU Clear fault - 0!\n";
++        writeLen = 0x02; // CMD + PEC
++        readLen = 0x00;
++        pmbusCmd = 0x03;
++        std::vector<uint8_t> pecData = {pmbusCmdClearFaultPec};
++
++        resCmdData.clear();
++        if (0 != psuCommon::sendPsuProxyMeCmd(sendByte, writeLen, readLen, pmbusCmd, resCmdData, pecData))
++        {
++            std::cerr << "Fail to send clear fault!\n";
++            return false;
++        }
++    }
++
++    return true;
++}
++
++bool PsuEventSensor::checkPsuStatusRegister(
++                            const uint8_t pmbusCmd, const uint8_t predictiveFailureBit,
++                            const uint8_t failureDetectedBit, const uint8_t inputLostBit)
++{
++    const uint8_t writeLen = 0x01, readLen = 0x01;
++    std::vector<uint8_t> resCmdData;
++    uint8_t status = 0;
++    uint8_t eventData2 = statusWord & 0x00FF;
++    uint8_t eventData3 = (statusWord & 0xFF00) >> 8;
++    
++    if (0 != psuCommon::sendPsuProxyMeCmd(blockRead, writeLen, readLen, pmbusCmd, resCmdData))
++    {
++        return false;
++    }
++
++    status = resCmdData.at(3);
++    //std::cerr << "[" << unsigned(pmbusCmd) << "] status = " << status << '\n';
++
++    /* WARNING */
++    if (status & predictiveFailureBit)
++    {
++        if (false == isLogSelPredictiveFailure)
++        {
++            psuCommon::logSelPsuStatus(asssertionDir, predictiveFailure, eventData2, eventData3);
++            isLogSelPredictiveFailure = true;
++        }
++    }
++
++    /* FAULT */
++    if (status & failureDetectedBit)
++    {
++        if (false == isLogSelFailureDetected)
++        {
++            psuCommon::logSelPsuStatus(asssertionDir, failureDetected, eventData2, eventData3);
++            isLogSelFailureDetected = true;
++        }
++    }
++    
++    /* INPUT LOST */
++    if ((0x7C == pmbusCmd) && (status & inputLostBit))
++    {
++        if (false == isLogSelInputLost)
++        {
++            psuCommon::logSelPsuStatus(asssertionDir, inputLost, eventData2, eventData3);
++            isLogSelInputLost = true;
++        }
++    }
++
++    return true;
++}
+diff --git a/src/PSUProxyMeSensorMain.cpp b/src/PSUProxyMeSensorMain.cpp
+new file mode 100644
+index 0000000..073cf26
+--- /dev/null
++++ b/src/PSUProxyMeSensorMain.cpp
+@@ -0,0 +1,418 @@
++/*
++// Copyright (c) 2020 Wiwynn Corporation
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//      http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++*/
++
++#include "PSUProxyMeSensor.hpp"
++#include "Utils.hpp"
++
++#include <boost/algorithm/string/predicate.hpp>
++#include <boost/algorithm/string/replace.hpp>
++#include <boost/container/flat_set.hpp>
++#include <filesystem>
++#include <fstream>
++#include <regex>
++#include <sdbusplus/asio/connection.hpp>
++#include <sdbusplus/asio/object_server.hpp>
++#include <array>
++#include <boost/container/flat_map.hpp>
++#include <cmath>
++#include <functional>
++#include <iostream>
++#include <sdbusplus/bus/match.hpp>
++#include <string>
++#include <utility>
++#include <variant>
++#include <vector>
++
++static constexpr bool DEBUG = false;
++
++static constexpr std::array<const char*, 1> sensorTypes = {
++    "xyz.openbmc_project.Configuration.pmbus"
++};
++
++namespace fs = std::filesystem;
++static boost::container::flat_map<std::string, std::string> sensorTable;
++
++namespace psuCommon
++{
++int sendPsuProxyMeCmd(const uint8_t transactionType, const uint8_t writeLen, 
++                      const uint8_t readLen, const uint8_t pmbusCmd, 
++                      std::vector<uint8_t>& resCmdData, std::vector<uint8_t>& appendCmdData)
++{
++    std::vector<uint8_t> reqCmdData = {0x57, 0x01, 0x00,
++                                      (0x10| transactionType), 0x02, 0xb0,
++                                       0x00, 0x00, 0x00,
++                                       0x20, writeLen, readLen, pmbusCmd};
++
++    if (writeLen > 1)
++    {
++        if ((writeLen-1) != appendCmdData.size())
++        {
++            std::cerr << "[PSU Proxy ME Sensor] Invalid append Command Data\n";
++            return -1;
++        }
++
++        for (int i=0; i<appendCmdData.size(); i++)
++        {
++            reqCmdData.push_back(appendCmdData.at(i));
++        }
++    }
++
++    int32_t resStatus = -1;
++    uint8_t resNetFn = 0, resLun = 0, resCmd = 0, resCc = 0;
++    std::tuple<int32_t, uint8_t, uint8_t, uint8_t, uint8_t, std::vector<uint8_t>> ipmbMePsuRes;
++
++    sdbusplus::message::message rawPmbusCmd = newBus.new_method_call(
++        ipmbMeService, ipmbMeObjPath, ipmbMeInterface, "sendRequest");
++    rawPmbusCmd.append(ipmbMeChannelNum, reqNetFn, reqLun, reqCmd, reqCmdData);
++
++    /* Send request to IPMB */
++    try
++    {
++        sdbusplus::message::message reply = newBus.call(rawPmbusCmd);
++        reply.read(ipmbMePsuRes);
++    }
++    catch(sdbusplus::exception_t& e)
++    {
++        sd_journal_print(LOG_ERR, "[PSU Proxy ME Sensor] Failed to send [%x]\n", pmbusCmd);
++        return -1;
++    }
++
++    std::tie(resStatus, resNetFn, resLun, resCmd, resCc, resCmdData) = ipmbMePsuRes;
++
++    /* Check IPMB layer status */
++    if (resStatus)
++    {
++        sd_journal_print(LOG_ERR, "[PSU Proxy ME Sensor] CMD: [%x], Status: [%x]\n", pmbusCmd, resStatus);
++        return -1;
++    }
++
++    /* Check Completion Code */
++    if (resCc)
++    {
++        sd_journal_print(LOG_ERR, "[PSU Proxy ME Sensor] CMD: [%x], CC: [%x]\n", pmbusCmd, resCc);
++        return -1;
++    }
++
++    return 0;
++}
++
++void logSelPsuStatus(const uint8_t eventDir, const uint8_t eventData1,
++                     const uint8_t eventData2, const uint8_t eventData3)
++{
++    uint16_t genId = 0x20;
++
++    bool assert = true;
++    if (eventDir == deasssertionDir)
++    {
++        assert = false;
++    }
++
++    std::vector<uint8_t> selData(3, 0xFF);
++    selData.at(0) = eventData1;                // Event Data 1
++    selData.at(1) = eventData2;                // Event Data 2
++    selData.at(2) = eventData3;                // Event Data 3
++
++    sdbusplus::message::message writeSEL = newBus.new_method_call(
++        ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
++    writeSEL.append(ipmiSelAddMessage, psuStatusPath, selData, assert, genId);
++
++    try
++    {
++        newBus.call_noreply(writeSEL);
++    }
++    catch (sdbusplus::exception_t& e)
++    {
++        std::cerr << "[PSU Proxy ME Sensor] Failed to add PSU_STATUS SEL!\n";
++    }
++}
++} // namespace psuCommon
++
++void createPsuThrdSensors(boost::asio::io_service& io,
++                   sdbusplus::asio::object_server& objectServer,
++                   boost::container::flat_map<std::string, std::unique_ptr<PsuThrdSensor>>& sensors,
++                   std::shared_ptr<sdbusplus::asio::connection>& dbusConnection, 
++                   const std::unique_ptr<boost::container::flat_set<std::string>>& sensorsChanged)
++{
++    bool firstScan = sensorsChanged == nullptr;
++
++    ManagedObjectType sensorConfigs;
++    int numCreated = 0;
++    bool useCache = false;
++
++    // TODO may need only modify the ones that need to be changed.
++    for (const char* type : sensorTypes)
++    {
++        if (!getSensorConfiguration(type, dbusConnection, sensorConfigs,
++                                    useCache))
++        {
++            std::cerr << "error get sensor config from entity manager\n";
++            
++            return;
++        }
++        useCache = true;
++    }
++    
++    for (const std::pair<sdbusplus::message::object_path, SensorData>&
++        sensor : sensorConfigs)
++    {
++        const SensorData* sensorData = nullptr;
++        const std::string* interfacePath = nullptr;
++        const char* sensorType = nullptr;
++        const std::pair<std::string, boost::container::flat_map<
++                  std::string, BasicVariantType>>*
++        baseConfig = nullptr;
++
++        sensorData = &(sensor.second);
++        for (const char* type : sensorTypes)
++        {
++            auto sensorBase = sensorData->find(type);
++            if (sensorBase != sensorData->end())
++            {
++                baseConfig = &(*sensorBase);
++                sensorType = type;
++
++                break;
++            }
++        }
++        
++        if (baseConfig == nullptr)
++        {
++            std::cerr << "error finding base configuration for PSU \n";
++
++            continue;
++        }
++
++        interfacePath = &(sensor.first.str);
++    
++        if (interfacePath == nullptr)
++        {
++            // To avoid this error message, add your export map entry,
++            // from Entity Manager, to sensorTypes at the top of this file.
++            std::cerr << " invalid sensor interface path\n";
++
++            continue;
++        }
++
++        // Sensor Name
++        auto findSensorName = baseConfig->second.find("Name");
++        if (findSensorName == baseConfig->second.end())
++        {
++            std::cerr << "Failed to find sensor name in JSON\n";
++
++            continue;
++        }
++        std::string sensorName = std::get<std::string>(findSensorName->second);
++
++        /* Sensor Type: 
++           power, current, temperature, voltage, fan_tach */
++        auto findSensorTypeJson = baseConfig->second.find("SensorType");
++        if (findSensorTypeJson == baseConfig->second.end())
++        {
++            std::cerr << "Failed to find sensor type in JSON\n";
++            continue;
++        }
++        std::string SensorTypeJson = std::get<std::string>(findSensorTypeJson->second);
++
++        auto findSensorType = sensorTable.find(SensorTypeJson);
++        if (findSensorType == sensorTable.end())
++        {
++            std::cerr << "Failed to find match for PSU sensorType: "
++                    << SensorTypeJson << "\n";
++            continue;
++        }
++
++        // on rescans, only update sensors we were signaled by
++        auto findSensor = sensors.find(sensorName);
++        if (!firstScan && findSensor != sensors.end())
++        {
++            bool found = false;
++            for (auto it = sensorsChanged->begin(); it != sensorsChanged->end();
++                 it++)
++            {
++                if (boost::ends_with(*it, findSensor->second->name))
++                {
++                    sensorsChanged->erase(it);
++                    findSensor->second = nullptr;
++                    found = true;
++                    break;
++                }
++            }
++            if (!found)
++            {
++                continue;
++            }
++        }
++
++        std::vector<thresholds::Threshold> sensorThresholds;
++        if (!parseThresholdsFromConfig(*sensorData, sensorThresholds))
++        {
++            std::cerr << "error populating thresholds for " << sensorName << "\n";
++        }
++
++        // PMBus command
++        auto configurationCmd = baseConfig->second.find("Command");
++        if (configurationCmd == baseConfig->second.end())
++        {
++            std::cerr << "Failed to find sensor pmbus command in JSON\n";
++            continue;
++        }
++        uint8_t pmbuscmd = static_cast<uint8_t>(std::get<uint64_t>(configurationCmd->second));
++
++        // Max. value
++        auto findMaxValue = baseConfig->second.find("MaxValue");
++        double MaxValue = 255;
++        if (findMaxValue != baseConfig->second.end())
++        {
++            MaxValue =
++                std::visit(VariantToDoubleVisitor(), findMaxValue->second);
++        }
++
++        // Min. value
++        auto findMinValue = baseConfig->second.find("MinValue");
++        double MinValue = 0;
++        if (findMinValue != baseConfig->second.end())
++        {
++            MinValue =
++                std::visit(VariantToDoubleVisitor(), findMinValue->second);
++        }
++
++        // Sensor power state
++        auto findPowerStateJson = baseConfig->second.find("PowerState");
++        if (findPowerStateJson == baseConfig->second.end())
++        {
++            std::cerr << "Failed to find power state in JSON\n";
++            continue;
++        }
++        std::string PowerStateJson = std::get<std::string>(findPowerStateJson->second);
++
++        PowerState sensorReadState;
++        if (0 == PowerStateJson.compare("Always"))
++        {
++            sensorReadState = PowerState::always;
++        }
++        else if (0 == PowerStateJson.compare("On"))
++        {
++            sensorReadState = PowerState::on;
++        }
++        else
++        {
++            std::cerr << "Failed to find power state\n";
++            continue;
++        }
++
++        sensors[sensorName] = std::make_unique<PsuThrdSensor>(
++            sensorType, objectServer, dbusConnection, io,
++            sensorName, std::move(sensorThresholds), *interfacePath,
++            findSensorType->second, pmbuscmd, MaxValue, MinValue, sensorReadState);
++
++        ++numCreated;
++        if constexpr (DEBUG)
++        {
++            std::cerr << "Created " << numCreated << " sensors so far\n";
++        }
++    }
++
++    if constexpr (DEBUG)
++    {
++        std::cerr << "Created total of " << numCreated << " sensors\n";
++    }
++    return;
++}
++
++void createPsuEventSensors(
++    boost::asio::io_service& io, sdbusplus::asio::object_server& objectServer,
++    boost::container::flat_map<std::string, std::unique_ptr<PsuEventSensor>>& sensors,
++    std::shared_ptr<sdbusplus::asio::connection>& dbusConnection)
++{
++    std::string sName;
++    std::string sType;
++
++    for (int i = 0; i < psuEventList.size(); i++)
++    {
++        sName = psuEventList[i].sensorName;
++        sType = psuEventList[i].sensorType;
++
++        sensors[sName] = std::make_unique<PsuEventSensor>(
++            objectServer, dbusConnection, io, sType, sName);
++    }
++}
++
++void propertyInitialize(void)
++{
++    sensorTable = {{"power", "power/"},
++                   {"current", "current/"},
++                   {"temperature", "temperature/"},
++                   {"voltage", "voltage/"},
++                   {"fan_tach", "fan_tach/"}};
++}
++
++int main(int argc, char *argv[])
++{
++    boost::asio::io_service io;
++    auto systemBus = std::make_shared<sdbusplus::asio::connection>(io);
++    systemBus->request_name("xyz.openbmc_project.PsuProxyMeSensor");
++    sdbusplus::asio::object_server objectServer(systemBus);
++    boost::container::flat_map<std::string, std::unique_ptr<PsuEventSensor>> sensorsPsuEvent;
++    boost::container::flat_map<std::string, std::unique_ptr<PsuThrdSensor>> sensorsPsuThrd;
++    std::vector<std::unique_ptr<sdbusplus::bus::match::match>> matches;
++    std::unique_ptr<boost::container::flat_set<std::string>> sensorsChanged =
++        std::make_unique<boost::container::flat_set<std::string>>();
++
++    propertyInitialize();
++
++    io.post([&]() {
++        createPsuEventSensors(io, objectServer, sensorsPsuEvent, systemBus);
++        createPsuThrdSensors(io, objectServer, sensorsPsuThrd, systemBus, nullptr); 
++    });
++
++    boost::asio::steady_timer filterTimer(io);
++    std::function<void(sdbusplus::message::message&)> eventHandler =
++        [&](sdbusplus::message::message& message) {
++            if (message.is_method_error())
++            {
++                std::cerr << "callback method error\n";
++                return;
++            }
++
++            sensorsChanged->insert(message.get_path());
++
++            filterTimer.expires_from_now(boost::asio::chrono::seconds(3));
++            filterTimer.async_wait([&](const boost::system::error_code& ec) {
++                if (ec == boost::asio::error::operation_aborted)
++                {
++                    return;
++                }
++                else if (ec)
++                {
++                    std::cerr << "timer error\n";
++                }
++
++                createPsuThrdSensors(io, objectServer, sensorsPsuThrd, systemBus, sensorsChanged);
++            });
++    };
++
++    for (const char* type : sensorTypes)
++    {
++        auto match = std::make_unique<sdbusplus::bus::match::match>(
++            static_cast<sdbusplus::bus::bus&>(*systemBus),
++            "type='signal',member='PropertiesChanged',path_namespace='" +
++                std::string(inventoryPath) + "',arg0namespace='" + type + "'",
++            eventHandler);
++        matches.emplace_back(std::move(match));
++    }
++
++    io.run();
++}
+diff --git a/src/PSUThrdProxyMeSensor.cpp b/src/PSUThrdProxyMeSensor.cpp
+new file mode 100644
+index 0000000..3ae283f
+--- /dev/null
++++ b/src/PSUThrdProxyMeSensor.cpp
+@@ -0,0 +1,255 @@
++/*
++// Copyright (c) 2019 Intel Corporation
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//      http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++*/
++
++#include "PSUProxyMeSensor.hpp"
++
++#include <unistd.h>
++#include <boost/algorithm/string/predicate.hpp>
++#include <boost/algorithm/string/replace.hpp>
++#include <iostream>
++#include <istream>
++#include <limits>
++#include <memory>
++#include <sdbusplus/asio/connection.hpp>
++#include <sdbusplus/asio/object_server.hpp>
++#include <string>
++#include <vector>
++
++static constexpr bool DEBUG = false;
++std::map<std::string, double> psuSensorReadingBuf;
++static constexpr uint8_t pmbusCmdReadVout = 0x8B;
++
++PsuThrdSensor::PsuThrdSensor(const std::string& objectType,
++                     sdbusplus::asio::object_server& objectServer,
++                     std::shared_ptr<sdbusplus::asio::connection>& conn,
++                     boost::asio::io_service& io, const std::string& sensorName,
++                     std::vector<thresholds::Threshold>&& _thresholds,
++                     const std::string& sensorConfiguration,
++                     std::string& sensorTypeName, uint8_t pmbusCmd,
++                     double max, double min, PowerState readState) :
++    Sensor(boost::replace_all_copy(sensorName, " ", "_"),
++           std::move(_thresholds), sensorConfiguration, objectType, max, min),
++    objServer(objectServer), waitTimer(io), errCount(0), pmbusCmd(pmbusCmd),
++    readState(std::move(readState)), thresholdTimer(io, this),
++    sn(sensorName), nvalue(0), voutMode(0xff)
++{
++    if constexpr (DEBUG)
++    {
++        std::cerr << "Constructed sensor: type "
++                  << objectType << " config " << sensorConfiguration
++                  << " typename " << sensorTypeName
++                  << " min " << min << " max " << max << " name \""
++                  << sensorName << "\"\n";
++    }
++
++    std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
++
++    sensorInterface = objectServer.add_interface(
++        dbusPath, "xyz.openbmc_project.Sensor.Value");
++
++    if (thresholds::hasWarningInterface(thresholds))
++    {
++        thresholdInterfaceWarning = objectServer.add_interface(
++            dbusPath, "xyz.openbmc_project.Sensor.Threshold.Warning");
++    }
++    if (thresholds::hasCriticalInterface(thresholds))
++    {
++        thresholdInterfaceCritical = objectServer.add_interface(
++            dbusPath, "xyz.openbmc_project.Sensor.Threshold.Critical");
++    }
++
++    // This should be called before initializing association.
++    // createInventoryAssoc() does add more associations before doing
++    // register and initialize "Associations" property.
++    setInitialProperties(conn);
++
++/*
++    association =
++        objectServer.add_interface(dbusPath, "org.openbmc.Associations");
++
++    createInventoryAssoc(conn, association, configurationPath);
++*/
++    setupPowerMatch(conn);
++    setupRead();
++}
++
++PsuThrdSensor::~PsuThrdSensor()
++{
++    waitTimer.cancel();
++    objServer.remove_interface(sensorInterface);
++    objServer.remove_interface(thresholdInterfaceWarning);
++    objServer.remove_interface(thresholdInterfaceCritical);
++    objServer.remove_interface(association);
++}
++
++void PsuThrdSensor::setupRead(void)
++{
++    handleResponse();
++}
++
++void PsuThrdSensor::handleResponse(void)
++{
++    // Set as sensor reading invalid for power-on type sensor
++    if (readState != PowerState::always && !isPowerOn())
++    {
++        updateValueInvalid(true);
++        // updateValue(0);
++        errCount = 0;
++
++        waitTimer.expires_from_now(boost::asio::chrono::milliseconds(sensorPollMs));
++        waitTimer.async_wait([&](const boost::system::error_code& ec) {
++            if (ec == boost::asio::error::operation_aborted)
++            {
++                return;
++            }
++            setupRead();
++        });
++
++        return;
++    }
++
++    if (checkPsuSensorReading())
++    {
++        try
++        {
++            if (nvalue != value)
++            {
++                if constexpr (DEBUG)
++                {
++                    std::cerr << "Update value from " << value
++                              << " to " << nvalue << "\n";
++                }
++                updateValue(nvalue);
++            }
++            updateValueInvalid(false);
++            errCount = 0;
++        }
++        catch (const std::invalid_argument&)
++        {
++            updateValueInvalid(true);
++            errCount++;
++        }
++    }
++    else
++    {
++        std::cerr << "Error in PSU sensor [" << name << "] read via ME proxy\n";
++        errCount++;
++    }
++
++    if (errCount >= warnAfterErrorCount)
++    {
++        if (errCount == warnAfterErrorCount)
++        {
++            std::cerr << "Failure to read PSU sensor [" << name << "]\n"; 
++        }
++        // updateValue(0);
++        updateValueInvalid(true);
++        errCount++;
++    }
++
++    waitTimer.expires_from_now(boost::asio::chrono::milliseconds(sensorPollMs));
++    waitTimer.async_wait([&](const boost::system::error_code& ec) {
++        if (ec == boost::asio::error::operation_aborted)
++        {
++            return;
++        }
++        setupRead();
++    });
++}
++
++void PsuThrdSensor::checkThresholds(void)
++{
++    if (readState != PowerState::always && !isPowerOn())
++    {
++        return;
++    }
++
++    if(readState == PowerState::always)
++    {
++        thresholds::checkThresholds(this);
++    }
++    else
++    {
++        thresholds::checkThresholdsPowerDelay(this, thresholdTimer);
++    }
++}
++
++bool PsuThrdSensor::checkPsuSensorReading(void)
++{
++    const uint8_t writeLen = 0x01;
++    const uint8_t readLen = 0x02;
++    std::vector<uint8_t> resCmdData;
++
++    /* 20h - VOUT_MODE */
++    if (0xff == voutMode)
++    {
++        const uint8_t readLenVoutMode = 0x01;
++        const uint8_t commandVoutMode = 0x20;
++
++        if (0 != psuCommon::sendPsuProxyMeCmd(blockRead, writeLen,
++                                              readLenVoutMode, commandVoutMode, resCmdData))
++        {
++            std::cerr << "Failed to read VOUT_MODE by ME proxy\n";
++            return false;
++        }
++
++        voutMode = resCmdData.at(3);
++    }
++    
++    if (0 != psuCommon::sendPsuProxyMeCmd(blockRead, writeLen,
++                                          readLen, pmbusCmd, resCmdData))
++    {
++        std::cerr << "Failed to read " << name << " via ME proxy\n";
++        return false;
++    }
++    
++    uint16_t rawData = resCmdData.at(4) << 8 | resCmdData.at(3);
++    
++    int32_t y = 0x0;
++    int32_t n = 0x0;
++    
++    if (pmbusCmdReadVout == pmbusCmd)
++    {
++        if (0xff == voutMode)
++        {
++            return false;
++        }
++        y = rawData & 0xffff;
++        n = voutMode & 0x1f;
++    }
++    else
++    {
++        // Linear data format
++        // y: data[10:0]
++        y = rawData & 0x7ff;
++        // n: data[15:11]
++        n = (resCmdData.at(4) >> 3) & 0x1f;
++
++        if (((y >> 10) & 0x01) == 0x01)
++        {
++            y = -(0x800 - y);
++        }
++    }
++
++    if (((n >> 4) & 0x01) == 0x01)
++    {
++        n = -(0x20 - n);
++    }
++    
++    nvalue = static_cast<double>(y) * pow(2, n);
++
++    return true;
++}
+-- 
+2.24.1
+

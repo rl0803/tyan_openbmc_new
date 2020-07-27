@@ -2,116 +2,164 @@
     {
         "Exposes": [
             {
-                "Address": "$address",
-                "Bus": "$bus",
-                "Name": "Chicony R550 PSU FRU",
-                "Type": "EEPROM"
-            },
-            {
+                "Name":"PSU Input Voltage",
+                "Bus": 7,
                 "Address": "0x58",
-                "Bus": "$bus",
-                "Name": "PSU",
-                "Labels": ["pin", "pout1", "vin", "vout1", "iin", "iout1", "temp1", "fan1"],
-                "PowerStates": [
-                    {
-                        "Label": "pin",
-                        "PowerState": "On"
-                    },
-                    {
-                        "Label": "pout1",
-                        "PowerState": "On"
-                    },
-                    {
-                        "Label": "vin",
-                        "PowerState": "Always"
-                    },
-                    {
-                        "Label": "vout1",
-                        "PowerState": "On"
-                    },
-                    {
-                        "Label": "iin",
-                        "PowerState": "On"
-                    },
-                    {
-                        "Label": "iout1",
-                        "PowerState": "On"
-                    },
-                    {
-                        "Label": "temp1",
-                        "PowerState": "Always"
-                    },
-                    {
-                        "Label": "fan1",
-                        "PowerState": "On"
-                    }
-                ],
+                "Command": "0x88",
+                "SensorType" : "voltage",
+                "MaxValue": 300,
+                "MinValue": 0,
+                "PowerState": "Always",
                 "Thresholds": [
                     {
                         "Direction": "greater than",
-                        "Label": "pin",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 700
-                    },
-                    {
-                        "Direction": "greater than",
-                        "Label": "iout1",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 52
-                    },
-                    {
-                        "Direction": "greater than",
-                        "Label": "iin",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 4.25
-                    },
-                    {
-                        "Direction": "greater than",
-                        "Label": "vout1",
-                        "Name": "upper critical",
-                        "Severity": 1,
-                        "Value": 12.625
-                    },
-                    {
-                        "Direction": "less than",
-                        "Label": "vout1",
-                        "Name": "lower critical",
-                        "Severity": 1,
-                        "Value": 11.375
-                    },
-                    {
-                        "Direction": "greater than",
-                        "Label": "vin",
                         "Name": "upper critical",
                         "Severity": 1,
                         "Value": 264.18
                     },
                     {
                         "Direction": "less than",
-                        "Label": "vin",
                         "Name": "lower critical",
                         "Severity": 1,
                         "Value": 81.03
-                    },
+                    }
+                ],
+                "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Output Voltage",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x8B",
+                "SensorType" : "voltage",
+                "MaxValue": 15,
+                "MinValue": 0,
+                "PowerState": "On",
+                "Thresholds": [
                     {
                         "Direction": "greater than",
-                        "Label": "fan1",
+                        "Name": "upper critical",
+                        "Severity": 1,
+                        "Value": 12.625
+                    },
+                    {
+                        "Direction": "less than",
+                        "Name": "lower critical",
+                        "Severity": 1,
+                        "Value": 11.375
+                    }
+                ],
+                "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Input Current",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x89",
+                "SensorType" : "current",
+                "MaxValue": 20,
+                "MinValue": 0,
+                "PowerState": "On",
+                "Thresholds": [
+                    {
+                        "Direction": "greater than",
+                        "Name": "upper critical",
+                        "Severity": 1,
+                        "Value": 4.25
+                    }
+                ],
+                "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Output Current",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x8C",
+                "SensorType" : "current",
+                "MaxValue": 100,
+                "MinValue": 0,
+                "PowerState": "On",
+                "Thresholds": [
+                    {
+                        "Direction": "greater than",
+                        "Name": "upper critical",
+                        "Severity": 1,
+                        "Value": 52
+                    }
+                ],
+                "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Input Power",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x97",
+                "SensorType" : "power",
+                "MaxValue": 1000,
+                "MinValue": 0,
+                "PowerState": "On",
+                "Thresholds": [
+                    {
+                        "Direction": "greater than",
+                        "Name": "upper critical",
+                        "Severity": 1,
+                        "Value": 700
+                    }
+                ],
+                "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Output Power",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x96",
+                "SensorType" : "power",
+                "MaxValue": 1000,
+                "MinValue": 0,
+                "PowerState": "On",
+                "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Fan Speed 1",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x90",
+                "SensorType" : "fan_tach",
+                "MaxValue": 30000,
+                "MinValue": 0,
+                "PowerState": "On",
+                "Thresholds": [
+                    {
+                        "Direction": "greater than",
                         "Name": "upper critical",
                         "Severity": 1,
                         "Value": 19800
                     },
                     {
                         "Direction": "less than",
-                        "Label": "fan1",
                         "Name": "lower critical",
                         "Severity": 1,
                         "Value": 2000
                     }
                 ],
                 "Type": "pmbus"
+            },
+            {
+                "Name":"PSU Temperature",
+                "Bus": 7,
+                "Address": "0x58",
+                "Command": "0x8D",
+                "SensorType" : "temperature",
+                "MaxValue": 127,
+                "MinValue": -128,
+                "PowerState": "Always",
+                "Type": "pmbus"
+            },
+            {
+                "Address": "$address",
+                "Bus": "$bus",
+                "Name": "Chicony R550 PSU FRU",
+                "Type": "EEPROM"
             }
         ],
         "Name": "Chicony R550 PSU",

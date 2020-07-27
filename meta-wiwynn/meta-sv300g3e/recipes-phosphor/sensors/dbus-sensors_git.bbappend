@@ -34,6 +34,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0042-Stop-the-threshold-check-delay-timer-when-the-event-is-deasserted.patch \
             file://0043-Implement-BMC-Update-SEL.patch \
             file://0044-Set-event-only-sensor-service-to-wait-for-dbus-sel-logging-object.patch \
+            file://0045-PSU-sensor-via-ME-proxy-command.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
@@ -41,6 +42,7 @@ SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
                           xyz.openbmc_project.nvmesensor.service \
                           xyz.openbmc_project.nicsensor.service \
                           xyz.openbmc_project.fanextsensor.service \
+                          xyz.openbmc_project.psuproxymesensor.service \
                          "
 
 DEPENDS += "obmc-libi2c \
