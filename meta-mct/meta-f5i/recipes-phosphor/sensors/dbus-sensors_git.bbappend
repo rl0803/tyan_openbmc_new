@@ -36,6 +36,7 @@ SRC_URI += "file://0001-add-supported-pmbus-name-cffps1.patch \
             file://0043-add-offset-value-for-E810-OCP-card.patch \
             file://0044-log-assert-event-when-timer-cancelled.patch \
             file://0045-filter-out-invalidate-ADC-value.patch \
+            file://0047-Filter-out-invalidate-MOS-temperature-value-and-add-.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.processorsensor.service"
