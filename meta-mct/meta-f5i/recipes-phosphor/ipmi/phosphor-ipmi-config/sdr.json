@@ -39,25 +39,25 @@
          "ownerId" : "0x3f",
          "sensorNumber" : "0x2C",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU0_MC0_D0"
+         "sensorName" : "CPU0_MC1_D0"
     },
     {
          "ownerId" : "0x3f",
          "sensorNumber" : "0x30",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU0_MC0_E0"
+         "sensorName" : "CPU0_MC1_E0"
     },
     {
          "ownerId" : "0x3f",
          "sensorNumber" : "0x31",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU0_MC0_E1"
+         "sensorName" : "CPU0_MC1_E1"
     },
     {
          "ownerId" : "0x3f",
          "sensorNumber" : "0x34",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU0_MC0_F0"
+         "sensorName" : "CPU0_MC1_F0"
     },
     {
          "ownerId" : "0x3f",
@@ -87,25 +87,25 @@
          "ownerId" : "0x3f",
          "sensorNumber" : "0x6C",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU1_MC0_D0"
+         "sensorName" : "CPU1_MC1_D0"
     },
     {
          "ownerId" : "0x3f",
          "sensorNumber" : "0x70",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU1_MC0_E0"
+         "sensorName" : "CPU1_MC1_E0"
     },
     {
          "ownerId" : "0x3f",
          "sensorNumber" : "0x71",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU1_MC0_E1"
+         "sensorName" : "CPU1_MC1_E1"
     },
     {
          "ownerId" : "0x3f",
          "sensorNumber" : "0x74",
          "sensorType" : "0x0C",
-         "sensorName" : "CPU1_MC0_F0"
+         "sensorName" : "CPU1_MC1_F0"
     },
     {
         "ownerId" : "0x2c",
