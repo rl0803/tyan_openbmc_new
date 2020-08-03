@@ -1,0 +1,83 @@
+From 436913f88c78e47dd831c3fc7c228ce69a8920c9 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 3 Aug 2020 15:06:15 +0800
+Subject: [PATCH] Add clear buffer in slave mqueue driver
+
+---
+ drivers/i2c/i2c-slave-mqueue.c | 41 +++++++++++++++++++++++++++++++++-
+ 1 file changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/i2c/i2c-slave-mqueue.c b/drivers/i2c/i2c-slave-mqueue.c
+index 6014bca0ff2a..d23b2ecb622c 100644
+--- a/drivers/i2c/i2c-slave-mqueue.c
++++ b/drivers/i2c/i2c-slave-mqueue.c
+@@ -8,10 +8,12 @@
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ #include <linux/sysfs.h>
++#include <linux/uaccess.h>
+ 
+ #define MQ_MSGBUF_SIZE		CONFIG_I2C_SLAVE_MQUEUE_MESSAGE_SIZE
+ #define MQ_QUEUE_SIZE		CONFIG_I2C_SLAVE_MQUEUE_QUEUE_SIZE
+ #define MQ_QUEUE_NEXT(x)	(((x) + 1) & (MQ_QUEUE_SIZE - 1))
++#define IOCTL_CLR_BUF 0x0F
+ 
+ struct mq_msg {
+ 	int	len;
+@@ -81,6 +83,42 @@ static int i2c_slave_mqueue_callback(struct i2c_client *client,
+ 	return ret;
+ }
+ 
++static ssize_t i2c_slave_mqueue_bin_write(struct file *filp,
++					 struct kobject *kobj,
++					 struct bin_attribute *attr,
++					 char *buf, loff_t pos, size_t count)
++{
++    struct mq_queue *mq;
++    struct mq_msg *msg;
++    unsigned long flags;
++    ssize_t ret = 0;
++	int error_count = 0;
++
++    mq = dev_get_drvdata(container_of(kobj, struct device, kobj));
++
++    switch (buf[0])
++	{
++        case IOCTL_CLR_BUF:
++			spin_lock_irqsave(&mq->lock, flags);
++			if ((mq->out != mq->in) && (count == 1))
++			{
++				mq->out = mq->in;
++			}
++	        spin_unlock_irqrestore(&mq->lock, flags);
++
++			if(error_count == 0)
++			{
++				return ret;
++			}
++			else
++			{
++				return -EFAULT;
++			}
++        default:
++            return -1;
++    }
++}
++
+ static ssize_t i2c_slave_mqueue_bin_read(struct file *filp,
+ 					 struct kobject *kobj,
+ 					 struct bin_attribute *attr,
+@@ -151,8 +189,9 @@ static int i2c_slave_mqueue_probe(struct i2c_client *client,
+ 
+ 	sysfs_bin_attr_init(&mq->bin);
+ 	mq->bin.attr.name = "slave-mqueue";
+-	mq->bin.attr.mode = 0400;
++	mq->bin.attr.mode = 0600;
+ 	mq->bin.read = i2c_slave_mqueue_bin_read;
++	mq->bin.write = i2c_slave_mqueue_bin_write;
+ 	mq->bin.size = MQ_MSGBUF_SIZE * MQ_QUEUE_SIZE;
+ 
+ 	ret = sysfs_create_bin_file(&dev->kobj, &mq->bin);
+-- 
+2.24.1
+

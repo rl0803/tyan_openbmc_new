@@ -237,8 +237,8 @@
         },
         {
             "Name": "Mezz NIC Temp",
-            "Bus1": 1,
-            "Bus2": 6,
+            "Bus1": 6,
+            "Bus2": 1,
             "Address": "0x1F",
             "SensorType": "temp",
             "MaxReading": 127,

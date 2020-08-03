@@ -217,6 +217,14 @@
 		compatible = "ti,tmp421";
 		reg = <0x4c>;
 	};
+
+	/* NIC card FRU */
+	eeprom@51 {
+		compatible = "atmel,24c32";
+		reg = <0x51>;
+		pagesize = <32>;
+	};
+
 };
 
 &i2c2 {
@@ -262,6 +270,12 @@
 
 &i2c6 {
 	status = "okay";
+	multi-master;
+	bmc@10 {
+		compatible = ",slave-mqueue";
+		reg = <0x10>;
+	};
+
 	eeprom@54 {
 		compatible = "atmel,24c64";
 		reg = <0x54>;

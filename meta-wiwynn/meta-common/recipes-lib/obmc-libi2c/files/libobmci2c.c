@@ -1,6 +1,29 @@
 
 #include "libobmci2c.h"
 
+#define POLY    (0x1070U << 3)
+static uint8_t crc8(uint16_t data)
+{
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		if (data & 0x8000)
+			data = data ^ POLY;
+		data = data << 1;
+	}
+	return (uint8_t)(data >> 8);
+}
+
+/* Incremental CRC8 over count bytes in the array pointed to by p */
+uint8_t i2c_smbus_pec(uint8_t crc, uint8_t *p, size_t count)
+{
+	int i;
+
+	for (i = 0; i < count; i++)
+		crc = crc8((crc ^ p[i]) << 8);
+	return crc;
+}
+
 int open_i2c_dev(int i2cbus, char *filename, size_t size, int quiet)
 {
     int file;
@@ -25,6 +48,25 @@ int open_i2c_dev(int i2cbus, char *filename, size_t size, int quiet)
             if (errno == EACCES)
                 fprintf(stderr, "Run as root?\n");
         }
+    }
+
+    return file;
+}
+
+int open_i2c_slave_dev(int i2cbus, int bmc_addr)
+{
+    int file;
+    char slaveDevPath[MAX_FILE_PATH_SIZE] = {0};
+
+    // 7-bit BMC slave address
+    snprintf(slaveDevPath, MAX_FILE_PATH_SIZE,
+             "/sys/bus/i2c/devices/i2c-%d/%d-%04x/slave-mqueue",
+             i2cbus, i2cbus, bmc_addr);
+
+    file = open(slaveDevPath, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+    if (file < 0)
+    {
+        fprintf(stderr, "Unable to open i2c slave-mqueue [%s]\n", slaveDevPath);
     }
 
     return file;
@@ -56,6 +98,7 @@ int i2c_master_write_read(int file, uint8_t slave_addr,
     struct i2c_msg i2cmsg[2];
     int ret;
 
+    // 7-bit slave address
     i2cmsg[0].addr = slave_addr & 0xFF;
     i2cmsg[0].flags = 0;
     i2cmsg[0].len = tx_cnt;
@@ -81,6 +124,7 @@ int i2c_master_write(int file, uint8_t slave_addr,
     struct i2c_msg i2cmsg;
     int ret;
 
+    // 7-bit slave address
     i2cmsg.addr = slave_addr & 0xFF;
     i2cmsg.flags = 0;
     i2cmsg.len = tx_cnt;
@@ -90,6 +134,32 @@ int i2c_master_write(int file, uint8_t slave_addr,
     iomsg.nmsgs = 1;
 
     ret = ioctl(file, I2C_RDWR, &iomsg);
+
+    return ret;
+}
+
+int i2c_slave_read(int file, uint8_t* rx_buf)
+{
+    uint8_t tmp_buf[MAX_SLAVE_REV_SIZE] = {0};
+    int readLen = -1;
+
+    readLen = read(file, tmp_buf, MAX_SLAVE_REV_SIZE);
+
+    if (readLen > 0)
+    {
+        memcpy(rx_buf, tmp_buf, readLen);
+    }
+
+    return readLen;
+}
+
+int i2c_slave_clear_buffer(int file)
+{
+    uint8_t tmp_buf[CLR_SLAVE_BUF_SIZE] = {0};
+    int ret;
+
+    tmp_buf[0] = IOCTL_CLR_SLAVE_BUF;
+    ret = write(file, tmp_buf, CLR_SLAVE_BUF_SIZE);
 
     return ret;
 }

@@ -1,0 +1,412 @@
+From a1837604e126b5543cdeb3d94fef2f218f7f0b59 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 3 Aug 2020 15:01:55 +0800
+Subject: [PATCH] Support NIC card temperature over MCTP
+
+---
+ include/NICSensor.hpp |   8 +-
+ src/NICSensor.cpp     | 316 +++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 316 insertions(+), 8 deletions(-)
+
+diff --git a/include/NICSensor.hpp b/include/NICSensor.hpp
+index b27ed40..9ddd053 100644
+--- a/include/NICSensor.hpp
++++ b/include/NICSensor.hpp
+@@ -35,14 +35,20 @@ private:
+     std::string path2;
+     std::string& sensorType;
+     std::string& sensorUnit;
+-    int errCount;
++    std::vector<uint8_t> fruBdManufacturer;
++    uint32_t errCount;
++    uint32_t mctpErrCount;
+     uint8_t busId1;
+     uint8_t busId2;
+     uint8_t slaveAddr;
+     float senValue;
++    bool mfgChecked;
++    bool mctpCmd1Set;
+ 
+     void setupRead(void);
+     bool visitNICReg(void);
++    bool fruGetMfg(void);
++    bool mctpGetTemp(void);
+     void handleResponse(void);
+     void checkThresholds(void) override;
+ };
+diff --git a/src/NICSensor.cpp b/src/NICSensor.cpp
+index 323c555..260da1b 100644
+--- a/src/NICSensor.cpp
++++ b/src/NICSensor.cpp
+@@ -26,6 +26,7 @@
+ #include <sdbusplus/asio/connection.hpp>
+ #include <sdbusplus/asio/object_server.hpp>
+ #include <string>
++#include <chrono>
+ 
+ static constexpr bool DEBUG = false;
+ static constexpr const char* sensorPathPrefix = "/xyz/openbmc_project/sensors/";
+@@ -34,6 +35,39 @@ static constexpr unsigned int sensorPollMs = 1000;
+ static constexpr unsigned int sensorScaleFactor = 1000;
+ static constexpr size_t warnAfterErrorCount = 10;
+ 
++static constexpr int bmcSlaveAddr = 0x10; // 7-bit bmc slave address
++static constexpr const char* fruI2cBus = "1";
++static constexpr const char* fruI2cAddr = "51";
++static constexpr const int mctpI2cBus = 6;
++static std::vector<uint8_t> mctpMfg = {0x49, 0x4E, 0x54, 0x45, 0x4C};
++static std::vector<uint8_t> mctpGetTempCmd1 = {0x0F, 0x0A, 0x21,
++										       0x01, 0x00, 0x60, 0xCF,
++										       0x00, 0x85, 0x01, 0x00,
++										       0x01, 0x20};
++static constexpr const int mctpGetTempCmd1ResLen = 16;
++
++static std::vector<uint8_t> mctpGetTempCmd2 = {0x0F, 0x1A, 0x21,
++										       0x01, 0x01, 0x60, 0xCA,
++										       0x02, 0x00, 0x01, 0x00,
++										       0x09, 0x00, 0x00, 0x00,
++										       0x00, 0x00, 0x00, 0x00,
++										       0x00, 0x00, 0x00, 0x00,
++										       0x00, 0x00, 0x00, 0x00,
++										       0x00, 0x93};
++static constexpr const int mctpGetTempCmd2ResLen = 34;
++
++static std::vector<uint8_t> mctpGetTempCmd3 = {0x0F, 0x22, 0x21,
++										       0x01, 0x01, 0x60, 0xC9,
++										       0x02, 0x00, 0x01, 0x00,
++										       0x35, 0x50, 0x00, 0x00,
++										       0x05, 0x00, 0x00, 0x00,
++										       0x00, 0x00, 0x00, 0x00,
++										       0x00, 0x00, 0x00, 0x01,
++										       0x57, 0x4B, 0x00, 0x00,
++										       0x00, 0x00, 0x00, 0x00,
++										       0x00, 0x92};
++static constexpr const int mctpGetTempCmd3ResLen = 42;
++
+ NICSensor::NICSensor(const std::string& path1, const std::string& path2,
+                        const std::string& objectType,
+                        sdbusplus::asio::object_server& objectServer,
+@@ -48,8 +82,8 @@ NICSensor::NICSensor(const std::string& path1, const std::string& path2,
+            std::move(_thresholds), sensorConfiguration, objectType, MaxValue,
+            MinValue),
+     path1(path1), path2(path2), slaveAddr(slaveAddr), objServer(objectServer), waitTimer(io),
+-    errCount(0), senValue(0), busId1(busId1), busId2(busId2),
+-    sensorType(sensorTypeName), sensorUnit(sensorUnit)
++    errCount(0), mctpErrCount(0), senValue(0), busId1(busId1), busId2(busId2),
++    sensorType(sensorTypeName), sensorUnit(sensorUnit), mfgChecked(false), mctpCmd1Set(false)
+ {
+     std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
+ 
+@@ -86,14 +120,25 @@ NICSensor::~NICSensor()
+ 
+ void NICSensor::setupRead(void)
+ {
+-    bool res = visitNICReg();
+-    if (res != true)
++    // Power-off state
++    if (!isPowerOn())
+     {
+-        errCount++;
++        mctpErrCount = 0;
++        errCount = 0;
++        mfgChecked = false;
++        mctpCmd1Set = false;
+     }
+     else
+     {
+-        errCount = 0;
++        bool res = visitNICReg();
++        if (res != true)
++        {
++            errCount++;
++        }
++        else
++        {
++            errCount = 0;
++        }
+     }
+ 
+     handleResponse();
+@@ -106,6 +151,25 @@ bool NICSensor::visitNICReg(void)
+ 
+     if (sensorUnit == "temp")
+     {
++        if (mfgChecked == false)
++        {
++            if(fruGetMfg() == true)
++            {
++                mfgChecked = true;
++            }
++        }
++
++        if (mfgChecked == true &&
++            fruBdManufacturer == mctpMfg)
++        {
++            if (mctpGetTemp() == true)
++            {
++                mctpErrCount = 0;
++                return true;
++            }
++            mctpErrCount++;
++        }
++
+         std::vector<char> filename(32, 0);
+         std::vector<uint8_t> cmdData;
+         std::vector<uint8_t> readBuf;
+@@ -179,6 +243,243 @@ bool NICSensor::visitNICReg(void)
+     }
+ }
+ 
++bool NICSensor::fruGetMfg(void)
++{
++    fruBdManufacturer.clear();
++
++    uint8_t res = 0xFF;
++    uint32_t offset;
++    uint8_t rdLen;
++    std::vector<uint8_t> buffer(32,0);
++
++    // 1. FRU Header Format
++    offset = 0x0;
++    rdLen = 0x1;
++    res = i2cEEPROMGet(fruI2cBus, fruI2cAddr, offset, rdLen, buffer.data());
++    if ((0x0 != res) ||
++        (0x1 != buffer.at(0)))
++    {
++        std::cerr << "Error in open NIC FRU EEPROM\n";
++        return false;
++    }
++
++    // 2. Get Board Area Offset
++    offset = 0x3;
++    rdLen = 0x1;
++    res = i2cEEPROMGet(fruI2cBus, fruI2cAddr, offset, rdLen, buffer.data());
++    if (0x0 != res)
++    {
++        std::cerr << "Error in get Board Area\n";
++        return false;
++    }
++
++    // 3. Get Board Manufacturer
++    /*
++        - Board Area Format Version (1)
++        - Board Area Length (1)
++        - Language Code (1)
++        - Mfg. time (3)
++        - Board Mfg. type/length (1)q
++    */
++    offset = (buffer.at(0) * 8) + 6;
++    rdLen = 0x1;
++    res = i2cEEPROMGet(fruI2cBus, fruI2cAddr, offset, rdLen, buffer.data());
++    if (0x0 != res)
++    {
++        std::cerr << "Error in get Board Mfg. type/length\n";
++        return false;
++    }
++
++    uint8_t manuTypeLen = buffer.at(0);
++    if (((manuTypeLen >> 6) & 0x3) != 0x3)
++    {
++        std::cerr << "Invalid Board Mfg. type\n";
++        return false;
++    }
++
++    // 4. Get Board Manufacturer String
++    offset++;
++    rdLen = manuTypeLen & 0x1F;
++
++    res = i2cEEPROMGet(fruI2cBus, fruI2cAddr, offset, rdLen, buffer.data());
++    if (0x0 != res)
++    {
++        std::cerr << "Error in get Board Manufacturer String\n";
++        return false;
++    }
++
++    for (int i=0; i<rdLen; i++)
++    {
++        sd_journal_print(LOG_INFO, "[MCTP][%c]", buffer.at(i));
++        fruBdManufacturer.push_back(buffer.at(i));
++    }
++
++    return true;
++}
++
++bool NICSensor::mctpGetTemp(void)
++{
++    std::vector<char> filename(32, 0);
++    int outFd = -1;
++    outFd =  open_i2c_dev(mctpI2cBus, filename.data(), filename.size(), 0);
++    if (outFd < 0)
++    {
++        std::cerr << "[MCTP] Error in open MCTP I2C device.\n";
++        return false;
++    }
++
++    int inFd = -1;
++    inFd = open_i2c_slave_dev(mctpI2cBus, bmcSlaveAddr);
++    if (inFd < 0)
++    {
++        std::cerr << "[MCTP] Error in open slave mqueue device.\n";
++        close_i2c_dev(outFd);
++        return false;
++    }
++
++    // Step1
++    int res = -1;
++    uint8_t mctpAddr = 0x32;
++    std::vector<uint8_t> mctpResp(255,0);
++
++    if (mctpCmd1Set == false)
++    {
++        i2c_slave_clear_buffer(inFd);
++        res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd1.size(), mctpGetTempCmd1.data());
++        if (res < 0)
++        {
++            std::cerr << "[MCTP] Error in master wirte in Cmd1.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
++        std::this_thread::sleep_for(std::chrono::milliseconds(50));
++
++        res = i2c_slave_read(inFd, mctpResp.data());
++        if (res <= 0)
++        {
++            std::cerr << "[MCTP] Error in reading data from mqueue for Cmd1.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
++
++        if (res != mctpGetTempCmd1ResLen)
++        {
++            std::cerr << "[MCTP] Error in resLen of Cmd1.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
++
++        if (DEBUG)
++        {
++            for (int j=0; j<res; j++)
++            {
++                sd_journal_print(LOG_INFO, "[CMD1][%x]",
++                                            mctpResp.at(j));
++            }
++        }
++
++        uint8_t cmd1_pec = i2c_smbus_pec(0, mctpResp.data(), (res-1));
++        if (cmd1_pec != mctpResp.at(res-1))
++        {
++            std::cerr << "[MCTP] Error in PEC of Cmd1.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
++    }
++    mctpCmd1Set = true;
++
++    i2c_slave_clear_buffer(inFd);
++    res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd2.size(), mctpGetTempCmd2.data());
++    if (res < 0)
++    {
++        std::cerr << "[MCTP] Error in master wirte in Cmd2.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++    std::this_thread::sleep_for(std::chrono::milliseconds(50));
++
++    res = i2c_slave_read(inFd, mctpResp.data());
++    if (res <= 0)
++    {
++        std::cerr << "[MCTP] Error in reading data from mqueue for Cmd2.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++
++    if (res != mctpGetTempCmd2ResLen)
++    {
++        std::cerr << "[MCTP] Error in resLen of Cmd2.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++
++    uint8_t cmd2_pec = i2c_smbus_pec(0, mctpResp.data(), (res-1));
++    if (cmd2_pec != mctpResp.at(res-1))
++    {
++            std::cerr << "[MCTP] Error in PEC of Cmd2.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++    }
++
++    // Get Temperature
++    i2c_slave_clear_buffer(inFd);
++    res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd3.size(), mctpGetTempCmd3.data());
++    if (res < 0)
++    {
++       std::cerr << "[MCTP] Error in master wirte in Cmd3.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++    std::this_thread::sleep_for(std::chrono::milliseconds(50));
++
++    res = i2c_slave_read(inFd, mctpResp.data());
++    if (res <= 0)
++    {
++        std::cerr << "[MCTP] Error in reading data from mqueue for Cmd3.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++
++    if (res != mctpGetTempCmd3ResLen)
++    {
++        std::cerr << "[MCTP] Error in resLen of Cmd3.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++
++    uint8_t cmd3_pec = i2c_smbus_pec(0, mctpResp.data(), (res-1));
++    if (cmd3_pec != mctpResp.at(res-1))
++    {
++        std::cerr << "[MCTP] Error in PEC of Cmd3.\n";
++        close_i2c_dev(inFd);
++        close_i2c_dev(outFd);
++        return false;
++    }
++
++    senValue = mctpResp.at(36);
++    if (DEBUG)
++    {
++        sd_journal_print(LOG_CRIT, "[MCTP Temp][Max %d][Curr %d]\n",
++                         mctpResp.at(35), mctpResp.at(36));
++    }
++
++    close_i2c_dev(inFd);
++    close_i2c_dev(outFd);
++
++    return true;
++}
++
+ void NICSensor::handleResponse()
+ {
+     if (errCount == warnAfterErrorCount)
+@@ -189,7 +490,8 @@ void NICSensor::handleResponse()
+                   << "\n";
+     }
+ 
+-    if (errCount >= warnAfterErrorCount)
++    if ((errCount >= warnAfterErrorCount) ||
++        !isPowerOn())
+     {
+         updateValueInvalid(true);
+         // updateValue(0);
+-- 
+2.24.1
+
