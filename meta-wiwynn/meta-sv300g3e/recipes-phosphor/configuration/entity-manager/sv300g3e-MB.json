@@ -145,6 +145,13 @@
             "MaxValue": 5,
             "MinValue": 0,
             "PowerState": "Always",
+            "PollingTime": 3600000,
+            "BridgeGpio": [
+                {
+                    "Name": "P3VBAT_BRIDGE_EN",
+                    "Polarity": "Low"
+                }
+            ],
             "Thresholds": [
                 {
                     "Direction": "greater than",

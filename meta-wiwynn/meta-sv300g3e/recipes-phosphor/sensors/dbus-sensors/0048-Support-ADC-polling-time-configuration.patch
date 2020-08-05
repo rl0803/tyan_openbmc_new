@@ -1,0 +1,118 @@
+From 8f7210d3298979f2c4c8c3c7aff66c555b18b628 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 5 Aug 2020 15:39:30 +0800
+Subject: [PATCH] Support ADC polling time configuration
+
+---
+ include/ADCSensor.hpp |  4 +++-
+ src/ADCSensor.cpp     |  9 +++++----
+ src/ADCSensorMain.cpp | 14 +++++++++++++-
+ 3 files changed, 21 insertions(+), 6 deletions(-)
+
+diff --git a/include/ADCSensor.hpp b/include/ADCSensor.hpp
+index 0191780..999da64 100644
+--- a/include/ADCSensor.hpp
++++ b/include/ADCSensor.hpp
+@@ -62,7 +62,8 @@ class ADCSensor : public Sensor
+               const double scaleFactor, PowerState readState,
+               const std::string& sensorConfiguration,
+               std::optional<BridgeGpio>&& bridgeGpio,
+-              const double MaxValue, const double MinValue);
++              const double MaxValue, const double MinValue,
++              unsigned int sensorPollMs);
+     ~ADCSensor();
+ 
+   private:
+@@ -76,6 +77,7 @@ class ADCSensor : public Sensor
+     std::optional<BridgeGpio> bridgeGpio;
+     PowerState readState;
+     thresholds::ThresholdTimer thresholdTimer;
++    unsigned int sensorPollMs;
+     void setupRead(void);
+     void handleResponse(const boost::system::error_code& err);
+     void checkThresholds(void) override;
+diff --git a/src/ADCSensor.cpp b/src/ADCSensor.cpp
+index e76aa5e..7c24b7b 100644
+--- a/src/ADCSensor.cpp
++++ b/src/ADCSensor.cpp
+@@ -32,9 +32,9 @@
+ #include <string>
+ #include <vector>
+ 
+-static constexpr unsigned int sensorPollMs = 1000;
++// static constexpr unsigned int sensorPollMs = 1000;
+ static constexpr size_t warnAfterErrorCount = 10;
+-static constexpr unsigned int gpioBridgeEnableMs = 20;
++static constexpr unsigned int gpioBridgeEnableMs = 100;
+ // scaling factor from hwmon
+ static constexpr unsigned int sensorScaleFactor = 1000;
+ 
+@@ -50,14 +50,15 @@ ADCSensor::ADCSensor(const std::string& path,
+                      const double scaleFactor, PowerState readState,
+                      const std::string& sensorConfiguration,
+                      std::optional<BridgeGpio>&& bridgeGpio,
+-                     const double MaxValue, const double MinValue) :
++                     const double MaxValue, const double MinValue,
++                     unsigned int sensorPollMs) :
+     Sensor(boost::replace_all_copy(sensorName, " ", "_"),
+            std::move(_thresholds), sensorConfiguration,
+            "xyz.openbmc_project.Configuration.ADC", MaxValue, MinValue),
+     objServer(objectServer), inputDev(io, open(path.c_str(), O_RDONLY)),
+     waitTimer(io), path(path), errCount(0), scaleFactor(scaleFactor),
+     bridgeGpio(std::move(bridgeGpio)), readState(std::move(readState)),
+-    thresholdTimer(io, this)
++    thresholdTimer(io, this), sensorPollMs(sensorPollMs)
+ {
+     sensorInterface = objectServer.add_interface(
+         "/xyz/openbmc_project/sensors/voltage/" + name,
+diff --git a/src/ADCSensorMain.cpp b/src/ADCSensorMain.cpp
+index 97c6e3d..1e4bc80 100644
+--- a/src/ADCSensorMain.cpp
++++ b/src/ADCSensorMain.cpp
+@@ -45,6 +45,8 @@ static std::regex inputRegex(R"(in(\d+)_input)");
+ 
+ static boost::container::flat_map<size_t, bool> cpuPresence;
+ 
++static constexpr unsigned int initSensorPollMs = 1000;
++
+ // filter out adc from any other voltage sensor
+ bool isAdc(const fs::path& parentPath)
+ {
+@@ -228,6 +230,14 @@ void createSensors(
+                         std::visit(VariantToDoubleVisitor(), findMinValue->second);
+                 }
+ 
++                unsigned int sensorPollMs = initSensorPollMs;
++                auto findPollingTime = baseConfiguration->second.find("PollingTime");
++                if (findPollingTime != baseConfiguration->second.end())
++                {
++                    sensorPollMs = std::visit(VariantToUnsignedIntVisitor(),
++                                              findPollingTime->second);
++                }
++
+                 auto findPowerOn = baseConfiguration->second.find("PowerState");
+                 PowerState readState = PowerState::always;
+                 if (findPowerOn != baseConfiguration->second.end())
+@@ -290,7 +300,7 @@ void createSensors(
+                 sensor = std::make_unique<ADCSensor>(
+                     path.string(), objectServer, dbusConnection, io, sensorName,
+                     std::move(sensorThresholds), scaleFactor, readState,
+-                    *interfacePath, std::move(bridgeGpio),MaxValue, MinValue);
++                    *interfacePath, std::move(bridgeGpio),MaxValue, MinValue, sensorPollMs);
+             }
+         }));
+ 
+@@ -336,8 +346,10 @@ int main()
+                     std::cerr << "timer error\n";
+                     return;
+                 }
++                /*
+                 createSensors(io, objectServer, sensors, systemBus,
+                               sensorsChanged);
++                */
+             });
+         };
+ 
+-- 
+2.24.1
+
