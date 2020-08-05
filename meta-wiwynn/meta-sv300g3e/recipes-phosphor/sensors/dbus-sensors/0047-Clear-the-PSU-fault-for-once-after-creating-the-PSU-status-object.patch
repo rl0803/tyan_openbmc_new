@@ -1,0 +1,127 @@
+From c036099a230afacdbd524550d91e9dcc7723fff2 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 5 Aug 2020 12:14:56 +0800
+Subject: [PATCH] Clear the PSU fault for once after creating the PSU status
+ monitoring object
+
+---
+ include/PSUProxyMeSensor.hpp  |  7 +++---
+ src/PSUEventProxyMeSensor.cpp | 47 ++++++++++++++++++++++++-----------
+ 2 files changed, 36 insertions(+), 18 deletions(-)
+
+diff --git a/include/PSUProxyMeSensor.hpp b/include/PSUProxyMeSensor.hpp
+index d9db3fa..16b60b3 100644
+--- a/include/PSUProxyMeSensor.hpp
++++ b/include/PSUProxyMeSensor.hpp
+@@ -35,9 +35,9 @@ static constexpr uint8_t readByte = 0x02;
+ static constexpr uint8_t readWord = 0x06;
+ static constexpr uint8_t blockRead = 0x0A;
+ 
+-static constexpr uint8_t failureDetected = 0x01;
+-static constexpr uint8_t predictiveFailure = 0x02;
+-static constexpr uint8_t inputLost = 0x03;
++static constexpr uint8_t failureDetected = 0xA1;
++static constexpr uint8_t predictiveFailure = 0xA2;
++static constexpr uint8_t inputLost = 0xA3;
+ 
+ static bool isLogSelPredictiveFailure = false;
+ static bool isLogSelFailureDetected = false;
+@@ -96,6 +96,7 @@ class PsuEventSensor
+ 
+         void setupRead(void);
+         void monitorPsuStatus(void);
++        bool clearPsuFault(void);
+         bool setPsuPageToZero(void);
+         bool checkPsuPmbusRevision(void);
+         bool checkPsuStatusWord(void);
+diff --git a/src/PSUEventProxyMeSensor.cpp b/src/PSUEventProxyMeSensor.cpp
+index 7b7ac86..30cbc97 100644
+--- a/src/PSUEventProxyMeSensor.cpp
++++ b/src/PSUEventProxyMeSensor.cpp
+@@ -50,6 +50,8 @@ objServer(objectServer), waitTimer(io), statusWord(0), value(0), sn(sensorName),
+         std::cerr << "[PSU Proxy ME Sensor] error initializing value interface\n";
+     }
+ 
++    // Clear PSU Fault
++    clearPsuFault();
+     setupRead();
+ }
+ 
+@@ -97,6 +99,26 @@ void PsuEventSensor::monitorPsuStatus(void)
+     checkPsuStatusWord();
+ }
+ 
++bool PsuEventSensor::clearPsuFault(void)
++{
++     std::cerr << "PSU Clear Fault!\n";
++
++    uint8_t writeLen = 0x02;
++    uint8_t readLen = 0x00;
++    uint8_t pmbusCmd = 0x3;
++    std::vector<uint8_t> pecData = {pmbusCmdClearFaultPec};
++    std::vector<uint8_t> resCmdData;
++
++    resCmdData.clear();
++    if (0 != psuCommon::sendPsuProxyMeCmd(sendByte, writeLen, readLen, pmbusCmd, resCmdData, pecData))
++    {
++        std::cerr << "Fail to send clear fault!\n";
++        return false;
++    }
++
++    return true;
++}
++
+ bool PsuEventSensor::setPsuPageToZero(void)
+ {
+     /* 00h - SET_PSU_PAGE */
+@@ -248,37 +270,32 @@ bool PsuEventSensor::checkPsuStatusWord(void)
+     }
+ 
+     /* SEL deassertion event */
+-    if ((0x00 == statusWord) && (isLogSelPredictiveFailure))
++    uint8_t eventData2 = statusWord & 0x00FF;
++    uint8_t eventData3 = (statusWord & 0xFF00) >> 8;
++
++    if ((0x0 == (0xE43C & statusWord)) && (isLogSelPredictiveFailure))
+     {
+-        psuCommon::logSelPsuStatus(deasssertionDir, predictiveFailure, 0x00, 0x00);
++        psuCommon::logSelPsuStatus(deasssertionDir, predictiveFailure, eventData2, eventData3);
+         isLogSelPredictiveFailure = false;
+     }
+ 
+-    if ((0x00 == statusWord) && (isLogSelFailureDetected))
++    if ((0x0 == (0xE43C & statusWord)) && (isLogSelFailureDetected))
+     {
+-        psuCommon::logSelPsuStatus(deasssertionDir, failureDetected, 0x00, 0x00);
++        psuCommon::logSelPsuStatus(deasssertionDir, failureDetected, eventData2, eventData3);
+         isLogSelFailureDetected = false;
+     }
+ 
+-    if ((0x00 == statusWord) && (isLogSelInputLost))
++    if ((0x0 == (0x2008 & statusWord)) && (isLogSelInputLost))
+     {
+-        psuCommon::logSelPsuStatus(deasssertionDir, inputLost, 0x00, 0x00);
++        psuCommon::logSelPsuStatus(deasssertionDir, inputLost, eventData2, eventData3);
+         isLogSelInputLost = false;
+     }
+ 
+     /* CLEAR_FAULTS */
+     if (true == statusFlag)
+     {
+-        std::cerr << "PSU Clear fault - 0!\n";
+-        writeLen = 0x02; // CMD + PEC
+-        readLen = 0x00;
+-        pmbusCmd = 0x03;
+-        std::vector<uint8_t> pecData = {pmbusCmdClearFaultPec};
+-
+-        resCmdData.clear();
+-        if (0 != psuCommon::sendPsuProxyMeCmd(sendByte, writeLen, readLen, pmbusCmd, resCmdData, pecData))
++        if (false == clearPsuFault())
+         {
+-            std::cerr << "Fail to send clear fault!\n";
+             return false;
+         }
+     }
+-- 
+2.24.1
+
