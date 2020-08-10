@@ -1,0 +1,63 @@
+From d0ec0bd804b6a528db28e7e41f73c58309688279 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 10 Aug 2020 11:01:08 +0800
+Subject: [PATCH] Add IPMI Platform Event command support
+
+---
+ src/sensorcommands.cpp | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/src/sensorcommands.cpp b/src/sensorcommands.cpp
+index 09ff7e3..fca7dbb 100644
+--- a/src/sensorcommands.cpp
++++ b/src/sensorcommands.cpp
+@@ -356,6 +356,12 @@ ipmi::RspType<> ipmiSenPlatformEvent(ipmi::message::Payload &p)
+     std::optional<uint8_t> eventData2 = 0;
+     std::optional<uint8_t> eventData3 = 0;
+ 
++    constexpr char const* ipmiSELService = "xyz.openbmc_project.Logging.IPMI";
++    constexpr char const* ipmiSELPath = "/xyz/openbmc_project/Logging/IPMI";
++    constexpr char const* ipmiSELAddInterface = "xyz.openbmc_project.Logging.IPMI";
++    const std::string ipmiSELAddMessage = "SEL Entry";
++    const uint8_t recordType = 0x02;
++
+     // todo: This check is supposed to be based on the incoming channel.
+     //      e.g. system channel will provide upto 8 bytes including generator
+     //      ID, but ipmb channel will provide only up to 7 bytes without the
+@@ -387,6 +393,33 @@ ipmi::RspType<> ipmiSenPlatformEvent(ipmi::message::Payload &p)
+         generatorID, evmRev, sensorType, sensorNum, eventType, eventData1,
+         eventData2.value_or(0xFF), eventData3.value_or(0xFF));
+ 
++    // Add this request to the SEL entry
++    std::vector<uint8_t> eventData(9, 0xFF);
++    eventData.at(0) = generatorID;
++    eventData.at(1) = generatorID >> 8;
++    eventData.at(2) = evmRev;
++    eventData.at(3) = sensorType;
++    eventData.at(4) = sensorNum;
++    eventData.at(5) = eventType;
++    eventData.at(6) = eventData1;
++    eventData.at(7) = eventData2.value_or(0xFF);
++    eventData.at(8) = eventData3.value_or(0xFF);
++
++    std::shared_ptr<sdbusplus::asio::connection> bus = getSdBus();
++    sdbusplus::message::message writeSEL = bus->new_method_call(
++        ipmiSELService, ipmiSELPath, ipmiSELAddInterface, "IpmiSelAddOem");
++    writeSEL.append(ipmiSELAddMessage, eventData, recordType);
++    try
++    {
++        bus->call(writeSEL);
++    }
++    catch (sdbusplus::exception_t& e)
++    {
++        std::cerr << "failed to call IpmiSelAdd for platform event\n";
++        return ipmi::responseUnspecifiedError();
++
++    }
++
+     if (generatorID == meId && sensorNum == meSensorNum && eventData2 &&
+         eventData3)
+     {
+-- 
+2.24.1
+
