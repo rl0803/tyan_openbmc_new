@@ -37,6 +37,7 @@ SRC_URI += "file://0001-add-supported-pmbus-name-cffps1.patch \
             file://0044-log-assert-event-when-timer-cancelled.patch \
             file://0045-filter-out-invalidate-ADC-value.patch \
             file://0047-Filter-out-invalidate-MOS-temperature-value-and-add-.patch \
+            file://0046-add-BMC-watchdog-timeout-SEL.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.processorsensor.service"
@@ -46,4 +47,10 @@ SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.mnvmesensor.service"
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.mostempsensor.service"
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.hostmemoryeccsensor.service"
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.eventsensor.service"
+
+DEPENDS += "obmc-libmisc"
+
+RDEPENDS_${PN} += "obmc-libmisc"
+
+
 
