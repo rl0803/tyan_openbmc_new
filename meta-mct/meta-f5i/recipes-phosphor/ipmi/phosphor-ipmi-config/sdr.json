@@ -8,8 +8,8 @@
     {
          "ownerId" : "0x1f",
          "sensorNumber" : "0xe5",
-         "sensorType" : "0x12",
-         "sensorName" : "Power Override"
+         "sensorType" : "0x22",
+         "sensorName" : "ACPI POWER STATE"
     },
     {
          "ownerId" : "0x3f",
