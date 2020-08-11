@@ -54,23 +54,20 @@ namespace ipmi
 static int getProperty(sdbusplus::bus::bus& bus, const std::string& path,
                  const std::string& property, double& value, const std::string service, const std::string interface)
 {
+    sdbusplus::message::variant<double> valuetmp;
     auto method = bus.new_method_call(service.c_str(), path.c_str(), PROPERTY_INTERFACE, "Get");
     method.append(interface.c_str(),property);
-    auto reply=bus.call(method);
-    if (reply.is_method_error())
-    {
-        std::printf("Error looking up services, PATH=%s",interface.c_str());
-        return -1;
-    }
-
-    sdbusplus::message::variant<double> valuetmp;
     try
     {
+        auto reply=bus.call(method);
+        if (reply.is_method_error())
+        {
+            std::printf("Error looking up services, PATH=%s",interface.c_str());
+            return -1;
+        }
         reply.read(valuetmp);
     }
-    catch (const sdbusplus::exception::SdBusError& e)
-    {
-        std::printf("Failed to get pattern string for match process");
+    catch (const sdbusplus::exception::SdBusError& e){
         return -1;
     }
 
@@ -159,33 +156,31 @@ void createTimer()
     }
 }
 
-/*
-    NetFun: 0x3e
-    Cmd : 0x3a
-    Request:
-*/
-ipmi_ret_t ipmiOpmaClearCmos(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
-                              ipmi_request_t request, ipmi_response_t response,
-                              ipmi_data_len_t data_len, ipmi_context_t context)
-{
-    ipmi_ret_t ipmi_rc = IPMI_CC_OK;
+/* Clear CMOS command
+NetFun: 0x30
+Cmd : 0x3A
+Request:
 
+Response:
+        Byte 1 : Completion Code
+*/
+ipmi::RspType<> ipmi_opma_clear_cmos()
+{
     //todo, check pgood status
     createTimer();
     if (clrCmosTimer == nullptr)
     {
-        return IPMI_CC_RESPONSE_ERROR;
+        return ipmi::responseResponseError();
     }
     
     if(clrCmosTimer->isRunning())
     {
-        return IPMI_CC_RESPONSE_ERROR;
+        return ipmi::responseResponseError();
     }
     clrCmosTimer->start(std::chrono::duration_cast<std::chrono::microseconds>(
     std::chrono::seconds(0)));    
    
-    return ipmi_rc;
-
+    return ipmi::responseSuccess();
 }
 //===============================================================
 /* Set Fan Control Enable Command
@@ -641,36 +636,27 @@ Response:
 #define PIN_SERVICE "xyz.openbmc_project.PSUSensor"
 #define PIN_INTERFACE "xyz.openbmc_project.Sensor.Value"
 
-ipmi_ret_t ipmi_Pnm_GetReading(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
-                              ipmi_request_t request, ipmi_response_t response,
-                              ipmi_data_len_t data_len, ipmi_context_t context)
+ipmi::RspType<std::vector<uint8_t>> ipmi_Pnm_GetReading(uint8_t type, uint8_t reserved1, uint8_t reserved2)
 {
-    ipmi_ret_t ipmi_rc = IPMI_CC_OK;
     uint8_t domainID;
     uint8_t readingType;
     uint8_t highByte;
     uint8_t lowByte;
     int rc=0;
     double readingValue;
-    uint8_t responseData[3]={0};
+    std::vector<uint8_t> responseData(3,0);
 
     auto bus = sdbusplus::bus::new_default();
-    auto* requestData= reinterpret_cast<PnmGetReadingRequest*>(request);
 
-    if((int)*data_len != 3)
-    {
-        return IPMI_CC_REQ_DATA_LEN_INVALID;
-    }
-
-    domainID = requestData->type & 0x0F;
-    readingType = requestData->type >> 4;
+    domainID = type & 0x0F;
+    readingType = type >> 4;
     if (readingType == 0x00 || readingType == 0x06)
     {
         // get PSU PIN sensor reading value
         rc = getProperty(bus,PIN_OBJECT,"Value",readingValue,PIN_SERVICE,PIN_INTERFACE);
         if(rc<0)
         {
-            return IPMI_CC_UNSPECIFIED_ERROR;
+            return ipmi::responseUnspecifiedError();
         }
 
         highByte = static_cast<uint16_t>(readingValue) >> 8;
@@ -679,10 +665,9 @@ ipmi_ret_t ipmi_Pnm_GetReading(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         responseData[2]=highByte;
     }
 
-    responseData[0]=requestData->type;
-    memcpy(response, responseData, sizeof(responseData));
+    responseData[0]=type;
 
-    return ipmi_rc;
+    return ipmi::responseSuccess(responseData);
 }
 
 //===============================================================
@@ -1395,8 +1380,6 @@ ipmi::RspType<> ipmi_GetOcpCard(uint8_t status)
 
 void register_netfn_mct_oem()
 {
-    ipmi_register_callback(NETFUN_TWITTER_OEM, IPMI_CMD_ClearCmos, NULL, ipmiOpmaClearCmos, PRIVILEGE_ADMIN);
-    ipmi_register_callback(NETFUN_TWITTER_OEM, IPMI_CMD_PnmGetReading, NULL, ipmi_Pnm_GetReading, PRIVILEGE_ADMIN);
     ipmi::registerOemHandler(ipmi::prioMax, 0x0019fd, IPMI_CMD_FanPwmDuty, ipmi::Privilege::Admin, ipmi_tyan_FanPwmDuty);
     ipmi::registerOemHandler(ipmi::prioMax, 0x0019fd, IPMI_CMD_ManufactureMode, ipmi::Privilege::Admin, ipmi_tyan_ManufactureMode);
 	ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_FloorDuty, ipmi::Privilege::Admin, ipmi_tyan_FloorDuty);
@@ -1405,6 +1388,8 @@ void register_netfn_mct_oem()
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_SetFruField, ipmi::Privilege::Admin, ipmi_setFruField);
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_GetFruField, ipmi::Privilege::Admin, ipmi_getFruField);
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_GetFirmwareString, ipmi::Privilege::Admin, ipmi_getFirmwareString);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_ClearCmos, ipmi::Privilege::Admin, ipmi_opma_clear_cmos);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_PnmGetReading, ipmi::Privilege::Admin, ipmi_Pnm_GetReading);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_SendRawPeci, ipmi::Privilege::Admin, ipmi_sendRawPeci);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_RamdomDelayACRestorePowerON, ipmi::Privilege::Admin, ipmi_tyan_RamdomDelayACRestorePowerON);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_SetService, ipmi::Privilege::Admin, ipmi_SetService);

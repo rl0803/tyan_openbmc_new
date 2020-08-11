@@ -31,10 +31,3 @@ enum ipmi_net_fns_oem_cmds
     IPMI_CMD_RelinkLan = 0x12,
     IPMI_CMD_GetOcpCard = 0x14,
 };
-
-struct PnmGetReadingRequest
-{
-    uint8_t type;
-    uint8_t reserved1;
-    uint8_t reserved2;
-};
