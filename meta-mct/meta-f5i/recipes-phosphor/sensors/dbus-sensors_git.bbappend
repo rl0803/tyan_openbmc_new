@@ -38,6 +38,7 @@ SRC_URI += "file://0001-add-supported-pmbus-name-cffps1.patch \
             file://0045-filter-out-invalidate-ADC-value.patch \
             file://0047-Filter-out-invalidate-MOS-temperature-value-and-add-.patch \
             file://0046-add-BMC-watchdog-timeout-SEL.patch \
+            file://0048-Add-event-disabled-event-sensor.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.processorsensor.service"
