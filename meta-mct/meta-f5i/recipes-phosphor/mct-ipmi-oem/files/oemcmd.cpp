@@ -305,6 +305,8 @@ ipmi::RspType<uint8_t> ipmi_tyan_FanPwmDuty(uint8_t pwmId, uint8_t duty)
     char temp[50];
     uint8_t responseDuty;
     uint8_t pwmValue = 0;
+    char FSCStatus[100];
+    uint8_t currentStatus;
 
     if (duty == 0xfe)
     {
@@ -360,43 +362,56 @@ ipmi::RspType<uint8_t> ipmi_tyan_FanPwmDuty(uint8_t pwmId, uint8_t duty)
     }
     else if (duty <= 0x64)
     {
-        memset(command,0,sizeof(command));
-        sprintf(command, "systemctl stop phosphor-pid-control.service");
-        rc = system(command);
-
-        memset(command,0,sizeof(command));
-        sprintf(command, "echo 0 > /usr/sbin/fsc");
-        system(command);
-
-        // control duty cycle (0%-100%)
-        pwmValue = duty*255/100;
-
-        switch (pwmId)
+        // Get Current Fan Control Status
+        file.open("/usr/sbin/fsc",std::ios::in);
+        if(!file)
         {
-            case 0:
+            currentStatus=1;
+        }
+        else
+        {
+            file.read(FSCStatus,sizeof(FSCStatus));
+            currentStatus = strtol(FSCStatus,NULL,16);
+        }
+        file.close();
+
+        if(currentStatus == 0x0)
+        {
+            // control duty cycle (0%-100%)
+            pwmValue = duty*255/100;
+
+            switch (pwmId)
+            {
+                case 0:
                     memset(command,0,sizeof(command));
                     sprintf(command, "echo %d > /sys/class/hwmon/hwmon0/pwm1", pwmValue);
                     break;
-            case 1:
+                case 1:
                     memset(command,0,sizeof(command));
                     sprintf(command, "echo %d > /sys/class/hwmon/hwmon0/pwm2", pwmValue);
                     break;
-            case 2:
+                case 2:
                     memset(command,0,sizeof(command));
                     sprintf(command, "echo %d > /sys/class/hwmon/hwmon0/pwm3", pwmValue);
                     break;
-            case 3:
+                case 3:
                     memset(command,0,sizeof(command));
                     sprintf(command, "echo %d > /sys/class/hwmon/hwmon0/pwm4", pwmValue);
                     break;
-            case 4:
+                case 4:
                     memset(command,0,sizeof(command));
                     sprintf(command, "echo %d > /sys/class/hwmon/hwmon0/pwm5", pwmValue);
                     break;
-            default:
+                default:
                     return ipmi::responseParmOutOfRange();
+            }
+            rc = system(command);
         }
-        rc = system(command);
+        else
+        {
+            // fan control is Enable , can't control fan duty
+            return ipmi::responseUnspecifiedError();
+        }
     }
     else
     {
