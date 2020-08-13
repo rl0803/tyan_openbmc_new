@@ -40,6 +40,7 @@ SRC_URI += "file://0001-add-supported-pmbus-name-cffps1.patch \
             file://0046-add-BMC-watchdog-timeout-SEL.patch \
             file://0048-Add-event-disabled-event-sensor.patch \
             file://0049-filter-out-invalidate-sys-air-inlet-value.patch \
+            file://0050-Update-BMC-watchdog-timeout-SEL.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.processorsensor.service"
