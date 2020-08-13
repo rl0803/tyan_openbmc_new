@@ -30,6 +30,8 @@
 #include <sdbusplus/bus.hpp>
 #include <sdbusplus/message/types.hpp>
 #include <peci.h>
+#include <nlohmann/json.hpp>
+
 
 #include "xyz/openbmc_project/Control/Power/RestorePolicy/server.hpp"
 
@@ -589,7 +591,124 @@ ipmi::RspType<std::optional<uint8_t>, // T1
    
 }
 
-//===============================================================
+
+
+//================================================================================================
+static boost::container::flat_map<uint8_t, std::string> eccMap;
+
+//MCT ecc filter
+static constexpr const char* sdrFile = "/usr/share/ipmi-providers/sdr.json";
+constexpr static const uint16_t biosId = 0x3f;
+constexpr static const uint8_t sensorTypeMemory = 0xc;
+constexpr static const uint8_t eventDataMemCorrectableEcc = 0;
+
+static void loadEccMap(void)
+{
+    static bool loaded = false;
+    uint16_t ownerId;
+    uint8_t sensorNum;
+    uint8_t sensorType;
+    std::string sensorName;
+    
+    if(loaded)
+    {
+        return; 
+    }
+    loaded = true; 
+
+    eccMap.clear();
+    std::ifstream sdrStream(sdrFile);
+    if(!sdrStream.is_open())
+    {
+        std::cerr << "NO defined SDR found\n";
+    }
+    else
+    {
+        auto data = nlohmann::json::parse(sdrStream, nullptr, false);
+        if (data.is_discarded())
+        {
+            std::cerr << "syntax error in " << sdrFile << "\n";
+        }
+        else
+        {
+            int idx = 0;
+            while (!data[idx].is_null())
+            {
+                ownerId = std::stoul((std::string)data[idx]["ownerId"], nullptr, 16);  
+                sensorNum = std::stoul((std::string)data[idx]["sensorNumber"], nullptr, 16);   
+                sensorType = std::stoul((std::string)data[idx]["sensorType"], nullptr, 16);
+                sensorName = data[idx]["sensorName"];
+                if(biosId == ownerId && sensorTypeMemory == sensorType)
+                {
+                    eccMap[sensorNum] = sensorName;
+                }
+                idx++;
+            }
+        }
+        sdrStream.close();
+    }
+   
+    for(auto const& pair:eccMap)
+    {
+        std::cerr << (unsigned)pair.first << ":" << pair.second << '\n';
+    }
+   
+}
+
+/*-------------------------------------
+ * OemGetEccCount(NetFn: 0x2E, Cmd: 0x1B)
+ * Request:
+ *   Byte 1: 0xfd
+ *   Byte 2: 0x19
+ *   Byte 3: 0x00
+ *   Byte 4: DIMM (Sensor Number for ECC event)
+ * Response:
+ *   Byte 1: Completion Code
+ *   Byte 2: 0xfd
+ *   Byte 3: 0x19
+ *   Byte 4: 0x00
+ *   Byte 5: Correctable ECC Count
+ *------------------------------------*/
+ipmi::RspType<uint8_t> ipmiGetEccCount(uint8_t sensorNum)
+{
+
+    constexpr const char* leakyBucktPath =
+        "/xyz/openbmc_project/leakyBucket/HOST_DIMM_ECC";
+    constexpr const char* leakyBucktIntf =
+        "xyz.openbmc_project.Sensor.Value";
+    std::shared_ptr<sdbusplus::asio::connection> busp = getSdBus();
+    ipmi::Value result;
+    uint8_t count;
+    loadEccMap();
+
+    auto ecc = eccMap.find(sensorNum);
+    //find ecc in eccMap
+    if (ecc == eccMap.end())
+    {
+        return ipmi::responseInvalidFieldRequest();
+    }
+
+    std::string sensorPath = "/xyz/openbmc_project/leakyBucket/HOST_DIMM_ECC/"+ecc->second;
+    
+    auto service = ipmi::getService(*busp, leakyBucktIntf, leakyBucktPath);
+
+    //get count
+    try
+    {
+        result = ipmi::getDbusProperty(
+                    *busp, service, sensorPath, leakyBucktIntf, "count");    
+        count = std::get<uint8_t>(result);
+    }
+    catch (const std::exception& e)
+    {
+        //ecc bucket is not created, return count as 0;    
+        return ipmi::responseSuccess(0);
+    }
+    return ipmi::responseSuccess(count);
+   
+}
+
+//======================================================================================================
 /* get gpio status Command (for manufacturing) 
 NetFun: 0x2E
 Cmd : 0x41
@@ -1399,6 +1518,7 @@ void register_netfn_mct_oem()
     ipmi::registerOemHandler(ipmi::prioMax, 0x0019fd, IPMI_CMD_ManufactureMode, ipmi::Privilege::Admin, ipmi_tyan_ManufactureMode);
 	ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_FloorDuty, ipmi::Privilege::Admin, ipmi_tyan_FloorDuty);
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_ConfigEccLeakyBucket, ipmi::Privilege::Admin, ipmi_tyan_ConfigEccLeakyBucket);
+    ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_GetEccCount, ipmi::Privilege::Admin, ipmiGetEccCount);
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_gpioStatus, ipmi::Privilege::Admin, ipmi_tyan_getGpio);
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_SetFruField, ipmi::Privilege::Admin, ipmi_setFruField);
     ipmi::registerOemHandler(ipmi::prioMax, IANA_TYAN, IPMI_CMD_GetFruField, ipmi::Privilege::Admin, ipmi_getFruField);
