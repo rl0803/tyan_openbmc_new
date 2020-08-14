@@ -1,0 +1,36 @@
+From e3a8c8bf2005769395df673158b133763d8f65a0 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 14 Aug 2020 15:51:37 +0800
+Subject: [PATCH] Add WDT2 and Fast Prochot event-only sensors
+
+---
+ include/EventSensor.hpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index 7e6c3df..eeb5819 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -65,7 +65,9 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "Power_Unit", .sensorType = "powerunit/"},
+     {.sensorName = "Processor_fail", .sensorType = "processor/"},
+     {.sensorName = "EventLogging", .sensorType = "sel_log/"},
+-    {.sensorName = "BMC_FW_UPDATE", .sensorType = "versionchange/"}
++    {.sensorName = "BMC_FW_UPDATE", .sensorType = "versionchange/"},
++    {.sensorName = "Watchdog_2", .sensorType = "watchdog2/"},
++    {.sensorName = "Fast_Prochot", .sensorType = "oem1/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+@@ -81,6 +83,8 @@ enum class sensorListIdx : uint8_t
+     Processor_fail = 8,
+     EventLogging = 9,
+     BMC_FW_UPDATE = 10,
++    Watchdog_2 = 11,
++    Fast_Prochot = 12,
+ };
+ 
+ class EventOnlySensor
+-- 
+2.24.1
+

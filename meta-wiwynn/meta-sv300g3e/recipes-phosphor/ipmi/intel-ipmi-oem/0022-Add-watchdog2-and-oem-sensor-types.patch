@@ -1,0 +1,41 @@
+From 07e28c98907ee4c240dbccbb8c27c16f796fdb1d Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 14 Aug 2020 15:59:11 +0800
+Subject: [PATCH] Add watchdog2 and oem sensor types
+
+---
+ include/sdrutils.hpp | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/include/sdrutils.hpp b/include/sdrutils.hpp
+index 9ef962c..b00b871 100644
+--- a/include/sdrutils.hpp
++++ b/include/sdrutils.hpp
+@@ -175,6 +175,8 @@ enum class SensorTypeCodes : uint8_t
+     mgmtsystemhealth = 0x28,
+     versionchange = 0x2b,
+     fru_state = 0x2c,
++    oem0 = 0xc0,
++    oem1 = 0xc1,
+ };
+ 
+ const static boost::container::flat_map<const char*, SensorTypeCodes, CmpStr>
+@@ -190,11 +192,14 @@ const static boost::container::flat_map<const char*, SensorTypeCodes, CmpStr>
+                  {"pattern", SensorTypeCodes::other},
+                  {"sel_log", SensorTypeCodes::eventlogdisabled},
+                  {"acpi", SensorTypeCodes::acpi},
++                 {"watchdog2", SensorTypeCodes::watchdog2},
+                  {"systemevent", SensorTypeCodes::systemevent},
+                  {"mgmtsystemhealth", SensorTypeCodes::mgmtsystemhealth},
+                  {"versionchange", SensorTypeCodes::versionchange},
+                  {"button", SensorTypeCodes::button},
+-                 {"fru_state", SensorTypeCodes::fru_state}}};
++                 {"fru_state", SensorTypeCodes::fru_state},
++                 {"oem0", SensorTypeCodes::oem0},
++                 {"oem1", SensorTypeCodes::oem1}}};
+ 
+ inline static std::string getSensorTypeStringFromPath(const std::string& path)
+ {
+-- 
+2.24.1
+
