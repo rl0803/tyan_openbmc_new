@@ -1,0 +1,32 @@
+[
+    {
+        "Name": "CPU0_VRHOT",
+        "GpioNum": 20,
+        "EventMon": "FALLING"
+    },
+    {
+        "Name": "CPU1_VRHOT",
+        "GpioNum": 21,
+        "EventMon": "FALLING"
+    },
+    {
+        "Name": "PSU1_ALERT",
+        "GpioNum": 44,
+        "EventMon": "FALLING"
+    },
+    {
+        "Name": "FM_THROTTLE_IN",
+        "GpioNum": 65,
+        "EventMon": "FALLING"
+    },
+    {
+        "Name": "VOLT_ALERT",
+        "GpioNum": 88,
+        "EventMon": "FALLING"
+    },
+    {
+        "Name": "FM_SYS_THROTTLE",
+        "GpioNum": 140,
+        "EventMon": "FALLING"
+    }
+]
