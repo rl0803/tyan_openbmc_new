@@ -1,0 +1,34 @@
+From a19a316ff08033ccf03c87f717130a5576987b6d Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 20 Aug 2020 16:28:23 +0800
+Subject: [PATCH 1/2] Add Fan_Failure event-only sensor
+
+---
+ include/EventSensor.hpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index eeb5819..de7dc60 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -67,7 +67,8 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "EventLogging", .sensorType = "sel_log/"},
+     {.sensorName = "BMC_FW_UPDATE", .sensorType = "versionchange/"},
+     {.sensorName = "Watchdog_2", .sensorType = "watchdog2/"},
+-    {.sensorName = "Fast_Prochot", .sensorType = "oem1/"}
++    {.sensorName = "Fast_Prochot", .sensorType = "oem1/"},
++    {.sensorName = "Fan_Failure", .sensorType = "slotconnector/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+@@ -85,6 +86,7 @@ enum class sensorListIdx : uint8_t
+     BMC_FW_UPDATE = 10,
+     Watchdog_2 = 11,
+     Fast_Prochot = 12,
++    Fan_Failure = 13,
+ };
+ 
+ class EventOnlySensor
+-- 
+2.24.1
+

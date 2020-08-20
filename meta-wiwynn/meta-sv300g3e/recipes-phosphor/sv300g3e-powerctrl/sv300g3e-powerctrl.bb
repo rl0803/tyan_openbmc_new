@@ -13,12 +13,14 @@ SRC_URI = "file://init_once.sh \
            file://poweron.sh \
            file://powerreset.sh \
            file://powercyclelog.sh \
+           file://fan-failure-poweroff.sh \
            file://host-gpio.service \
            file://host-poweroff.service \
            file://host-powersoft.service \
            file://host-poweron.service \
            file://host-powerreset.service \
            file://host-powercyclelog.service \
+           file://fan-failure-poweroff.service \
           "
 
 DEPENDS = "systemd"
@@ -31,6 +33,7 @@ SYSTEMD_SERVICE_${PN} = "host-gpio.service \
                          host-powersoft.service \
                          host-powerreset.service \
                          host-powercyclelog.service \
+                         fan-failure-poweroff.service \
                         "
 
 do_install() {
@@ -41,4 +44,5 @@ do_install() {
     install -m 0755 ${S}poweron.sh ${D}/${sbindir}/
     install -m 0755 ${S}powerreset.sh ${D}/${sbindir}/
     install -m 0755 ${S}powercyclelog.sh ${D}/${sbindir}/
+    install -m 0755 ${S}fan-failure-poweroff.sh ${D}/${sbindir}/
 }

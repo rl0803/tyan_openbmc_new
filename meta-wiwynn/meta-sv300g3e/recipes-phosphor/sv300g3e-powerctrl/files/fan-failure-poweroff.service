@@ -1,0 +1,10 @@
+[Unit]
+Description=2-fan-failure-poweroff service
+Requires=host-gpio.service
+After=host-gpio.service
+
+[Service]
+RemainAfterExit=no
+Type=oneshot
+ExecStart=/usr/bin/env fan-failure-poweroff.sh
+SyslogIdentifier=fan-failure-poweroff.sh

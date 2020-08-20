@@ -1,0 +1,215 @@
+From 723dd1c811dc4d66012fe040f798496874e37d5c Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 20 Aug 2020 16:30:50 +0800
+Subject: [PATCH 2/2] Support 2-fan-failure event handler
+
+---
+ include/TachSensor.hpp |   7 +++
+ src/TachSensor.cpp     | 125 +++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 128 insertions(+), 4 deletions(-)
+
+diff --git a/include/TachSensor.hpp b/include/TachSensor.hpp
+index 16aa1a4..04ab143 100644
+--- a/include/TachSensor.hpp
++++ b/include/TachSensor.hpp
+@@ -83,11 +83,18 @@ class TachSensor : public Sensor
+     boost::asio::posix::stream_descriptor inputDev;
+     boost::asio::steady_timer waitTimer;
+     boost::asio::streambuf readBuf;
++    thresholds::ThresholdTimer thresholdTimer;
+     std::string path;
++    static inline size_t failedFanNumber = 0;
++    static inline bool isFanFailureLogged = false;
++    static inline bool isFanFailurePowerOff = false;
+     size_t errCount;
++    bool isFanFailure;
+     void setupRead(void);
+     void handleResponse(const boost::system::error_code& err);
+     void checkThresholds(void) override;
++    void fanFailureLogHandler(void);
++    void fanFailurePowerOffHandler(void);
+ };
+ 
+ inline void logFanInserted(const std::string& device)
+diff --git a/src/TachSensor.cpp b/src/TachSensor.cpp
+index 4ced919..31e1517 100644
+--- a/src/TachSensor.cpp
++++ b/src/TachSensor.cpp
+@@ -38,6 +38,16 @@
+ 
+ static constexpr unsigned int pwmPollMs = 1000;
+ static constexpr size_t warnAfterErrorCount = 3;
++static constexpr size_t fanFailurePowerOffCount = 2;
++
++static constexpr char const *SYSTEMD_SERVICE = "org.freedesktop.systemd1";
++static constexpr char const *SYSTEMD_OBJ_PATH = "/org/freedesktop/systemd1";
++static constexpr char const *SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
++
++static constexpr char const *ipmiSELService = "xyz.openbmc_project.Logging.IPMI";
++static constexpr char const *ipmiSELPath = "/xyz/openbmc_project/Logging/IPMI";
++static constexpr char const *ipmiSELAddInterface = "xyz.openbmc_project.Logging.IPMI";
++const static std::string ipmiSELAddMessage = "SEL Entry";
+ 
+ TachSensor::TachSensor(const std::string& path, const std::string& objectType,
+                        sdbusplus::asio::object_server& objectServer,
+@@ -51,9 +61,9 @@ TachSensor::TachSensor(const std::string& path, const std::string& objectType,
+     Sensor(boost::replace_all_copy(fanName, " ", "_"), std::move(_thresholds),
+            sensorConfiguration, objectType, limits.second, limits.first),
+     objServer(objectServer), redundancy(redundancy),
+-    presence(std::move(presenceSensor)),
++    presence(std::move(presenceSensor)), thresholdTimer(io, this),
+     inputDev(io, open(path.c_str(), O_RDONLY)), waitTimer(io), path(path),
+-    errCount(0)
++    errCount(0), isFanFailure(false)
+ {
+     sensorInterface = objectServer.add_interface(
+         "/xyz/openbmc_project/sensors/fan_tach/" + name,
+@@ -135,6 +145,10 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+         updateValueInvalid(true);
+         // updateValue(0);
+         errCount = 0;
++        failedFanNumber = 0;
++        isFanFailureLogged = false;
++        isFanFailurePowerOff = false;
++        isFanFailure = false;
+ 
+         // clear response buffer reading
+         std::istream invalidResponseStream(&readBuf);
+@@ -188,6 +202,20 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+                 }
+                 errCount = 0;
+                 updateValueInvalid(false);
++
++                if (isFanFailure == true)
++                {
++                    isFanFailure = false;
++
++                    if ( 0 != failedFanNumber)
++                    {
++                        failedFanNumber--;
++                    }
++/*
++                    sd_journal_print(LOG_INFO, "[%s][%d][Deassert]\n",
++                                        name.c_str(), failedFanNumber);
++*/
++                }
+             }
+             catch (const std::invalid_argument&)
+             {
+@@ -216,8 +244,33 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+                 std::cerr << "Failure to read sensor " << name << " at " << path
+                           << " ec:" << err << "\n";
+             }
++
++            if (isFanFailure == false)
++            {
++                isFanFailure = true;
++                failedFanNumber++;
++/*
++                sd_journal_print(LOG_INFO, "[%s][%d][Assert]\n",
++                                    name.c_str(), failedFanNumber);
++*/
++            }
++
++            if ((failedFanNumber >= fanFailurePowerOffCount) &&
++                (isFanFailureLogged == false))
++            {
++                isFanFailureLogged = true;
++                fanFailureLogHandler();
++            }
++
+             updateValue(0);
+             // updateValueInvalid(true);
++
++            if ((failedFanNumber >= fanFailurePowerOffCount) &&
++                (isFanFailurePowerOff == false))
++            {
++                isFanFailurePowerOff = true;
++                fanFailurePowerOffHandler();
++            }
+         }
+     }
+     responseStream.clear();
+@@ -245,13 +298,77 @@ void TachSensor::checkThresholds(void)
+         return;
+     }
+ 
+-    bool status = thresholds::checkThresholds(this);
+-
++    if (isFanFailure == true)
++    {
++        thresholds::checkThresholds(this);
++    }
++    else
++    {
++        thresholds::checkThresholdsPowerDelay(this, thresholdTimer);
++    }
++/*
+     if (redundancy && *redundancy)
+     {
+         (*redundancy)
+             ->update("/xyz/openbmc_project/sensors/fan_tach/" + name, !status);
+     }
++*/
++}
++
++void TachSensor::fanFailureLogHandler(void)
++{
++    if (isPowerOn())
++    {
++        auto reqBus = sdbusplus::bus::new_system();
++
++        // SEL entry for fan failure
++        uint16_t genId = 0x20;
++        bool assert = true;
++        std::vector<uint8_t> eventData(3, 0xFF);
++        std::string dbusPath = "/xyz/openbmc_project/sensors/slotconnector/Fan_Failure";
++
++        /*
++           Sensor type: Slot / Connector (0x21)
++           Data 1: Sensor specific offset: 00h - Fault Status asserted
++           Data 2: Slot/Connector Type: 08h - FAN
++        */
++        eventData.at(0) = 0x0;
++        eventData.at(1) = 0x8;
++
++        sdbusplus::message::message selWrite = reqBus.new_method_call(
++            ipmiSELService, ipmiSELPath, ipmiSELAddInterface, "IpmiSelAdd");
++        selWrite.append(ipmiSELAddMessage, dbusPath, eventData, assert, genId);
++        try
++        {
++            reqBus.call_noreply(selWrite);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            std::cerr << "Failed to log the 2-fan-failure SEL\n";
++        }
++    }
++}
++
++void TachSensor::fanFailurePowerOffHandler(void)
++{
++    if (isPowerOn())
++    {
++        auto reqBus = sdbusplus::bus::new_system();
++        std::string sysUnit("fan-failure-poweroff.service");
++        // Launch the 2-fan-failure-power-off service
++
++        try
++        {
++            sdbusplus::message::message method = reqBus.new_method_call(
++                SYSTEMD_SERVICE, SYSTEMD_OBJ_PATH, SYSTEMD_INTERFACE, "StartUnit");
++            method.append(sysUnit, "replace");
++            reqBus.call_noreply(method);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            std::cerr << "Failed to power off the host because of 2-fan-failure event\n";
++        }
++    }
+ }
+ 
+ PresenceSensor::PresenceSensor(const std::string& gpioName, bool inverted,
+-- 
+2.24.1
+

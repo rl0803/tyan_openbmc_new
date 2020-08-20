@@ -39,6 +39,8 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0047-Clear-the-PSU-fault-for-once-after-creating-the-PSU-status-object.patch \
             file://0048-Support-ADC-polling-time-configuration.patch \
             file://0049-Add-WDT2-and-Fast-Prochot-event-only-sensors.patch \
+            file://0050-Add-Fan_Failure-event-only-sensor.patch \
+            file://0051-Support-2-fan-failure-event-handler.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \

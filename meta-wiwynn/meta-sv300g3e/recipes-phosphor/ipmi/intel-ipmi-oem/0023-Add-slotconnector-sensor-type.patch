@@ -1,0 +1,32 @@
+From 3edde96b4b8317cd2fec2d2695effca857252ea1 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 20 Aug 2020 16:24:52 +0800
+Subject: [PATCH] Add slotconnector sensor type
+
+---
+ include/sdrutils.hpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/sdrutils.hpp b/include/sdrutils.hpp
+index b00b871..2847b0d 100644
+--- a/include/sdrutils.hpp
++++ b/include/sdrutils.hpp
+@@ -170,6 +170,7 @@ enum class SensorTypeCodes : uint8_t
+     watchdog1 = 0x11,
+     systemevent = 0x12,
+     button = 0x14,
++    slotconnector = 0x21,
+     acpi = 0x22,
+     watchdog2 = 0x23,
+     mgmtsystemhealth = 0x28,
+@@ -191,6 +192,7 @@ const static boost::container::flat_map<const char*, SensorTypeCodes, CmpStr>
+                  {"power", SensorTypeCodes::other},
+                  {"pattern", SensorTypeCodes::other},
+                  {"sel_log", SensorTypeCodes::eventlogdisabled},
++                 {"slotconnector", SensorTypeCodes::slotconnector},
+                  {"acpi", SensorTypeCodes::acpi},
+                  {"watchdog2", SensorTypeCodes::watchdog2},
+                  {"systemevent", SensorTypeCodes::systemevent},
+-- 
+2.24.1
+
