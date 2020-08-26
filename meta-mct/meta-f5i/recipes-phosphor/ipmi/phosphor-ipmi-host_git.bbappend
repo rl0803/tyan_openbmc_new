@@ -12,6 +12,8 @@ SRC_URI += "file://0004-Implement-NMI-command-in-Chassis-Control-command.patch \
             file://0013-Implement-power-control-SEL-generated-in-chassis-con.patch \
             file://0014-Implement-the-DCMI-power-reading-and-power-limit-com.patch \
             file://0015-Add-debug-message-for-watchdog-reset.patch \
+            file://0016-rewrite-Get-Session-Info-to-use-new-yielding-D-Bus-A.patch \
+            file://0017-Fix-the-wrong-field-value-for-session-info-commnad.patch \
             "
 EXTRA_OECONF += "--disable-i2c-whitelist-check"
 
