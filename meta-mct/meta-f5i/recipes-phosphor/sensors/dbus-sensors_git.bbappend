@@ -42,6 +42,7 @@ SRC_URI += "file://0001-add-supported-pmbus-name-cffps1.patch \
             file://0049-filter-out-invalidate-sys-air-inlet-value.patch \
             file://0050-Update-BMC-watchdog-timeout-SEL.patch \
             file://0051-Implement-the-average-mode-for-fan-tech-value.patch \
+            file://0052-Change-the-using-timer-from-deadline_timer-to-steady.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.processorsensor.service"
