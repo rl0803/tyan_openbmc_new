@@ -1,4 +1,3 @@
-FLASH_RWFS_OFFSET = "32768"
 
 OBMC_IMAGE_EXTRA_INSTALL_append_f5i =   " libgpiod \
                                           gpio-initial \
@@ -29,4 +28,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_f5i =   " libgpiod \
                                           phosphor-host-postd \
                                           ethtool \
                                           mct-dcmi-power \
+                                          gdb \
                                         "
