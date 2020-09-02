@@ -1,0 +1,13 @@
+[Unit]
+Description=frb event Service
+StopWhenUnneeded=false
+After=interrupt-dbus-register.service
+
+[Service]
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/frb-event-handler
+SyslogIdentifier=frb-event-handler
+
+[Install]
+WantedBy=multi-user.target
