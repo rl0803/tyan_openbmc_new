@@ -135,6 +135,11 @@
 // #include "openbmc-flash-layout.dtsi"
 		#include "openbmc-flash-layout-64M.dtsi"
 	};
+	flash@1 {
+		status = "okay";
+		m25p,fast-read;
+		label = "bmc2";
+	};
 };
 
 &spi1 {
