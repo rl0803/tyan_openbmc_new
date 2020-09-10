@@ -1,0 +1,25 @@
+From 934a1a38053eef386a7694e07bc513ad18ecafc1 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 10 Sep 2020 09:37:21 +0800
+Subject: [PATCH] Set the IPMB transaction retry number to 1
+
+---
+ ipmbbridged.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ipmbbridged.hpp b/ipmbbridged.hpp
+index e264195..ee9a510 100644
+--- a/ipmbbridged.hpp
++++ b/ipmbbridged.hpp
+@@ -45,7 +45,7 @@ enum class ipmbResponseStatus
+  * @brief Ipmb outstanding requests defines
+  */
+ constexpr int ipmbMaxOutstandingRequestsCount = 64;
+-constexpr int ipmbNumberOfTries = 6;
++constexpr int ipmbNumberOfTries = 1;
+ constexpr uint64_t ipmbRequestRetryTimeout = 250; // ms
+ 
+ /**
+-- 
+2.24.1
+
