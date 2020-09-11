@@ -13,6 +13,7 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0010-Add-AST2500-JTAG-driver-support.patch \
             file://0011-Modify-PTCR-register-for-setting-desired-minimal-RPM.patch \
             file://0012-Add-clear-buffer-in-slave-mqueue-driver.patch \
+            file://0013-Clear-the-i2c-slave-state-when-a-bmc-i2c-master-cmd-times-out.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
