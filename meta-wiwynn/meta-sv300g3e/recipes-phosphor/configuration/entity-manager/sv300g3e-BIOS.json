@@ -97,6 +97,30 @@
      },
      {
           "ownerId" : "0x20",
+          "sensorNumber" : 250,
+          "sensorType" : "0x0D",
+          "sensorName" : "SSD0_Presense"
+     },
+     {
+          "ownerId" : "0x20",
+          "sensorNumber" : 251,
+          "sensorType" : "0x0D",
+          "sensorName" : "SSD1_Presense"
+     },
+     {
+          "ownerId" : "0x20",
+          "sensorNumber" : 252,
+          "sensorType" : "0x0D",
+          "sensorName" : "SSD2_Presense"
+     },
+     {
+          "ownerId" : "0x20",
+          "sensorNumber" : 253,
+          "sensorType" : "0x0D",
+          "sensorName" : "SSD3_Presense"
+     },
+     {
+          "ownerId" : "0x20",
           "sensorNumber" : 254,
           "sensorType" : "0x2b",
           "sensorName" : "IB BMC FW UPDATE"

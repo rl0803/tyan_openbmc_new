@@ -1,0 +1,33 @@
+/*
+// Copyright (c) 2020 Wiwynn Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+*/
+
+#pragma once
+
+#include <unistd.h>
+#include <variant>
+#include <iostream>
+#include <systemd/sd-journal.h>
+#include <boost/chrono/chrono_io.hpp>
+#include <boost/process.hpp>
+
+constexpr char const *ipmiSELService = "xyz.openbmc_project.Logging.IPMI";
+constexpr char const *ipmiSELPath = "/xyz/openbmc_project/Logging/IPMI";
+constexpr char const *ipmiSELAddInterface = "xyz.openbmc_project.Logging.IPMI";
+const static std::string ipmiSELAddMessage = "SEL Entry";
+const uint8_t recordType = 0x02;
+const uint8_t evmRev = 0x4;
+const uint8_t ssdNumber = 4;
+const uint8_t ssdSenNumBase = 250;
