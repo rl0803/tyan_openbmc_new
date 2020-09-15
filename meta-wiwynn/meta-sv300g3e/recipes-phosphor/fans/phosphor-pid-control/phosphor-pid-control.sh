@@ -1,6 +1,7 @@
 #!/bin/sh
 
-fanTablePath="/run/initramfs/ro/usr/share/entity-manager/configurations/fan-table.json"
+# fanTablePath="/run/initramfs/ro/usr/share/entity-manager/configurations/fan-table.json"
+fanTablePath="/etc/fan-table.json"
 
 if [ -f "$fanTablePath" ]; then
     # Check the post complete property status

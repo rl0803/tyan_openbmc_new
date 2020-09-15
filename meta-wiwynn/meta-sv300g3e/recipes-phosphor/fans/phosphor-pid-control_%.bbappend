@@ -13,8 +13,10 @@ SRC_URI += " file://0001-Add-fan-control-linear.patch \
              file://0011-Add-sensor-failed-function-for-CPU-NIC-and-FP-inlet.patch \
              file://0012-Fix-for-PWM-accumulation.patch \
              file://0013-Fix-fan-mode-switch-issue-and-keep-fan-mode-after-dc.patch \
+             file://0014-Set-fan-pwm-to-80-percent-before-end-of-post.patch \
              file://writePwm.sh \
              file://phosphor-pid-control.sh \
+             file://fan-table.json \
            "
 
 inherit obmc-phosphor-systemd
@@ -24,8 +26,11 @@ EXTRA_OECONF += "MAX_FAN_REDUNDANCY=2"
 
 FILES_${PN} += "${bindir}/writePwm.sh"
 FILES_${PN} += "${bindir}/phosphor-pid-control.sh"
+FILES_${PN} += "/etc/fan-table.json"
 
 do_install_append() {
     install -m 0755 ${WORKDIR}/writePwm.sh ${D}${bindir}/
     install -m 0755 ${WORKDIR}/phosphor-pid-control.sh ${D}${bindir}/
+    install -d ${D}/etc
+    install -m 0444 ${WORKDIR}/fan-table.json ${D}/etc/fan-table.json
 }

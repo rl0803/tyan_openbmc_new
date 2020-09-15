@@ -1,0 +1,295 @@
+From e55d25ef7df4d4947f9b7b1376ff5c27d7e8e655 Mon Sep 17 00:00:00 2001
+From: Eilin <eilin_li@wiwynn.com>
+Date: Mon, 14 Sep 2020 19:00:33 +0800
+Subject: [PATCH] When postcomplete is high ,all fan control should be eighty
+ percent
+
+---
+ main.cpp        | 80 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ pid/pidloop.cpp | 50 +++++++++++++++++++++++++++----
+ pid/pidloop.hpp |  2 +-
+ pid/zone.cpp    | 11 +++++++
+ pid/zone.hpp    |  5 ++++
+ 5 files changed, 140 insertions(+), 8 deletions(-)
+ mode change 100644 => 100755 main.cpp
+ mode change 100644 => 100755 pid/pidloop.cpp
+ mode change 100644 => 100755 pid/pidloop.hpp
+ mode change 100644 => 100755 pid/zone.cpp
+ mode change 100644 => 100755 pid/zone.hpp
+
+diff --git a/main.cpp b/main.cpp
+old mode 100644
+new mode 100755
+index f2d2a3c..0893313
+--- a/main.cpp
++++ b/main.cpp
+@@ -85,6 +85,9 @@ static constexpr auto debugModeIntfName = "xyz.openbmc_project.Control.DebugMode
+ 
+ static constexpr auto manualModeFilePath = "/tmp/fanCtrlManual";
+ 
++static bool postcompleteStateOn = false;
++static std::unique_ptr<sdbusplus::bus::match::match> postcompleteMatch = nullptr;
++
+ // Register debug mode signal handler
+ void registerDebugSignalHandler()
+ {
+@@ -257,7 +260,7 @@ int restartControlLoops()
+     {
+         auto& timer = timers.emplace_back(io);
+         std::cerr << "pushing zone " << i.first << "\n";
+-        pidControlLoop(i.second.get(), timer, lastPwm);
++        pidControlLoop(i.second.get(), timer, postcompleteStateOn, lastPwm);
+     }
+ 
+     return 0;
+@@ -290,6 +293,74 @@ void writePwmFailsafeHandler(int signum)
+     exit(signum);
+ }
+ 
++bool startPostCompleteMonitor(
++    const std::shared_ptr<sdbusplus::asio::connection>& conn)
++{
++
++    
++    //static boost::asio::steady_timer timer(conn->get_io_context());
++    std::cerr << "startPostCompleteMonitor start\n";
++    // 1. Initialize postcompleteStateOn
++    std::variant<int> state;
++    auto method = conn->new_method_call("org.openbmc.control.Power",
++                                        "/org/openbmc/control/power0",
++                                        "org.freedesktop.DBus.Properties", "Get");
++    method.append("org.openbmc.control.PostComplete", "postcomplete");
++    try
++    {
++        auto reply = conn->call(method);
++        reply.read(state);
++
++        if( 1 != std::get<int>(state))
++        {
++            postcompleteStateOn = false;
++        }
++        else
++        {
++            postcompleteStateOn = true;
++        }
++    }
++    catch (const sdbusplus::exception::SdBusError& e)
++    {
++        std::cerr << "Not able to get postcomplete property\n";
++        return false;
++    }
++
++    // 2. Update postcompleteStateOn when the property be changed
++    postcompleteMatch = std::make_unique<sdbusplus::bus::match::match>(
++        static_cast<sdbusplus::bus::bus &>(*conn),
++        "type='signal',interface='org.freedesktop.DBus.Properties',"
++        "member='PropertiesChanged',path='/org/openbmc/control/power0',"
++        "arg0='org.openbmc.control.PostComplete'",
++        [](sdbusplus::message::message& message) {
++            boost::container::flat_map<std::string, std::variant<int>> values;
++            std::string objectName;
++            message.read(objectName, values);
++
++            auto findState = values.find("postcomplete");
++            if (findState != values.end())
++            {
++                int on = std::get<int>(findState->second);
++                if (1 != on)
++                {
++                    postcompleteStateOn = false;
++                }
++                else{
++                    postcompleteStateOn = true;
++                }
++                
++            }
++        });
++
++    if(!postcompleteMatch)
++    {
++        std::cerr << "Power Match not created\n";
++        return false;
++    }
++
++    return true;
++}
++
+ int main(int argc, char* argv[])
+ {
+     signal(SIGINT, writePwmFailsafeHandler);
+@@ -336,6 +407,13 @@ int main(int argc, char* argv[])
+ 
+     registerDebugSignalHandler();
+ 
++    std::shared_ptr<sdbusplus::asio::connection> modeMonitor(&modeControlBus);
++    if(!startPostCompleteMonitor(modeMonitor))
++    {
++        std::cerr << "Failed to start post complete monitor\n";
++        return -1;
++    }
++
+     /*
+      * All sensors are managed by one manager, but each zone has a pointer to
+      * it.
+diff --git a/pid/pidloop.cpp b/pid/pidloop.cpp
+old mode 100644
+new mode 100755
+index 621336a..6a6f3b2
+--- a/pid/pidloop.cpp
++++ b/pid/pidloop.cpp
+@@ -29,7 +29,9 @@
+ #include <systemd/sd-journal.h>
+ #include "util.hpp"
+ #include <cmath>
++#include <iostream>
+ 
++static constexpr int defaultFanSpeed = 80;
+ int64_t zoneID;
+ 
+ static void processThermals(PIDZone* zone)
+@@ -49,12 +51,22 @@ static void processThermals(PIDZone* zone)
+     // Get the maximum RPM setpoint.
+     zone->determineMaxSetPointRequest();
+ }
+-void pidControlLoop(PIDZone* zone, boost::asio::steady_timer& timer, int lastPwm,
+-                    bool first, uint64_t ms100cnt, uint64_t checkFanFailuresCount)
++void pidControlLoop(PIDZone* zone, boost::asio::steady_timer& timer, bool& postcompleteStateOn
++                    , int lastPwm, bool first, uint64_t ms100cnt, uint64_t checkFanFailuresCount)
+ {
+     if (first)
+     {
+-        if (lastPwm >= 0)
++        if (postcompleteStateOn)
++        {
++            zone->setPrePostcompleteState(postcompleteStateOn);
++
++            zone->manual(true);
++
++            zone->setManualMode(true);
++            
++            writePwm(defaultFanSpeed);
++        }
++        else if (lastPwm >= 0)
+         {
+             zone->manual(true);
+ 
+@@ -76,10 +88,36 @@ void pidControlLoop(PIDZone* zone, boost::asio::steady_timer& timer, int lastPwm
+         zone->initializeCache();
+         processThermals(zone);
+     }
++    else
++    {
++        if (postcompleteStateOn != zone->getPrePostcompleteState())
++        {
++            if(postcompleteStateOn)
++            {
++                zone->setPrePostcompleteState(postcompleteStateOn);
++
++                zone->manual(true);
++
++                zone->setManualMode(true);
++            
++                writePwm(defaultFanSpeed);
++                
++            }
++            else
++            {
++                zone->setPrePostcompleteState(postcompleteStateOn);
++
++                zone->manual(false);
++
++                zone->setManualMode(false);
++            }
++            
++        }
++    }
+ 
+     // Cycle time is 100 ms by default.
+     timer.expires_after(std::chrono::milliseconds(zone->getCycleTimeBase()));
+-    timer.async_wait([zone, &timer, ms100cnt, checkFanFailuresCount](
++    timer.async_wait([zone, &timer, &postcompleteStateOn, ms100cnt, checkFanFailuresCount](
+                          const boost::system::error_code& ec) mutable {
+         if (ec == boost::asio::error::operation_aborted)
+         {
+@@ -116,7 +154,7 @@ void pidControlLoop(PIDZone* zone, boost::asio::steady_timer& timer, int lastPwm
+         // Check if we should just go back to sleep.
+         if (zone->getManualMode())
+         {
+-            pidControlLoop(zone, timer, -1, false, ms100cnt, checkFanFailuresCount);
++            pidControlLoop(zone, timer, postcompleteStateOn, -1, false, ms100cnt, checkFanFailuresCount);
+             return;
+         }
+ 
+@@ -159,6 +197,6 @@ void pidControlLoop(PIDZone* zone, boost::asio::steady_timer& timer, int lastPwm
+             checkFanFailuresCount = 0;
+         }
+ 
+-        pidControlLoop(zone, timer, -1, false, ms100cnt, checkFanFailuresCount);
++        pidControlLoop(zone, timer, postcompleteStateOn, -1, false, ms100cnt, checkFanFailuresCount);
+     });
+ }
+diff --git a/pid/pidloop.hpp b/pid/pidloop.hpp
+old mode 100644
+new mode 100755
+index f1a6ab4..f2ea506
+--- a/pid/pidloop.hpp
++++ b/pid/pidloop.hpp
+@@ -15,5 +15,5 @@
+  * @param[in] ms100cnt - loop timer counter.
+  */
+ void pidControlLoop(PIDZone* zone, boost::asio::steady_timer& timer,
+-                    int lastPwm = -1, bool first = true, uint64_t ms100cnt = 0,
++                    bool& postcompleteStateOn, int lastPwm = -1, bool first = true, uint64_t ms100cnt = 0,
+                     uint64_t checkFanFailuresCount = 0);
+diff --git a/pid/zone.cpp b/pid/zone.cpp
+old mode 100644
+new mode 100755
+index d6fbd44..7db0002
+--- a/pid/zone.cpp
++++ b/pid/zone.cpp
+@@ -69,6 +69,17 @@ void PIDZone::setManualMode(bool mode)
+     _manualMode = mode;
+ }
+ 
++bool PIDZone::getPrePostcompleteState(void)
++{
++    return prePostcompleteState;
++}
++
++void PIDZone::setPrePostcompleteState(bool mode)
++{
++    prePostcompleteState = mode;
++}
++
++
+ bool PIDZone::getFailSafeMode(void) const
+ {
+     /* If fail safe fans are more than the maximum number that project
+diff --git a/pid/zone.hpp b/pid/zone.hpp
+old mode 100644
+new mode 100755
+index c1445f5..24044b4
+--- a/pid/zone.hpp
++++ b/pid/zone.hpp
+@@ -103,6 +103,9 @@ class PIDZone : public ZoneInterface, public ModeObject
+     void addFanInput(const std::string& fan);
+     void addThermalInput(const std::string& therm);
+ 
++    bool getPrePostcompleteState(void);
++    void setPrePostcompleteState(bool mode);
++
+     void initializeLog(void);
+     std::ofstream& getLogHandle(void);
+ 
+@@ -125,6 +128,8 @@ class PIDZone : public ZoneInterface, public ModeObject
+     const uint64_t _updateThermalsCycle;
+     bool _checkFanFailuresFlag = false;
+ 
++    bool prePostcompleteState = false;
++
+     std::set<std::string> _failSafeTemps;
+     std::set<std::string> _failSafeFans;
+     std::map<std::string, bool> _isFanFailure;
+-- 
+2.17.1
+

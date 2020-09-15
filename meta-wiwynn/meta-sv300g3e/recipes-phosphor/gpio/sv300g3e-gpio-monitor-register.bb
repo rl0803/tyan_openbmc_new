@@ -16,6 +16,7 @@ SRC_URI += "file://toggle_identify_led.sh \
             file://end-of-post-event.service \
             file://SetPowerGoodPropertyOff.service \
             file://SetPowerGoodPropertyOn.service \
+            file://SetPOSTCompletePropertyOn.service \
             file://caterr-event.sh \
             file://caterr-event.service \
            "
@@ -32,4 +33,5 @@ SYSTEMD_SERVICE_${PN} += "id-button-pressed.service"
 SYSTEMD_SERVICE_${PN} += "end-of-post-event.service"
 SYSTEMD_SERVICE_${PN} += "SetPowerGoodPropertyOff.service"
 SYSTEMD_SERVICE_${PN} += "SetPowerGoodPropertyOn.service"
+SYSTEMD_SERVICE_${PN} += "SetPOSTCompletePropertyOn.service"
 SYSTEMD_SERVICE_${PN} += "caterr-event.service"

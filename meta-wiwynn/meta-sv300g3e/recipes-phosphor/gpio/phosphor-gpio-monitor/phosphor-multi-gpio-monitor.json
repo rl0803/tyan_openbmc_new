@@ -32,11 +32,14 @@
         "Name": "POSTComplete",
         "ChipId": "0",
         "GpioNum": 2,
-        "EventMon": "FALLING",
+        "EventMon": "BOTH",
         "Target":
         {
             "FALLING": [
                 "end-of-post-event.service"
+            ],
+            "RISING": [
+                "SetPOSTCompletePropertyOn.service"
             ]
         },
         "Continue": true
