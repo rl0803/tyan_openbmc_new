@@ -14,7 +14,9 @@ SRC_URI = " \
            file://initFruFlag.service \
            file://initFruFlag.sh \
            file://writeFRU.sh \
-           file://relinkLan.sh"
+           file://relinkLan.sh \
+           file://restartNetIpmi.sh \
+           "
 
 DEPENDS = "systemd"
 RDEPENDS_${PN} = "bash"
@@ -22,7 +24,9 @@ RDEPENDS_${PN} = "bash"
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE_${PN} = " \
                          disable-sw2.service \
-                         initFruFlag.service"
+                         initFruFlag.service \
+                         restartNetIpmi.service \
+                         "
 
 
 do_install() {
@@ -31,4 +35,5 @@ do_install() {
     install -m 0755 ${S}initFruFlag.sh ${D}/${sbindir}/
     install -m 0755 ${S}writeFRU.sh ${D}/${sbindir}/
     install -m 0755 ${S}relinkLan.sh ${D}/${sbindir}/
+    install -m 0755 ${S}restartNetIpmi.sh ${D}/${sbindir}/
 }
