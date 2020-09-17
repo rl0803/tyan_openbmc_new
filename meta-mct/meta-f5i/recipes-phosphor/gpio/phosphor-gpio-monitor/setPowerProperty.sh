@@ -13,13 +13,14 @@ if [ "$1" == "on" ]; then
 	touch /run/openbmc/host@0-on
 
 #    if [ $bmcState == "Ready" ]; then
-        # set host to on
+     if [ $(systemctl is-active host-poweroff.service) != "activating" ] && [ $(systemctl is-active host-poweron.service) != "activating" ]; then
+        echo "set host to on"
         busctl set-property xyz.openbmc_project.State.Host /xyz/openbmc_project/state/host0 xyz.openbmc_project.State.Host CurrentHostState s "xyz.openbmc_project.State.Host.HostState.Running"
         busctl set-property xyz.openbmc_project.State.Host /xyz/openbmc_project/state/host0 xyz.openbmc_project.State.Host RequestedHostTransition s "xyz.openbmc_project.State.Host.Transition.On"
         # set chassis to on
         busctl set-property xyz.openbmc_project.State.Chassis /xyz/openbmc_project/state/chassis0 xyz.openbmc_project.State.Chassis CurrentPowerState s "xyz.openbmc_project.State.Chassis.PowerState.On"
         busctl set-property xyz.openbmc_project.State.Chassis /xyz/openbmc_project/state/chassis0 xyz.openbmc_project.State.Chassis RequestedPowerTransition s "xyz.openbmc_project.State.Chassis.Transition.On"
-#    fi
+     fi
 
 else
     echo "pgood off"
@@ -29,10 +30,12 @@ else
 	rm -f /run/openbmc/host@0-on
 	rm -f /run/openbmc/host@0-request
 #    if [ $bmcState == "Ready" ]; then
-        busctl set-property xyz.openbmc_project.State.Host /xyz/openbmc_project/state/host0 xyz.openbmc_project.State.Host CurrentHostState s "xyz.openbmc_project.State.Host.HostState.Off"
+     if [ $(systemctl is-active host-poweroff.service) != "activating" ] && [ $(systemctl is-active host-poweron.service) != "activating" ]; then
+        echo "set host to off"
+	busctl set-property xyz.openbmc_project.State.Host /xyz/openbmc_project/state/host0 xyz.openbmc_project.State.Host CurrentHostState s "xyz.openbmc_project.State.Host.HostState.Off"
         busctl set-property xyz.openbmc_project.State.Host /xyz/openbmc_project/state/host0 xyz.openbmc_project.State.Host RequestedHostTransition s "xyz.openbmc_project.State.Host.Transition.Off"
         busctl set-property xyz.openbmc_project.State.Chassis /xyz/openbmc_project/state/chassis0 xyz.openbmc_project.State.Chassis CurrentPowerState s "xyz.openbmc_project.State.Chassis.PowerState.Off"
         busctl set-property xyz.openbmc_project.State.Chassis /xyz/openbmc_project/state/chassis0 xyz.openbmc_project.State.Chassis RequestedPowerTransition s "xyz.openbmc_project.State.Chassis.Transition.Off"
-#    fi
+    fi
 fi
 

@@ -5,7 +5,7 @@ After=host-gpio.service
 Conflicts=obmc-chassis-poweron@0.target
 
 [Service]
-RemainAfterExit=yes
+RemainAfterExit=no
 Type=oneshot
 ExecStart=/usr/bin/env poweroff.sh
 SyslogIdentifier=poweroff.sh
