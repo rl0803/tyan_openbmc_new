@@ -620,7 +620,7 @@
                     "Label": "temp1",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 36
+                    "Value": 35
                 },
                 {
                     "Direction": "greater than",
@@ -651,7 +651,7 @@
                     "Label": "temp2",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 100
+                    "Value": 105
                 }
             ],
             "Type": "TMP421"
@@ -666,7 +666,7 @@
                     "Label": "temp1",
                     "Name": "upper critical",
                     "Severity": 1,
-                    "Value": 100
+                    "Value": 105
                 }
             ],
             "Type": "TMP75"
