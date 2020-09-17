@@ -250,7 +250,7 @@ class BiosFlashControl(DbusProperties, DbusObjectManager):
         subprocess.Popen('gpioset gpiochip0 72=0', shell=True)
         subprocess.Popen('gpioset gpiochip0 73=1', shell=True)
         # Waiting for gpio set
-        time.sleep(2)
+        time.sleep(5)
         # Load the ASpeed SMC driver
         subprocess.Popen('echo -n 1e630000.spi > /sys/bus/platform/drivers/aspeed-smc/bind', shell=True)
 
@@ -261,10 +261,12 @@ class BiosFlashControl(DbusProperties, DbusObjectManager):
     def RestoreSPIInterface(self):
         # unLoad the ASpeed SMC driver
         subprocess.Popen('echo -n 1e630000.spi > /sys/bus/platform/drivers/aspeed-smc/unbind', shell=True)
+
+        time.sleep(10)
         
         # connect PCH to SPI Flash 
-        subprocess.Popen('gpioget gpiochip0 72', shell=True)
-        subprocess.Popen('gpioget gpiochip0 73', shell=True)
+        subprocess.Popen('gpioset gpiochip0 72=1', shell=True)
+        subprocess.Popen('gpioset gpiochip0 73=0', shell=True)
 
         #self.update_process = None
         if self.update_process:
