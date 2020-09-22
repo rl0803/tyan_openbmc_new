@@ -1,0 +1,10 @@
+[Unit]
+Description=Host power-on delay service
+Requires=host-gpio.service
+After=host-gpio.service
+
+[Service]
+RemainAfterExit=no
+Type=oneshot
+ExecStart=/usr/bin/env poweron-delay.sh
+SyslogIdentifier=poweron-delay.sh

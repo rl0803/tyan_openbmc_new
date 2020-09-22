@@ -11,6 +11,7 @@ SRC_URI = "file://init_once.sh \
            file://poweroff.sh \
            file://powersoft.sh \
            file://poweron.sh \
+           file://poweron-delay.sh \
            file://powerreset.sh \
            file://powercyclelog.sh \
            file://fan-failure-poweroff.sh \
@@ -18,6 +19,7 @@ SRC_URI = "file://init_once.sh \
            file://host-poweroff.service \
            file://host-powersoft.service \
            file://host-poweron.service \
+           file://host-poweron-delay.service \
            file://host-powerreset.service \
            file://host-powercyclelog.service \
            file://fan-failure-poweroff.service \
@@ -29,6 +31,7 @@ RDEPENDS_${PN} = "bash"
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE_${PN} = "host-gpio.service \
                          host-poweron.service \
+                         host-poweron-delay.service \
                          host-poweroff.service \
                          host-powersoft.service \
                          host-powerreset.service \
@@ -42,6 +45,7 @@ do_install() {
     install -m 0755 ${S}poweroff.sh ${D}/${sbindir}/
     install -m 0755 ${S}powersoft.sh ${D}/${sbindir}/
     install -m 0755 ${S}poweron.sh ${D}/${sbindir}/
+    install -m 0755 ${S}poweron-delay.sh ${D}/${sbindir}/
     install -m 0755 ${S}powerreset.sh ${D}/${sbindir}/
     install -m 0755 ${S}powercyclelog.sh ${D}/${sbindir}/
     install -m 0755 ${S}fan-failure-poweroff.sh ${D}/${sbindir}/

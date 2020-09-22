@@ -1,0 +1,40 @@
+From 7a67b2c1ab85a47031d439a2c897f90719d71aef Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Tue, 22 Sep 2020 14:19:28 +0800
+Subject: [PATCH] Run the power-on delay service when the power-off service is
+ still activating
+
+---
+ chassishandler.cpp | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/chassishandler.cpp b/chassishandler.cpp
+index 9da8f9c..8a159b6 100644
+--- a/chassishandler.cpp
++++ b/chassishandler.cpp
+@@ -1208,8 +1208,22 @@ ipmi::RspType<> ipmiChassisControl(uint8_t chassisControl)
+     switch (chassisControl)
+     {
+         case CMD_POWER_ON:
++        {
++
++            fs::path pwroff("/run/openbmc/host@0-request");
++            std::optional<bool> powerGood = power_policy::getPowerStatus();
++
++            if ((fs::exists(pwroff)) ||
++                (powerGood && (*powerGood == true)))
++            {
++                std::string pwrondelay("host-poweron-delay.service");
++                rc = startSystemdUnit(pwrondelay);
++                break;
++            }
++
+             rc = initiate_state_transition(State::Host::Transition::On);
+             break;
++        }
+         case CMD_POWER_OFF:
+             // This path would be hit in 2 conditions.
+             // 1: When user asks for power off using ipmi chassis command 0x04
+-- 
+2.24.1
+
