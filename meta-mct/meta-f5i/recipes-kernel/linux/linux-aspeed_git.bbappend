@@ -10,6 +10,7 @@ SRC_URI += "file://f5i.cfg \
             file://0007-Fix-fan-sensor-disappear-when-power-off-problem.patch \
             file://0008-s7106-increase-rofs-space.patch \
             file://0009-Register-all-of-dimm-sensors-when-initializing.patch \
-            file://0010-change-aspeed-rpm-driver-to-falling-edge.patch \
+            file://0011-irqchip-Add-Aspeed-SCU-Interrupt-Controller.patch \
+            file://0012-Support-interrupt-handle-for-aspeed-bmc-misc.patch \
             "
 
