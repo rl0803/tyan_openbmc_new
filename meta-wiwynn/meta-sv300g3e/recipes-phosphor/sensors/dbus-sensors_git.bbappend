@@ -41,6 +41,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0049-Add-WDT2-and-Fast-Prochot-event-only-sensors.patch \
             file://0050-Add-Fan_Failure-event-only-sensor.patch \
             file://0051-Support-2-fan-failure-event-handler.patch \
+            file://0052-Use-different-IIDs-in-NIC-temperature-via-MCTP-method.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \

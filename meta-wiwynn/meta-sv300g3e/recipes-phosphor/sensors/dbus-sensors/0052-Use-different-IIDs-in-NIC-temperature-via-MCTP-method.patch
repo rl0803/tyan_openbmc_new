@@ -1,0 +1,184 @@
+From a2e1f69b45b115b767b6449188b5839883a72575 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 24 Sep 2020 17:09:23 +0800
+Subject: [PATCH] Use different IIDs in NIC temperature via MCTP method
+
+---
+ include/NICSensor.hpp |  3 +-
+ src/NICSensor.cpp     | 92 +++++++++++++++++++++++++++----------------
+ 2 files changed, 59 insertions(+), 36 deletions(-)
+
+diff --git a/include/NICSensor.hpp b/include/NICSensor.hpp
+index 9ddd053..2a623c4 100644
+--- a/include/NICSensor.hpp
++++ b/include/NICSensor.hpp
+@@ -41,9 +41,10 @@ private:
+     uint8_t busId1;
+     uint8_t busId2;
+     uint8_t slaveAddr;
++    uint8_t mctpIID;
+     float senValue;
+     bool mfgChecked;
+-    bool mctpCmd1Set;
++    bool mctpCmd12Set;
+ 
+     void setupRead(void);
+     bool visitNICReg(void);
+diff --git a/src/NICSensor.cpp b/src/NICSensor.cpp
+index 260da1b..b10b896 100644
+--- a/src/NICSensor.cpp
++++ b/src/NICSensor.cpp
+@@ -66,6 +66,7 @@ static std::vector<uint8_t> mctpGetTempCmd3 = {0x0F, 0x22, 0x21,
+ 										       0x57, 0x4B, 0x00, 0x00,
+ 										       0x00, 0x00, 0x00, 0x00,
+ 										       0x00, 0x92};
++static constexpr const int mctpGetTempCmd3ReqLen = 37;
+ static constexpr const int mctpGetTempCmd3ResLen = 42;
+ 
+ NICSensor::NICSensor(const std::string& path1, const std::string& path2,
+@@ -82,8 +83,8 @@ NICSensor::NICSensor(const std::string& path1, const std::string& path2,
+            std::move(_thresholds), sensorConfiguration, objectType, MaxValue,
+            MinValue),
+     path1(path1), path2(path2), slaveAddr(slaveAddr), objServer(objectServer), waitTimer(io),
+-    errCount(0), mctpErrCount(0), senValue(0), busId1(busId1), busId2(busId2),
+-    sensorType(sensorTypeName), sensorUnit(sensorUnit), mfgChecked(false), mctpCmd1Set(false)
++    errCount(0), mctpErrCount(0), senValue(0), busId1(busId1), busId2(busId2), mctpIID(0x1),
++    sensorType(sensorTypeName), sensorUnit(sensorUnit), mfgChecked(false), mctpCmd12Set(false)
+ {
+     std::string dbusPath = sensorPathPrefix + sensorTypeName + name;
+ 
+@@ -126,7 +127,8 @@ void NICSensor::setupRead(void)
+         mctpErrCount = 0;
+         errCount = 0;
+         mfgChecked = false;
+-        mctpCmd1Set = false;
++        mctpCmd12Set = false;
++        mctpIID = 0x1;
+     }
+     else
+     {
+@@ -340,9 +342,10 @@ bool NICSensor::mctpGetTemp(void)
+     // Step1
+     int res = -1;
+     uint8_t mctpAddr = 0x32;
++    uint8_t mctpAddrPec = 0x3b;
+     std::vector<uint8_t> mctpResp(255,0);
+ 
+-    if (mctpCmd1Set == false)
++    if (mctpCmd12Set == false)
+     {
+         i2c_slave_clear_buffer(inFd);
+         res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd1.size(), mctpGetTempCmd1.data());
+@@ -389,52 +392,61 @@ bool NICSensor::mctpGetTemp(void)
+             close_i2c_dev(outFd);
+             return false;
+         }
+-    }
+-    mctpCmd1Set = true;
++    // }
++    // mctpCmd1Set = true;
+ 
+-    i2c_slave_clear_buffer(inFd);
+-    res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd2.size(), mctpGetTempCmd2.data());
+-    if (res < 0)
+-    {
+-        std::cerr << "[MCTP] Error in master wirte in Cmd2.\n";
+-        close_i2c_dev(inFd);
+-        close_i2c_dev(outFd);
+-        return false;
+-    }
+-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
++        i2c_slave_clear_buffer(inFd);
++        res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd2.size(), mctpGetTempCmd2.data());
++        if (res < 0)
++        {
++            std::cerr << "[MCTP] Error in master wirte in Cmd2.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
++        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+ 
+-    res = i2c_slave_read(inFd, mctpResp.data());
+-    if (res <= 0)
+-    {
+-        std::cerr << "[MCTP] Error in reading data from mqueue for Cmd2.\n";
+-        close_i2c_dev(inFd);
+-        close_i2c_dev(outFd);
+-        return false;
+-    }
++        res = i2c_slave_read(inFd, mctpResp.data());
++        if (res <= 0)
++        {
++            std::cerr << "[MCTP] Error in reading data from mqueue for Cmd2.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
+ 
+-    if (res != mctpGetTempCmd2ResLen)
+-    {
+-        std::cerr << "[MCTP] Error in resLen of Cmd2.\n";
+-        close_i2c_dev(inFd);
+-        close_i2c_dev(outFd);
+-        return false;
+-    }
++        if (res != mctpGetTempCmd2ResLen)
++        {
++            std::cerr << "[MCTP] Error in resLen of Cmd2.\n";
++            close_i2c_dev(inFd);
++            close_i2c_dev(outFd);
++            return false;
++        }
+ 
+-    uint8_t cmd2_pec = i2c_smbus_pec(0, mctpResp.data(), (res-1));
+-    if (cmd2_pec != mctpResp.at(res-1))
+-    {
++        uint8_t cmd2_pec = i2c_smbus_pec(0, mctpResp.data(), (res-1));
++        if (cmd2_pec != mctpResp.at(res-1))
++        {
+             std::cerr << "[MCTP] Error in PEC of Cmd2.\n";
+             close_i2c_dev(inFd);
+             close_i2c_dev(outFd);
+             return false;
++        }
+     }
++    mctpCmd12Set = true;
+ 
+     // Get Temperature
++    // Specify the IID
++
++    mctpGetTempCmd3.at(11) = mctpIID;
++    uint8_t cmd3req_pec = i2c_smbus_pec(mctpAddrPec, mctpGetTempCmd3.data(),
++                                       (mctpGetTempCmd3ReqLen-1));
++    mctpGetTempCmd3.at(mctpGetTempCmd3ReqLen-1) = cmd3req_pec;
++
+     i2c_slave_clear_buffer(inFd);
+     res = i2c_master_write(outFd, mctpAddr, mctpGetTempCmd3.size(), mctpGetTempCmd3.data());
+     if (res < 0)
+     {
+-       std::cerr << "[MCTP] Error in master wirte in Cmd3.\n";
++        std::cerr << "[MCTP] Error in master wirte in Cmd3.\n";
+         close_i2c_dev(inFd);
+         close_i2c_dev(outFd);
+         return false;
+@@ -477,6 +489,16 @@ bool NICSensor::mctpGetTemp(void)
+     close_i2c_dev(inFd);
+     close_i2c_dev(outFd);
+ 
++    // Increase the IID
++    if (0xFF == mctpIID)
++    {
++        mctpIID = 0x1;
++    }
++    else
++    {
++        mctpIID++;
++    }
++
+     return true;
+ }
+ 
+-- 
+2.24.1
+
