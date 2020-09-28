@@ -1,0 +1,87 @@
+From e602b8ab9af6d6bdc292c4173c6dc2b5ee1eaa68 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 28 Sep 2020 14:58:10 +0800
+Subject: [PATCH] Refer to the postcomplete property change to clear the post
+ code vector
+
+---
+ inc/post_code.hpp | 42 +++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/inc/post_code.hpp b/inc/post_code.hpp
+index 3c4ac4a..d946057 100644
+--- a/inc/post_code.hpp
++++ b/inc/post_code.hpp
+@@ -39,6 +39,8 @@ const static constexpr char *PostCodeListPath =
+ const static constexpr char *CurrentBootCycleIndexName =
+     "CurrentBootCycleIndex";
+ const static constexpr char *HostStatePath = "/xyz/openbmc_project/state/host0";
++const static constexpr char *PowerStatePath = "/org/openbmc/control/power0";
++const static constexpr char *PostStateIntf = "org.openbmc.control.PostComplete";
+ 
+ struct EventDeleter
+ {
+@@ -80,6 +82,7 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+                     }
+                 }
+             }),
++/*
+         propertiesChangedSignalCurrentHostState(
+             bus,
+             sdbusplus::bus::match::rules::type::signal() +
+@@ -117,6 +120,42 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+                         }
+                     }
+                 }
++            }),
++*/
++            propertiesChangedSignalEndOfPostState(
++            bus,
++            sdbusplus::bus::match::rules::type::signal() +
++                sdbusplus::bus::match::rules::member("PropertiesChanged") +
++                sdbusplus::bus::match::rules::path(PowerStatePath) +
++                sdbusplus::bus::match::rules::interface(PropertiesIntf) +
++                sdbusplus::bus::match::rules::argN(0,PostStateIntf),
++            [this](sdbusplus::message::message &msg) {
++                std::string objectName;
++                std::map<std::string, sdbusplus::message::variant<int>>
++                    msgData;
++                msg.read(objectName, msgData);
++                auto valPropMap = msgData.find("postcomplete");
++                {
++                    if (valPropMap != msgData.end())
++                    {
++                        int postState = sdbusplus::message::variant_ns::get<int>(
++                                                        valPropMap->second);
++                        if (1 == postState)
++                        {
++                            if (this->currentBootCycleIndex() >=
++                                this->maxBootCycleNum())
++                            {
++                                this->currentBootCycleIndex(1);
++                            }
++                            else
++                            {
++                                this->currentBootCycleIndex(
++                                    this->currentBootCycleIndex() + 1);
++                            }
++                            this->postCodes.clear();
++                        }
++                    }
++                }
+             })
+     {
+         phosphor::logging::log<phosphor::logging::level::INFO>(
+@@ -153,7 +192,8 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+     std::string strCurrentBootCycleIndexName;
+     void savePostCodes(uint64_t code);
+     sdbusplus::bus::match_t propertiesChangedSignalRaw;
+-    sdbusplus::bus::match_t propertiesChangedSignalCurrentHostState;
++    // sdbusplus::bus::match_t propertiesChangedSignalCurrentHostState;
++    sdbusplus::bus::match_t propertiesChangedSignalEndOfPostState;
+     fs::path serialize(const std::string &path);
+     bool deserialize(const fs::path &path, uint16_t &index);
+     bool deserializePostCodes(const fs::path &path,
+-- 
+2.24.1
+
