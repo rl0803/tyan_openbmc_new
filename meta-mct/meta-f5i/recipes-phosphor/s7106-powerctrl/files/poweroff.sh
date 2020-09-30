@@ -7,11 +7,11 @@ pwrstatus=$(busctl get-property org.openbmc.control.Power /org/openbmc/control/p
 if [ $pwrstatus -eq 1 ]; then   
     # *** Push power button ***
     # GPIO E1
+    echo "Execute Power off"
     /usr/bin/gpioset gpiochip0 33=0
     for (( i=0; i<=6; i=i+1 ))
     do
         sleep 1
-        #pwrstatus=$(/usr/bin/gpioget gpiochip0 26)
         pwrstatus=$(busctl get-property org.openbmc.control.Power /org/openbmc/control/power0 org.openbmc.control.Power pgood | cut -d' ' -f2)
         if [ $pwrstatus -eq 0 ]; then
              break;    
