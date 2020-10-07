@@ -1,8 +1,12 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-SRC_URI += "file://0001-Add-web-entry-for-sol-log-download.patch \
-            file://0002-s7106-Add-bios-upload-URI.patch \
-            file://0003-Add-web-URI-for-crashdumps-display.patch \
+SRCREV = "65176d3908b27393d81b72284dbebc47055e517c"
+
+DEPENDS += "boost-url"
+
+SRC_URI += "file://mct_oem_rest.hpp;subdir=git/include \
+            file://0001-Support-rest-API-for-MCT-OEM.patch \
+            file://0002-Fix-the-issue-for-update-bmcweb-recipe.patch \
             "
 
 # add a user called bmcweb for the server to assume
@@ -19,3 +23,6 @@ EXTRA_OECMAKE += "-DBMCWEB_ENABLE_REDFISH_RAW_PECI=ON"
 EXTRA_OECMAKE += "-DBMCWEB_ENABLE_REDFISH_BMC_JOURNAL=ON"
 EXTRA_OECMAKE += "-DBMCWEB_HTTP_REQ_BODY_LIMIT_MB=128"
 EXTRA_OECMAKE += "-DBMCWEB_INSECURE_ENABLE_REDFISH_FW_TFTP_UPDATE=ON"
+
+# Enable MCT OEM Rest support
+EXTRA_OECMAKE += "-DBMCWEB_ENABLE_MCT_OEM_REST=ON"

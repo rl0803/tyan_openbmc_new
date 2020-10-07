@@ -1,4 +1,4 @@
-From 71f17402e22299c6cd8957cf1ef6b76d51c7bd96 Mon Sep 17 00:00:00 2001
+From 935b90a31a10e0494ff2f5b82b15077a5d3ef0ef Mon Sep 17 00:00:00 2001
 From: John Chung <john.chung@mic.com.tw>
 Date: Thu, 9 Apr 2020 16:02:27 +0800
 Subject: [PATCH] Implement the feature for setting web status to enable or
@@ -21,10 +21,10 @@ Create the web disabled notification
 diff --git a/app/common/services/api-utils.js b/app/common/services/api-utils.js
 old mode 100644
 new mode 100755
-index 7643a4e..8b8bb75
+index f10476d..1886c7a
 --- a/app/common/services/api-utils.js
 +++ b/app/common/services/api-utils.js
-@@ -1560,6 +1560,16 @@ window.angular && (function(angular) {
+@@ -1780,6 +1780,16 @@ window.angular && (function(angular) {
                  return response.data;
                });
          },
@@ -44,17 +44,17 @@ index 7643a4e..8b8bb75
 diff --git a/app/index.js b/app/index.js
 old mode 100644
 new mode 100755
-index a0dde4d..93c28aa
+index 156fab6..668398e
 --- a/app/index.js
 +++ b/app/index.js
-@@ -151,29 +151,54 @@ window.angular && (function(angular) {
+@@ -187,29 +187,54 @@ window.angular && (function(angular) {
          }
        ])
        .run([
--        '$rootScope', '$location', 'dataService', 'userModel',
--        function($rootScope, $location, dataService, userModel) {
-+        '$rootScope', '$location', 'dataService', 'userModel', 'APIUtils',
-+        function($rootScope, $location, dataService, userModel, APIUtils) {
+-        '$rootScope', '$location', 'dataService', 'userModel', '$cookies',
+-        function($rootScope, $location, dataService, userModel, $cookies) {
++        '$rootScope', '$location', 'dataService', 'userModel', '$cookies', 'APIUtils',
++        function($rootScope, $location, dataService, userModel, $cookies,  APIUtils) {
            $rootScope.dataService = dataService;
            dataService.path = $location.path();
 -          $rootScope.$on('$routeChangeStart', function(event, next, current) {
@@ -121,7 +121,7 @@ index a0dde4d..93c28aa
 diff --git a/app/login/controllers/login-controller.html b/app/login/controllers/login-controller.html
 old mode 100644
 new mode 100755
-index b89c2c4..b60e2b6
+index e162d8f..618d184
 --- a/app/login/controllers/login-controller.html
 +++ b/app/login/controllers/login-controller.html
 @@ -11,6 +11,9 @@
@@ -137,7 +137,7 @@ index b89c2c4..b60e2b6
 diff --git a/app/login/controllers/login-controller.js b/app/login/controllers/login-controller.js
 old mode 100644
 new mode 100755
-index 7867a0c..cb19a2b
+index cc0f0b3..10b596c
 --- a/app/login/controllers/login-controller.js
 +++ b/app/login/controllers/login-controller.js
 @@ -10,15 +10,18 @@ window.angular && (function(angular) {
@@ -168,10 +168,10 @@ index 7867a0c..cb19a2b
          if (!username || username == '' || !password || password == '' ||
              !host || host == '') {
            return false;
-@@ -41,7 +45,20 @@ window.angular && (function(angular) {
-               $scope.$emit('user-logged-in', {});
-               var next = $location.search().next;
-               if (next === undefined || next == null) {
+@@ -43,7 +47,20 @@ window.angular && (function(angular) {
+               // don't allow forwarding to non-local urls
+               if (next === undefined || next == null ||
+                   next.indexOf(':') >= 0) {
 -                $window.location.hash = '#/overview/server';
 +                APIUtils.getServiceStatus().then(
 +                  function(data) {
