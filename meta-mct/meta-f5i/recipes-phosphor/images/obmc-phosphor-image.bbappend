@@ -30,4 +30,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_f5i =   " libgpiod \
                                           mct-dcmi-power \
                                           gdb \
                                           mct-register-monitor \
+                                          pattern-matching \
                                         "
