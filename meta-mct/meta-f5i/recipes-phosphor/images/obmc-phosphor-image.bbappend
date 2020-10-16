@@ -31,4 +31,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_f5i =   " libgpiod \
                                           gdb \
                                           mct-register-monitor \
                                           pattern-matching \
+                                          state-manager-recheck \
                                         "
