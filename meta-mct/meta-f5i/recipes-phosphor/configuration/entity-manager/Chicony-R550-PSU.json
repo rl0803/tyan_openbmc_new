@@ -5,7 +5,6 @@
                 "Address": "0x58",
                 "Bus": "$bus",
                 "Name": "PSU0",
-                "Labels": ["pin", "pout1", "vin", "vout1", "iin", "iout1", "temp1", "fan1"],
                 "PowerStates": [
                     {
                         "Label": "pin",
@@ -37,7 +36,86 @@
                     },
                     {
                         "Label": "fan1",
-                        "PowerState": "On"
+                        "PowerState": "Always"
+                    }
+                ],
+                "Thresholds": [
+                    {
+                        "Direction": "greater than",
+                        "Label": "pin",
+                        "Name": "upper non critical",
+                        "Severity": 0,
+                        "Value": 605
+                    },
+                    {
+                        "Direction": "greater than",
+                        "Label": "pout1",
+                        "Name": "upper non critical",
+                        "Severity": 0,
+                        "Value": 550
+                    },
+                    {
+                        "Direction": "greater than",
+                        "Label": "vin",
+                        "Name": "upper non critical",
+                        "Severity": 0,
+                        "Value": 264
+                    },
+                    {
+                        "Direction": "less than",
+                        "Label": "vin",
+                        "Name": "lower non critical",
+                        "Severity": 0,
+                        "Value": 90
+                    },
+                    {
+                        "Direction": "greater than",
+                        "Label": "vout1",
+                        "Name": "upper critical",
+                        "Severity": 1,
+                        "Value": 12.809
+                    },
+                    {
+                        "Direction": "less than",
+                        "Label": "vout1",
+                        "Name": "lower critical",
+                        "Severity": 1,
+                        "Value": 11.59
+                    },
+                    {
+                        "Direction": "greater than",
+                        "Label": "iout1",
+                        "Name": "upper critical",
+                        "Severity": 1,
+                        "Value": 63.75
+                    },
+                    {
+                        "Direction": "greater than",
+                        "Label": "iout1",
+                        "Name": "upper non critical",
+                        "Severity": 0,
+                        "Value": 46.75
+                    },
+                    {
+                        "Direction": "greater than",
+                        "Label": "temp1",
+                        "Name": "upper non critical",
+                        "Severity": 0,
+                        "Value": 55
+                    },
+                    {
+                        "Direction": "less than",
+                        "Label": "temp1",
+                        "Name": "lower non critical",
+                        "Severity": 0,
+                        "Value": 0
+                    },
+                    {
+                        "Direction": "less than",
+                        "Label": "fan1",
+                        "Name": "lower critical",
+                        "Severity": 1,
+                        "Value": 1500
                     }
                 ],
                 "Type": "pmbus"
