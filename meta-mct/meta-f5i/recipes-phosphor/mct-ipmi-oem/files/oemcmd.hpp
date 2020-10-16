@@ -11,6 +11,7 @@ enum ipmi_net_fns_oem
 #define IANA_TYAN 0x0019fd
 enum ipmi_net_fns_oem_cmds
 {
+    IPMI_CMD_GenCrashdump = 0x03,
     IPMI_CMD_FanPwmDuty = 0x05,
     IPMI_CMD_ManufactureMode = 0x06,
     IPMI_CMD_FloorDuty = 0x07,

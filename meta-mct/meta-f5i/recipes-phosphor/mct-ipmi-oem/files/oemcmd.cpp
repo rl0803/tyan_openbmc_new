@@ -1512,6 +1512,43 @@ ipmi::RspType<> ipmi_GetOcpCard(uint8_t status)
     return ipmi::responseSuccess();
 }
 
+//===============================================================
+/* BMC internal Generate crashdump
+NetFun: 0x30
+Cmd : 0x03
+Request:
+
+Response:
+    Byte 1 : Completion Code
+
+*/
+ipmi::RspType<> ipmi_GenCrashdump()
+{
+    uint8_t serviceResponse = 0;
+
+    constexpr auto service = "com.intel.crashdump";
+    constexpr auto path = "/com/intel/crashdump";
+    constexpr auto interface = "com.intel.crashdump.Stored";
+    constexpr auto genMethod = "IERR";
+
+    auto bus = sdbusplus::bus::new_default();
+
+    auto method = bus.new_method_call(service, path, interface, "GenerateStoredLog");
+    method.append(genMethod);
+
+    try
+    {
+        auto reply = bus.call(method);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        log<level::ERR>("Error in Generate IERR",entry("ERROR=%s", e.what()));
+        return ipmi::responseUnspecifiedError();
+    }
+
+    return ipmi::responseSuccess();
+}
+
 void register_netfn_mct_oem()
 {
     ipmi::registerOemHandler(ipmi::prioMax, 0x0019fd, IPMI_CMD_FanPwmDuty, ipmi::Privilege::Admin, ipmi_tyan_FanPwmDuty);
@@ -1534,5 +1571,6 @@ void register_netfn_mct_oem()
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiGetSolPattern);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_SET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiSetSolPattern);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GetOcpCard, ipmi::Privilege::Admin, ipmi_GetOcpCard);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GenCrashdump, ipmi::Privilege::Admin, ipmi_GenCrashdump);
 }
 }
