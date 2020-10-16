@@ -1245,9 +1245,18 @@
     "Probe": "xyz.openbmc_project.FruDevice({'BOARD_PRODUCT_NAME': '.*S7106*'})",
     "Type": "Board",
     "xyz.openbmc_project.Inventory.Decorator.Asset": {
-        "Manufacturer": "$PRODUCT_MANUFACTURER",
-        "Model": "$PRODUCT_PRODUCT_NAME",
-        "PartNumber": "$PRODUCT_PART_NUMBER",
-        "SerialNumber": "$PRODUCT_SERIAL_NUMBER"
+        "ChassisType": "$CHASSIS_TYPE",
+        "ChassisPartNumber": "$CHASSIS_PART_NUMBER",
+        "ChassisSerial": "$CHASSIS_SERIAL_NUMBER",
+        "ChassisExtra": "$CHASSIS_INFO_AM1",
+        "BoardMfgDate": "$BOARD_MANUFACTURE_DATE",
+        "BoardMfg": "$BOARD_MANUFACTURER",
+        "BoardProduct": "$BOARD_PRODUCT_NAME",
+        "BoardSerial": "$BOARD_SERIAL_NUMBER",
+        "BoardPartNumber": "$BOARD_PRODUCT_NAME",
+        "ProductName": "$PRODUCT_PRODUCT_NAME",
+        "ProductPartNumber": "$PRODUCT_PART_NUMBER",
+        "ProductVersion": "$PRODUCT_VERSION",
+        "ProductSerial": "$PRODUCT_SERIAL_NUMBER"
     }
 }
