@@ -23,10 +23,16 @@
 #include <boost/chrono/chrono_io.hpp>
 #include <boost/process.hpp>
 
+constexpr char const *propertyInterface = "org.freedesktop.DBus.Properties";
+constexpr char const *powerStateService = "org.openbmc.control.Power";
+constexpr char const *powerStatePath = "/org/openbmc/control/power0";
+constexpr char const *powerStateInterface = "org.openbmc.control.Power";
+
 constexpr char const *ipmiSELService = "xyz.openbmc_project.Logging.IPMI";
 constexpr char const *ipmiSELPath = "/xyz/openbmc_project/Logging/IPMI";
 constexpr char const *ipmiSELAddInterface = "xyz.openbmc_project.Logging.IPMI";
 const static std::string ipmiSELAddMessage = "SEL Entry";
+
 const uint8_t recordType = 0x02;
 const uint8_t evmRev = 0x4;
 const uint8_t ssdNumber = 4;

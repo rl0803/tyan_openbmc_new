@@ -17,20 +17,96 @@
 #include "SSDHotplug.hpp"
 
 #include <boost/container/flat_set.hpp>
+#include <boost/container/flat_map.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <filesystem>
 #include <sdbusplus/asio/connection.hpp>
+#include <sdbusplus/asio/object_server.hpp>
 #include <systemd/sd-journal.h>
 #include <openbmc/libobmci2c.h>
 
 /*
 boost::asio::io_service io;
 auto systemBus = std::make_shared<sdbusplus::asio::connection>(io);
-*/
 static auto dbus = sdbusplus::bus::new_default_system();
-static constexpr unsigned int intervalMs = 1000;
+*/
+static boost::asio::io_service io;
+static boost::asio::steady_timer pollingTimer(io);
+static constexpr unsigned int pollingSec = 1;
 
-void writeSEL(bool ssdStatus, uint8_t ssdIdx)
+static bool ssdOriginalStatus[ssdNumber] = {false};
+static bool ssdCurrentStatus[ssdNumber] = {false};
+
+static bool acpiPowerStateOn = false;
+static std::unique_ptr<sdbusplus::bus::match::match> acpiPowerMatch = nullptr;
+
+bool startAcpiPowerMonitor(
+    const std::shared_ptr<sdbusplus::asio::connection>& conn)
 {
+    // 1. Initialize acpiPowerStateOn
+    std::variant<int> state;
+    auto method = conn->new_method_call(powerStateService, powerStatePath,
+                                        propertyInterface, "Get");
+    method.append(powerStateInterface, "pgood");
+    try
+    {
+        auto reply = conn->call(method);
+        reply.read(state);
+
+        if( 1 != std::get<int>(state))
+        {
+            acpiPowerStateOn = false;
+        }
+        else
+        {
+            acpiPowerStateOn = true;
+        }
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << "Not able to get pgood property\n";
+        return false;
+    }
+
+    // 2. Initialize acpiPowerStateOn
+    acpiPowerMatch = std::make_unique<sdbusplus::bus::match::match>(
+        static_cast<sdbusplus::bus::bus &>(*conn),
+        "type='signal',interface='org.freedesktop.DBus.Properties',"
+        "member='PropertiesChanged',path='/org/openbmc/control/power0',"
+        "arg0='org.openbmc.control.Power'",
+        [](sdbusplus::message::message& message) {
+            boost::container::flat_map<std::string, std::variant<int>> values;
+            std::string objectName;
+            message.read(objectName, values);
+
+            auto findState = values.find("pgood");
+            if (findState != values.end())
+            {
+                int on = std::get<int>(findState->second);
+                if (1 != on)
+                {
+                    acpiPowerStateOn = false;
+                }
+                else
+                {
+                    acpiPowerStateOn = true;
+                }
+            }
+        });
+
+    if(!acpiPowerMatch)
+    {
+        std::cerr << "[SSD] Power Match not created\n";
+        return false;
+    }
+
+    return true;
+}
+
+static void writeSEL(bool ssdStatus, uint8_t ssdIdx)
+{
+    auto dbus = sdbusplus::bus::new_default_system();
+
     // std::cerr << "No." << ssdNum << " SSD's value=" << ssdStatus << "\n";
     std::vector<uint8_t> eventData(9, 0xFF);
     eventData.at(0) = 0x20;
@@ -59,11 +135,13 @@ void writeSEL(bool ssdStatus, uint8_t ssdIdx)
     }
     catch (sdbusplus::exception_t& e)
     {
-        std::cerr << "Failed to add SSD SEL\n";
+        std::cerr << "[SSD] Failed to add SSD SEL\n";
     }
+
+    return;
 }
 
-void readSSDstatusFromI2C(bool *ssdStatus)
+static void readSSDstatusThruI2C(bool *ssdStatus)
 {
     int fd = -1;
     int res = -1;
@@ -72,10 +150,9 @@ void readSSDstatusFromI2C(bool *ssdStatus)
 
     int busId = 0;
     fd = open_i2c_dev(busId, filename.data(), filename.size(), 0);
-
     if(fd < 0)
     {
-        std::cerr << "Fail to open I2C device\n";
+        std::cerr << "[SSD] Fail to open I2C device\n";
     }
 
     std::vector<uint8_t> cmdData;
@@ -86,15 +163,16 @@ void readSSDstatusFromI2C(bool *ssdStatus)
 
     uint8_t slaveAddr = 0x21;
 
-    res = i2c_master_write_read(fd, slaveAddr, cmdData.size(), cmdData.data(), readBuf.size(), readBuf.data());
+    res = i2c_master_write_read(fd, slaveAddr, cmdData.size(), cmdData.data(),
+                                readBuf.size(), readBuf.data());
     uint8_t raw_value = readBuf.at(0);
     if (res < 0)
     {
-        std::cerr << "I2C read error\n";
+        std::cerr << "[SSD] I2C read error\n";
     }
-
     close_i2c_dev(fd);
 
+    // SSD present status in bitwise map
     for(uint8_t i = 0 ; i < ssdNumber ; i++)
     {
         uint8_t tmp = raw_value >> i;
@@ -108,35 +186,64 @@ void readSSDstatusFromI2C(bool *ssdStatus)
             ssdStatus[i] = false;
         }
     }
+
+    return;
 }
 
-
-int main(int argc, char *argv[])
+static void pollSSDstatus()
 {
-    //Initial SSD status
-    bool ssdOriginalStatus[ssdNumber];
-    readSSDstatusFromI2C(ssdOriginalStatus);
-    for (uint8_t ssdIdx = 0; ssdIdx < ssdNumber; ssdIdx++)
-    {
-        writeSEL(ssdOriginalStatus[ssdIdx], ssdIdx);
-    }
+    readSSDstatusThruI2C(ssdCurrentStatus);
 
-    //Polling SSD status each second
-    bool ssdCurrentStatus[ssdNumber];
-    while (true)
+    for(uint8_t i = 0; i < ssdNumber; i++)
     {
-        readSSDstatusFromI2C(ssdCurrentStatus);
-        
-        for(uint8_t i = 0; i < ssdNumber; i++)
+        if(ssdCurrentStatus[i] != ssdOriginalStatus[i])
         {
-            if(ssdCurrentStatus[i] != ssdOriginalStatus[i])
+            ssdOriginalStatus[i] = ssdCurrentStatus[i];
+
+            if (true == acpiPowerStateOn)
             {
-                ssdOriginalStatus[i] = ssdCurrentStatus[i];
                 writeSEL(ssdOriginalStatus[i], i);
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(intervalMs));
     }
+
+    pollingTimer.expires_from_now(boost::asio::chrono::seconds(pollingSec));
+    pollingTimer.async_wait([&](const boost::system::error_code& ec) {
+        if (ec == boost::asio::error::operation_aborted)
+        {
+            return; // we're being canceled
+        }
+        else if (ec)
+        {
+            std::cerr << "timer error\n";
+            return;
+        }
+
+        pollSSDstatus();
+    });
+
+    return;
+}
+
+int main(int argc, char *argv[])
+{
+    auto systemBus = std::make_shared<sdbusplus::asio::connection>(io);
+    systemBus->request_name("xyz.openbmc_project.ssd-hotplug-event");
+    sdbusplus::asio::object_server objectServer(systemBus);
+
+    if(!startAcpiPowerMonitor(systemBus))
+    {
+        std::cerr << "Failed to start ACPI power monitor\n";
+        return -1;
+    }
+
+    //Initial SSD status
+    readSSDstatusThruI2C(ssdOriginalStatus);
+
+    // SSD present status polling
+    pollSSDstatus();
+
+    io.run();
 
     return 0;
 }
