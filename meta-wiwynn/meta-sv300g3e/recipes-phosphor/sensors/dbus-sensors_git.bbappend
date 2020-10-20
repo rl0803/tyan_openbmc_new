@@ -43,6 +43,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0051-Support-2-fan-failure-event-handler.patch \
             file://0052-Use-different-IIDs-in-NIC-temperature-via-MCTP-method.patch \
             file://0053-Add-Fan-Failure-SEL-entry-to-the-normal-sel-add-queue.patch \
+            file://0054-Add-PSU-STATUS-entry-to-the-500ms-delay-sel-add-queue.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \

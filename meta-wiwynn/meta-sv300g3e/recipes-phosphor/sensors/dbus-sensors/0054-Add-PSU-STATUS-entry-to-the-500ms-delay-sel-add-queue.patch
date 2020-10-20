@@ -1,0 +1,52 @@
+From 5fa113788d12f8ac792083e07c5d38d34f7f356d Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Tue, 20 Oct 2020 17:27:51 +0800
+Subject: [PATCH] Add PSU STATUS entry to the 500ms-delay-sel-add queue
+
+---
+ include/PSUProxyMeSensor.hpp | 5 +++++
+ src/PSUProxyMeSensorMain.cpp | 5 +++--
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/include/PSUProxyMeSensor.hpp b/include/PSUProxyMeSensor.hpp
+index 16b60b3..818240d 100644
+--- a/include/PSUProxyMeSensor.hpp
++++ b/include/PSUProxyMeSensor.hpp
+@@ -55,6 +55,11 @@ static constexpr char const *ipmbMeInterface = "org.openbmc.Ipmb";
+ static constexpr char const *ipmiSelService = "xyz.openbmc_project.Logging.IPMI";
+ static constexpr char const *ipmiSelPath = "/xyz/openbmc_project/Logging/IPMI";
+ static constexpr char const *ipmiSelAddInterface = "xyz.openbmc_project.Logging.IPMI";
++
++static constexpr char const *ipmiSELQueueService = "xyz.openbmc_project.SelQueue";
++static constexpr char const *ipmiSELQueuePath = "/xyz/openbmc_project/SelQueue";
++static constexpr char const *ipmiSELAddQueueInterface = "xyz.openbmc_project.AddQueue";
++
+ static const std::string ipmiSelAddMessage = "SEL Entry";
+ static const std::string psuStatusPath = "/xyz/openbmc_project/sensors/powersupply/PSU_STATUS";
+ 
+diff --git a/src/PSUProxyMeSensorMain.cpp b/src/PSUProxyMeSensorMain.cpp
+index 073cf26..53c146e 100644
+--- a/src/PSUProxyMeSensorMain.cpp
++++ b/src/PSUProxyMeSensorMain.cpp
+@@ -113,6 +113,7 @@ void logSelPsuStatus(const uint8_t eventDir, const uint8_t eventData1,
+                      const uint8_t eventData2, const uint8_t eventData3)
+ {
+     uint16_t genId = 0x20;
++    uint8_t selQueueType = 0x1; // Add to 500ms delay SEL queue
+ 
+     bool assert = true;
+     if (eventDir == deasssertionDir)
+@@ -126,8 +127,8 @@ void logSelPsuStatus(const uint8_t eventDir, const uint8_t eventData1,
+     selData.at(2) = eventData3;                // Event Data 3
+ 
+     sdbusplus::message::message writeSEL = newBus.new_method_call(
+-        ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
+-    writeSEL.append(ipmiSelAddMessage, psuStatusPath, selData, assert, genId);
++        ipmiSELQueueService, ipmiSELQueuePath, ipmiSELAddQueueInterface, "IpmiSelAddQueue");
++    writeSEL.append(ipmiSelAddMessage, psuStatusPath, selData, assert, genId, selQueueType);
+ 
+     try
+     {
+-- 
+2.24.1
+
