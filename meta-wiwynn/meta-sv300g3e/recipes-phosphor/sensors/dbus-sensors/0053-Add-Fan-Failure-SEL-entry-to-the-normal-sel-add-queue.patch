@@ -1,0 +1,67 @@
+From 2dc575d9abaa593d9d420fd87533fe9717abd63b Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Tue, 20 Oct 2020 14:53:16 +0800
+Subject: [PATCH] Add Fan Failure SEL entry to the normal-sel-add queue
+
+---
+ src/TachSensor.cpp | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/src/TachSensor.cpp b/src/TachSensor.cpp
+index 31e1517..c959c2b 100644
+--- a/src/TachSensor.cpp
++++ b/src/TachSensor.cpp
+@@ -47,6 +47,11 @@ static constexpr char const *SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manag
+ static constexpr char const *ipmiSELService = "xyz.openbmc_project.Logging.IPMI";
+ static constexpr char const *ipmiSELPath = "/xyz/openbmc_project/Logging/IPMI";
+ static constexpr char const *ipmiSELAddInterface = "xyz.openbmc_project.Logging.IPMI";
++
++static constexpr char const *ipmiSELQueueService = "xyz.openbmc_project.SelQueue";
++static constexpr char const *ipmiSELQueuePath = "/xyz/openbmc_project/SelQueue";
++static constexpr char const *ipmiSELAddQueueInterface = "xyz.openbmc_project.AddQueue";
++
+ const static std::string ipmiSELAddMessage = "SEL Entry";
+ 
+ TachSensor::TachSensor(const std::string& path, const std::string& objectType,
+@@ -255,6 +260,9 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+ */
+             }
+ 
++            updateValue(0);
++            // updateValueInvalid(true);
++
+             if ((failedFanNumber >= fanFailurePowerOffCount) &&
+                 (isFanFailureLogged == false))
+             {
+@@ -262,9 +270,6 @@ void TachSensor::handleResponse(const boost::system::error_code& err)
+                 fanFailureLogHandler();
+             }
+ 
+-            updateValue(0);
+-            // updateValueInvalid(true);
+-
+             if ((failedFanNumber >= fanFailurePowerOffCount) &&
+                 (isFanFailurePowerOff == false))
+             {
+@@ -326,6 +331,7 @@ void TachSensor::fanFailureLogHandler(void)
+         bool assert = true;
+         std::vector<uint8_t> eventData(3, 0xFF);
+         std::string dbusPath = "/xyz/openbmc_project/sensors/slotconnector/Fan_Failure";
++        uint8_t selQueueType = 0x0; // Add to normal SEL queue
+ 
+         /*
+            Sensor type: Slot / Connector (0x21)
+@@ -336,8 +342,8 @@ void TachSensor::fanFailureLogHandler(void)
+         eventData.at(1) = 0x8;
+ 
+         sdbusplus::message::message selWrite = reqBus.new_method_call(
+-            ipmiSELService, ipmiSELPath, ipmiSELAddInterface, "IpmiSelAdd");
+-        selWrite.append(ipmiSELAddMessage, dbusPath, eventData, assert, genId);
++            ipmiSELQueueService, ipmiSELQueuePath, ipmiSELAddQueueInterface, "IpmiSelAddQueue");
++        selWrite.append(ipmiSELAddMessage, dbusPath, eventData, assert, genId, selQueueType);
+         try
+         {
+             reqBus.call_noreply(selWrite);
+-- 
+2.24.1
+

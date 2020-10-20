@@ -1,0 +1,32 @@
+From 6143742627a3d329438375cb1f3a0d53faaf48ab Mon Sep 17 00:00:00 2001
+From: Eilin <eilin_li@wiwynn.com>
+Date: Thu, 8 Oct 2020 10:50:28 +0800
+Subject: [PATCH] Add judgment to prevent assertCount from decreasing to a
+ negative value
+
+---
+ include/threshold_event_monitor.hpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+ mode change 100644 => 100755 include/threshold_event_monitor.hpp
+
+diff --git a/include/threshold_event_monitor.hpp b/include/threshold_event_monitor.hpp
+old mode 100644
+new mode 100755
+index 27e0f2d..b3b93e6
+--- a/include/threshold_event_monitor.hpp
++++ b/include/threshold_event_monitor.hpp
+@@ -327,6 +327,11 @@ inline static sdbusplus::bus::match::match startThresholdEventMonitor(
+         else
+         {
+             assertCount--;
++            if(assertCount < 0)
++            {
++                assertCount = 0;
++            }
++
+             if (assertCount == 0)
+             {
+                 if (pgoodState)
+-- 
+2.17.1
+
