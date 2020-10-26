@@ -1,0 +1,32 @@
+From fdc820bfcabdc60d713753cc76ebaa388130e98f Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Sun, 25 Oct 2020 23:02:23 +0800
+Subject: [PATCH 1/2] Disable time sync with ME function
+
+---
+ src/sel_logger.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/sel_logger.cpp b/src/sel_logger.cpp
+index e384e2d..122a7ca 100644
+--- a/src/sel_logger.cpp
++++ b/src/sel_logger.cpp
+@@ -338,6 +338,7 @@ int main(int argc, char *argv[])
+         startPulseEventMonitor(conn);
+ #endif
+ 
++#if 0
+     // Sync BMC system time with ME
+     boost::asio::steady_timer syncMETimer(io);
+     syncMETimer.expires_from_now(boost::asio::chrono::seconds(60));
+@@ -348,6 +349,7 @@ int main(int argc, char *argv[])
+         }
+         syncTimeWithME(internalBus);;
+     });
++#endif
+ 
+     io.run();
+ 
+-- 
+2.24.1
+

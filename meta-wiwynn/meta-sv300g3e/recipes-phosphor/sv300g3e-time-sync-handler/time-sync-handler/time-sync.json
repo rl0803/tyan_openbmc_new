@@ -1,0 +1,4 @@
+{
+    "FreqOfPollSyncSeconds": 3600,
+    "MESyncFailRetrySeconds": 10
+}

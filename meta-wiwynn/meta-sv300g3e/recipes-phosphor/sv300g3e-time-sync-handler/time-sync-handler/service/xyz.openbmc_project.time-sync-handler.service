@@ -1,0 +1,15 @@
+[Unit]
+Description=Time sync event Service
+StopWhenUnneeded=false
+After=interrupt-dbus-register.service
+Wants=mapper-wait@-xyz-openbmc_project-Ipmi-Channel-Ipmb.service
+After=mapper-wait@-xyz-openbmc_project-Ipmi-Channel-Ipmb.service
+
+[Service]
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/time-sync-handler
+SyslogIdentifier=time-sync-handler
+
+[Install]
+WantedBy=basic.target

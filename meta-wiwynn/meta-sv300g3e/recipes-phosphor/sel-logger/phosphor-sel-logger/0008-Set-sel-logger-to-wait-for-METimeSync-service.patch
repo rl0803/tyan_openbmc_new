@@ -1,0 +1,25 @@
+From 1564273dd941a5cbcdcd9da638a4c7477fb2fb81 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Sun, 25 Oct 2020 23:04:01 +0800
+Subject: [PATCH 2/2] Set sel-logger to wait for METimeSync service
+
+---
+ service_files/xyz.openbmc_project.Logging.IPMI.service | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/service_files/xyz.openbmc_project.Logging.IPMI.service b/service_files/xyz.openbmc_project.Logging.IPMI.service
+index 9b8ae41..7471a4f 100644
+--- a/service_files/xyz.openbmc_project.Logging.IPMI.service
++++ b/service_files/xyz.openbmc_project.Logging.IPMI.service
+@@ -1,5 +1,8 @@
+ [Unit]
+ Description=IPMI SEL Logging Service
++Wants=mapper-wait@-xyz-openbmc_project-METimeSync.service
++After=mapper-wait@-xyz-openbmc_project-METimeSync.service
++
+ 
+ [Service]
+ Restart=always
+-- 
+2.24.1
+

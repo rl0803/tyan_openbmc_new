@@ -55,10 +55,33 @@ configPSU()
 }
 
 
+settingServ="xyz.openbmc_project.Settings"
+settingPath="/xyz/openbmc_project/time/sync_method"
+timeSyncIntf="xyz.openbmc_project.Time.Synchronization"
+
+# Config NTP service
+configNTP()
+{
+    local manual="\"xyz.openbmc_project.Time.Synchronization.Method.Manual\""
+    local ntp="\"xyz.openbmc_project.Time.Synchronization.Method.NTP\""
+    syncMethod=$(busctl get-property ${settingServ} ${settingPath} ${timeSyncIntf} TimeSyncMethod | cut -d" " -f 2)
+
+    if [ ${syncMethod} == ${manual} ]; then
+        echo "Time.Synchronization = Manual"
+        timedatectl set-ntp false
+    elif [ ${syncMethod} == ${ntp} ]; then
+        echo "Time.Synchronization = NTP"
+        timedatectl set-ntp true
+    else
+         echo "Failed to get time-sync mode from Settings manager"
+    fi
+}
+
 # Register functions that post-init script is going to do.
 initialize()
 {
     configPSU
+    configNTP
 }
 
 # If flag file does not exist, create it.
