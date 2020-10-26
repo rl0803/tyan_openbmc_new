@@ -33,4 +33,5 @@ OBMC_IMAGE_EXTRA_INSTALL_append_f5i =   " libgpiod \
                                           pattern-matching \
                                           state-manager-recheck \
                                           srvcfg-manager \
+                                          twitter-ipmi-oem-bin \
                                         "
