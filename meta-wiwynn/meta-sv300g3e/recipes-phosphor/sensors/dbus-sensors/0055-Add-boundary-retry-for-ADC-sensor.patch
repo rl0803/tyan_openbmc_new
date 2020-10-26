@@ -1,0 +1,48 @@
+From 75b52da0f629bc87ce578c26943817aade31ce8f Mon Sep 17 00:00:00 2001
+From: Varun Sampat <vsampat@twitter.com>
+Date: Mon, 26 Oct 2020 19:26:55 -0400
+Subject: [PATCH] Add boundary retry for ADC sensor
+
+---
+ include/ADCSensor.hpp |  1 +
+ src/ADCSensor.cpp     | 11 +++++++++--
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/include/ADCSensor.hpp b/include/ADCSensor.hpp
+index 999da64..1b0adab 100644
+--- a/include/ADCSensor.hpp
++++ b/include/ADCSensor.hpp
+@@ -74,6 +74,7 @@ class ADCSensor : public Sensor
+     std::string path;
+     size_t errCount;
+     double scaleFactor;
++    int retry = 0;
+     std::optional<BridgeGpio> bridgeGpio;
+     PowerState readState;
+     thresholds::ThresholdTimer thresholdTimer;
+diff --git a/src/ADCSensor.cpp b/src/ADCSensor.cpp
+index 7c24b7b..2b34eb0 100644
+--- a/src/ADCSensor.cpp
++++ b/src/ADCSensor.cpp
+@@ -177,12 +177,19 @@ void ADCSensor::handleResponse(const boost::system::error_code& err)
+         try
+         {
+             double nvalue = std::stof(response);
++	    double rawValue  = nvalue;
++
++            if(rawValue >= 1790) {
++                std::cerr << "rawValue:" <<rawValue << "\n";
++                retry++;
++            } else {
++                retry = 0;
++            }
+ 
+             nvalue = (nvalue / sensorScaleFactor) / scaleFactor;
+             nvalue = std::round(nvalue * roundFactor) / roundFactor;
+ 
+-            if (nvalue != value)
+-            {
++            if ((nvalue != value) && ((rawValue < 1790) || (retry >= 3))) {
+                 updateValue(nvalue);
+             }
+             errCount = 0;
