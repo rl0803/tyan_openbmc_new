@@ -7,6 +7,7 @@ DEPENDS += "boost-url"
 SRC_URI += "file://mct_oem_rest.hpp;subdir=git/include \
             file://0001-Support-rest-API-for-MCT-OEM.patch \
             file://0002-Fix-the-issue-for-update-bmcweb-recipe.patch \
+            file://0003-Implement-the-SEL-feature-for-redfish-log-service.patch \
             "
 
 # add a user called bmcweb for the server to assume

@@ -1,14 +1,14 @@
-From 70b6bff767bce026b96f7dff2a9a25e6da6d79e5 Mon Sep 17 00:00:00 2001
+From 0a3522128433489d6c19deacc30a0f7a99cdcfc6 Mon Sep 17 00:00:00 2001
 From: John Chung <john.chung@mic.com.tw>
-Date: Thu, 8 Oct 2020 09:54:23 +0800
+Date: Mon, 26 Oct 2020 12:28:43 +0800
 Subject: [PATCH] Disable unfinished feature temporarily
 
 ---
- app/common/directives/app-navigation.html                       | 8 ++++----
+ app/common/directives/app-navigation.html                       | 4 ++--
  app/configuration/controllers/firmware-controller.html          | 6 +++---
  app/overview/controllers/system-overview-controller.html        | 4 ++--
  app/server-control/controllers/power-operations-controller.html | 8 ++++----
- 4 files changed, 13 insertions(+), 13 deletions(-)
+ 4 files changed, 11 insertions(+), 11 deletions(-)
  mode change 100644 => 100755 app/common/directives/app-navigation.html
  mode change 100644 => 100755 app/configuration/controllers/firmware-controller.html
  mode change 100644 => 100755 app/overview/controllers/system-overview-controller.html
@@ -17,23 +17,9 @@ Subject: [PATCH] Disable unfinished feature temporarily
 diff --git a/app/common/directives/app-navigation.html b/app/common/directives/app-navigation.html
 old mode 100644
 new mode 100755
-index 41441e2..89c4426
+index 41441e2..a77cab6
 --- a/app/common/directives/app-navigation.html
 +++ b/app/common/directives/app-navigation.html
-@@ -12,11 +12,11 @@
-         <span class="nav-link">Health</span>
-       </button>
-       <ul class="nav__second-level btn-health" ng-style="navStyle" ng-class="{opened: (showHealthMenu)}">
--        <li ng-class="{'active': (path == '/server-health/sys-log')}">
-+        <!-- <li ng-class="{'active': (path == '/server-health/sys-log')}">
-           <a href="#/server-health/sys-log" tabindex="{{(showHealthMenu) ? 0 : -1}}">
-             <span>Event log</span>
-           </a>
--        </li>
-+        </li> -->
-         <li ng-class="{'active': (path == '/server-health/inventory-overview' || path == '/server-health/inventory')}">
-           <a href="#/server-health/inventory-overview" tabindex="{{(showHealthMenu) ? 0 : -1}}">
-             <span>Hardware status</span>
 @@ -89,11 +89,11 @@
          <li ng-class="{'active': (path == '/configuration' || path == '/configuration/firmware')}">
            <a href="#/configuration/firmware" tabindex="{{(showConfigMenu) ? 0 : -1}}"><span>Firmware</span></a>
