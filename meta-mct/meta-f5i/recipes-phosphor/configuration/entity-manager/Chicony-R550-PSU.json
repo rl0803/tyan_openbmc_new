@@ -5,6 +5,23 @@
                 "Address": "0x58",
                 "Bus": "$bus",
                 "Name": "PSU0",
+                "Labels": ["pin", "pout1", "vin", "vout1", "iin", "iout1", "temp1", "fan1"],
+                "pin_Max": 1500,
+                "pin_Min": 0,
+                "pout1_Max": 1500,
+                "pout1_Min": 0,
+                "vin_Max": 300,
+                "vin_Min": 0,
+                "vout1_Max": 20,
+                "vout1_Min": 0,
+                "iin_Max": 15,
+                "iin_Min": 0,
+                "iout1_Max": 90,
+                "iout1_Min": 0,
+                "temp1_Max": 127,
+                "temp1_Min": -127,
+                "fan1_Max": 30000,
+                "fan1_Min": 0,
                 "PowerStates": [
                     {
                         "Label": "pin",
@@ -101,7 +118,7 @@
                         "Label": "temp1",
                         "Name": "upper non critical",
                         "Severity": 0,
-                        "Value": 55
+                        "Value": 65
                     },
                     {
                         "Direction": "less than",
