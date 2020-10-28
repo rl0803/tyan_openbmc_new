@@ -1,0 +1,29 @@
+From 0e4ecaa1c0e347389589c718798548f6a1967a1c Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Thu, 22 Oct 2020 20:01:57 +0800
+Subject: [PATCH] Add debug log for dimm hwmon sensor
+
+---
+ drivers/hwmon/peci-dimmtemp.c | 3 +++
+ 1 file changed, 3 insertions(+)
+ mode change 100644 => 100755 drivers/hwmon/peci-dimmtemp.c
+
+diff --git a/drivers/hwmon/peci-dimmtemp.c b/drivers/hwmon/peci-dimmtemp.c
+old mode 100644
+new mode 100755
+index 0ff37d2..c2582ef
+--- a/drivers/hwmon/peci-dimmtemp.c
++++ b/drivers/hwmon/peci-dimmtemp.c
+@@ -182,6 +182,9 @@ static int dimmtemp_read(struct device *dev, enum hwmon_sensor_types type,
+ 	switch (attr) {
+ 	case hwmon_temp_input:
+ 		*val = priv->temp[channel].value;
++		if(*val > 80000){
++			printk(KERN_ERR "Dimm channel: %d  value:%ld\n",channel,*val);
++		}
+ 		break;
+ 	case hwmon_temp_max:
+ 		*val = priv->temp_max[channel];
+-- 
+2.7.4
+

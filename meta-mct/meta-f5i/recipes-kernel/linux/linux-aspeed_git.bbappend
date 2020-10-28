@@ -12,5 +12,6 @@ SRC_URI += "file://f5i.cfg \
             file://0009-Register-all-of-dimm-sensors-when-initializing.patch \
             file://0011-irqchip-Add-Aspeed-SCU-Interrupt-Controller.patch \
             file://0012-Support-interrupt-handle-for-aspeed-bmc-misc.patch \
+            file://0013-Add-debug-log-for-dimm-hwmon-sensor.patch \
             "
 
