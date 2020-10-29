@@ -118,7 +118,7 @@
                         "Label": "temp1",
                         "Name": "upper non critical",
                         "Severity": 0,
-                        "Value": 65
+                        "Value": 55
                     },
                     {
                         "Direction": "less than",

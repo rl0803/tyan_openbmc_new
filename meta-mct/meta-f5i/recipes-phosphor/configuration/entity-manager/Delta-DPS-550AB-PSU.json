@@ -118,7 +118,7 @@
                         "Label": "temp1",
                         "Name": "upper non critical",
                         "Severity": 0,
-                        "Value": 65
+                        "Value": 55
                     },
                     {
                         "Direction": "less than",
@@ -145,7 +145,7 @@
             }
         ],
         "Name": "Delta DPS-550AB PSU 1",
-		"Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME': '.*DPS-550*'})",
+        "Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME': '.*DPS-550*'})",
         "Type": "PowerSupply",
         "xyz.openbmc_project.Inventory.Decorator.Asset": {
             "Manufacturer": "$BOARD_MANUFACTURER",
