@@ -26,9 +26,27 @@
 #include <string>
 #include <systemd/sd-journal.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 static const std::string solLogFile = "/var/log/obmc-console.log";
 static constexpr unsigned int sensorPollSec = 5;
 static constexpr size_t warnAfterErrorCount = 10;
+
+int execmd(char* cmd,char* result) {
+    char buffer[128];
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe)
+        return -1;
+
+    while(!feof(pipe)) {
+        if(fgets(buffer, 128, pipe)){
+            strcat(result,buffer);
+        }
+    }
+    pclose(pipe);
+    return 0;
+}
 
 SolPatternSensor::SolPatternSensor(
     sdbusplus::asio::object_server& objectServer,
@@ -164,7 +182,26 @@ bool SolPatternSensor::runMatching(void)
         return true;
     }
 
-    boost::process::ipstream ips;
+    char cmd[400]={0};
+    char response[50]="";
+    int rc=0;
+
+    memset(cmd,0,sizeof(cmd));
+    snprintf(cmd,sizeof(cmd),"egrep -a -m 255 -o \"%s\" %s | wc -l ",patternString.c_str(),solLogFile.c_str());
+
+    memset(response,0,sizeof(response));
+    rc=execmd(cmd,response);
+
+    if(rc==0)
+    {
+        newHitCount = static_cast<unsigned int>(strtol(response, NULL, 10));
+    }
+    else
+    {
+        return false;
+    }
+
+    /*boost::process::ipstream ips;
     boost::process::child c(matchingCmd.c_str(), boost::process::std_out > ips);
     c.wait();
 
@@ -177,7 +214,7 @@ bool SolPatternSensor::runMatching(void)
     else
     {
         return false;
-    }
+    }*/
 
     return true;
 }
