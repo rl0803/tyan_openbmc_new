@@ -1,0 +1,107 @@
+From 345fc7c935d7583f1c81b9dc2e75c79cf692d4c0 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 4 Nov 2020 14:13:09 +0800
+Subject: [PATCH] Add a post code SEL for FRB2 event
+
+---
+ watchdog.cpp | 84 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 84 insertions(+)
+
+diff --git a/watchdog.cpp b/watchdog.cpp
+index e5bb308..6b16a4c 100755
+--- a/watchdog.cpp
++++ b/watchdog.cpp
+@@ -231,6 +231,90 @@ void Watchdog::addWatchdogSel()
+         {
+             log<level::ERR>("Failed to add FRB2 SEL\n");
+         }
++
++        /* Record the post codes when a FRB2 event occurs */
++        // boot cycle index property
++        uint16_t bootCycleIndex = 0;
++        std::variant<uint16_t> value;
++
++        auto method = bus.new_method_call("xyz.openbmc_project.State.Boot.PostCode",
++                                          "/xyz/openbmc_project/State/Boot/PostCode",
++                                          "org.freedesktop.DBus.Properties", "Get");
++        method.append("xyz.openbmc_project.State.Boot.PostCode", "CurrentBootCycleIndex");
++        try
++        {
++            auto rep = bus.call(method);
++            rep.read(value);
++            bootCycleIndex = std::get<uint16_t>(value);
++        }
++        catch (const sdbusplus::exception::SdBusError& e)
++        {
++            log<level::ERR>("Failed to get CurrentBootCycleIndex property\n");
++            return;
++        }
++
++        // post codes
++        std::vector<uint64_t> tmpBuffer;
++        const size_t retPostCodeLen = 12;
++        const size_t retLen = 13;
++        std::vector<uint8_t> postcodeData(retLen, 0xFF);
++
++        method = bus.new_method_call("xyz.openbmc_project.State.Boot.PostCode",
++                                     "/xyz/openbmc_project/State/Boot/PostCode",
++                                     "xyz.openbmc_project.State.Boot.PostCode",
++                                     "GetPostCodes");
++        method.append(bootCycleIndex);
++        try
++        {
++            auto rep = bus.call(method);
++            rep.read(tmpBuffer);
++            int tmpBufferSize = tmpBuffer.size();
++
++            if (tmpBufferSize <= 0)
++            {
++                postcodeData.at(0) = 0xff;
++            }
++            else
++            {
++                postcodeData.at(0) = 0x0;
++            }
++
++            // Set command return length to return the last 12 post code.
++            int tmpBufferIndex = 0;
++            if (tmpBufferSize > retPostCodeLen)
++            {
++                tmpBufferIndex = tmpBufferSize - retPostCodeLen;
++            }
++
++            /* Get post code data */
++            for (int i = 0; ((i < retPostCodeLen) && (tmpBufferIndex < tmpBufferSize)); i++, tmpBufferIndex++)
++            {
++                postcodeData.at(i+1) = tmpBuffer.at(tmpBufferIndex);
++            }
++        }
++        catch (const sdbusplus::exception::SdBusError& e)
++        {
++            log<level::ERR>("Failed to get post codes after the FRB2 event\n");
++            return;
++        }
++
++        // Add SEL
++        const uint8_t oemType = 0xe0;
++        method = bus.new_method_call("xyz.openbmc_project.Logging.IPMI",
++                                     "/xyz/openbmc_project/Logging/IPMI",
++                                     "xyz.openbmc_project.Logging.IPMI",
++                                     "IpmiSelAddOem");
++        method.append(ipmiSELAddMessage, postcodeData, oemType);
++
++        try
++        {
++            bus.call(method);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            log<level::ERR>("Failed to add oem post code SEL for FRB2 event\n");
++            return;
++        }
+     }
+ }
+ 
+-- 
+2.17.1
+
