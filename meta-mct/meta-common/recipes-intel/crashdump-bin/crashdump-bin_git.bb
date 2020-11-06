@@ -15,7 +15,6 @@ S = "${WORKDIR}/"
 SRC_URI = "file://crashdump-1.0.tgz \
            file://bafi-1.05.tgz \
            file://LICENSE  \
-           file://crashdump_input_skx.json \
           "
 
 INSANE_SKIP_${PN} += "already-stripped"
@@ -30,5 +29,4 @@ do_install() {
     install -m 0755 ${S}crashdump ${D}/usr/bin/
     install -m 0755 ${S}bafi ${D}/usr/bin/
     install -d ${D}/usr/share/crashdump/input
-    install -m 0644 ${S}crashdump_input_skx.json ${D}/usr/share/crashdump/input/crashdump_input_skx.json
 }
