@@ -1,0 +1,21 @@
+From 04a15872b9fa7926c12ec919ae42c0860efa96b9 Mon Sep 17 00:00:00 2001
+From: Varun Sampat <vsampat@twitter.com>
+Date: Mon, 9 Nov 2020 21:07:14 -0500
+Subject: [PATCH] Add change to read aux bytes from dev_id.json
+
+---
+ src/appcommands.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/appcommands.cpp b/src/appcommands.cpp
+index b9e37e5..17f6643 100644
+--- a/src/appcommands.cpp
++++ b/src/appcommands.cpp
+@@ -320,6 +320,7 @@ auto ipmiAppGetDeviceId() -> ipmi::RspType<uint8_t, // Device ID
+                 devId.revision = data.value("revision", 0);
+                 devId.addnDevSupport = data.value("addn_dev_support", 0);
+                 devId.manufId = data.value("manuf_id", 0);
++                devId.aux = data.value("aux", 0);
+ 
+                 try
+                 {

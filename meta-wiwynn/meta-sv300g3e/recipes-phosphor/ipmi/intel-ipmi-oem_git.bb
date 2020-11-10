@@ -27,6 +27,7 @@ SRC_URI = "git://github.com/openbmc/intel-ipmi-oem \
            file://0022-Add-watchdog2-and-oem-sensor-types.patch \
            file://0023-Add-slotconnector-sensor-type.patch \
            file://0024-Fix-ipmi-get-sel-display-fru-data-issue.patch \
+           file://0025-Add-change-to-read-aux-bytes-from-dev_id.json.patch \
           "
 # SRCREV = "ba9c1765f5edc2f0891e012f33b3059a0dbd7ff1"
 SRCREV = "147daec5fcfcdacd8813eab6a7735d0f1b615c8a"
