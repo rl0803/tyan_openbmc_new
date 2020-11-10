@@ -8,6 +8,12 @@ else
     echo "Directory /usr/share/sel exists."
 fi
 
+if [ ! -f /usr/share/sel/ipmi_sel ]; then
+    touch /usr/share/sel/ipmi_sel
+else
+    echo "File /usr/share/sel/ipmi_sel exists."
+fi
+
 # Create symbolic links to the non-volatile SEL records
 if [ ! -L /var/log/ipmi_sel ]; then
     ln -s /usr/share/sel/ipmi_sel /var/log/ipmi_sel
