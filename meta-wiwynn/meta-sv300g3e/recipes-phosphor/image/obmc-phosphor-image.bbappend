@@ -37,5 +37,6 @@ OBMC_IMAGE_EXTRA_INSTALL_append_sv300g3e += " entity-manager \
                                               ssd-hotplug \
                                               sel-queue \
                                               time-sync-handler \
-					      srvcfg-manager \
+                                              srvcfg-manager \
+                                              twitter-ipmi-oem-bin \
                                             "
