@@ -9,5 +9,6 @@ SRC_URI += "file://platform-config.json;subdir=git/ \
             file://0005-Disable-unfinished-feature-temporarily.patch \
             file://0006-Fix-the-page-for-server-information-and-hardware-sta.patch \
             file://0007-Fix-the-page-for-system-logs-feature.patch \
+            file://0008-Fix-the-page-for-firmware-feature.patch \
 "
 
