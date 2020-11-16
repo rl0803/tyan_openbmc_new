@@ -1,0 +1,34 @@
+From 22a94c89f989870bc887e82e0e26f0c802ad832c Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 16 Nov 2020 12:10:43 +0800
+Subject: [PATCH] Add Battery event-only sensor
+
+---
+ include/EventSensor.hpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index de7dc60..2acbdf0 100644
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -68,7 +68,8 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "BMC_FW_UPDATE", .sensorType = "versionchange/"},
+     {.sensorName = "Watchdog_2", .sensorType = "watchdog2/"},
+     {.sensorName = "Fast_Prochot", .sensorType = "oem1/"},
+-    {.sensorName = "Fan_Failure", .sensorType = "slotconnector/"}
++    {.sensorName = "Fan_Failure", .sensorType = "slotconnector/"},
++    {.sensorName = "Battery", .sensorType = "battery/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+@@ -87,6 +88,7 @@ enum class sensorListIdx : uint8_t
+     Watchdog_2 = 11,
+     Fast_Prochot = 12,
+     Fan_Failure = 13,
++    Battery = 14,
+ };
+ 
+ class EventOnlySensor
+-- 
+2.17.1
+

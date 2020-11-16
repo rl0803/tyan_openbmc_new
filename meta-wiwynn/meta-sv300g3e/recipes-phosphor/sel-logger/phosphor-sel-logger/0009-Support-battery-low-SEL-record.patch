@@ -1,0 +1,33 @@
+From 181c8d0a38e146bf2937f9ee550e9ad8a0612fc1 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 16 Nov 2020 12:16:41 +0800
+Subject: [PATCH] Support battery-low SEL record
+
+---
+ include/threshold_event_monitor.hpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/include/threshold_event_monitor.hpp b/include/threshold_event_monitor.hpp
+index b3b93e6..9014c7c 100755
+--- a/include/threshold_event_monitor.hpp
++++ b/include/threshold_event_monitor.hpp
+@@ -356,6 +356,16 @@ inline static sdbusplus::bus::match::match startThresholdEventMonitor(
+             selBMCGenID, "REDFISH_MESSAGE_ID=%s", redfishMessageID.c_str(),
+             "REDFISH_MESSAGE_ARGS=%.*s,%f,%f", sensorName.length(),
+             sensorName.data(), sensorVal, thresholdVal);
++
++        if (std::string(sensorName) == "P3V_BAT" &&
++            event == "CriticalLow" && assert == 1)
++        {
++            std::vector<uint8_t> batteryLowData(selEvtDataMaxSize, 0xFF);
++            batteryLowData[0] = 0x00;
++            selAddSystemRecord("SEL Entry",
++            "/xyz/openbmc_project/sensors/battery/Battery", batteryLowData, assert,
++            selBMCGenID);
++        }
+     };
+     sdbusplus::bus::match::match thresholdEventMatcher(
+         static_cast<sdbusplus::bus::bus &>(*conn),
+-- 
+2.17.1
+

@@ -10,4 +10,5 @@ SRC_URI += "file://0001-Reset-the-SEL-ID-to-1-after-clearing-the-SEL.patch \
             file://0006-Add-judgment-to-prevent-assertCount-from-being-negative.patch \
             file://0007-Disable-time-sync-with-ME-function.patch \
             file://0008-Set-sel-logger-to-wait-for-METimeSync-service.patch \
+            file://0009-Support-battery-low-SEL-record.patch \
            "
