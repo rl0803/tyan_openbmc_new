@@ -1,0 +1,196 @@
+From 2247e9f5d514ff527137809de14d02ef8ac0853f Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 20 Nov 2020 10:10:33 +0800
+Subject: [PATCH] Add CMOS clear setting support
+
+---
+ chassishandler.cpp | 72 +++++++++++++++++++++++++++++++++++++++++-----
+ chassishandler.hpp |  7 ++++-
+ 2 files changed, 71 insertions(+), 8 deletions(-)
+
+diff --git a/chassishandler.cpp b/chassishandler.cpp
+index 8a159b6..62b91db 100644
+--- a/chassishandler.cpp
++++ b/chassishandler.cpp
+@@ -40,6 +40,9 @@
+ #define SET_PARM_BOOT_FLAGS_VALID_ONE_TIME 0x80
+ #define SET_PARM_BOOT_FLAGS_VALID_PERMANENT 0xC0
+ #define SET_PARM_BOOT_FLAGS_BOOT_TYPE_UEFI 0x20
++#define SET_PARM_BOOT_FLAGS_CMOS_CLEAR 0x80
++#define SET_PARM_BOOT_FLAGS_CMOS_CLEAR_VALID 0x1F
++#define SET_PARM_BOOT_SET_IN_PROCESS 0x01
+ 
+ std::unique_ptr<phosphor::Timer> identifyTimer
+     __attribute__((init_priority(101)));
+@@ -73,6 +76,10 @@ static constexpr size_t identifyIntervalPos = 0;
+ static constexpr size_t forceIdentifyPos = 1;
+ 
+ static bool biosUefiBoot = true; // default UEFI boot
++static bool biosCMOSclear = false;
++static bool biosCMOSclearValid = false;
++static bool setInProgress = false;
++
+ 
+ void register_netfn_chassis_functions() __attribute__((constructor));
+ 
+@@ -1537,8 +1544,6 @@ ipmi_ret_t ipmi_chassis_get_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+ 
+     std::memset(resp, 0, sizeof(*resp));
+     resp->version = SET_PARM_VERSION;
+-    resp->parm = 5;
+-    resp->data[0] = SET_PARM_BOOT_FLAGS_VALID_ONE_TIME;
+ 
+     /*
+      * Parameter #5 means boot flags. Please refer to 28.13 of ipmi doc.
+@@ -1547,13 +1552,15 @@ ipmi_ret_t ipmi_chassis_get_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+     if (reqptr->parameter ==
+         static_cast<uint8_t>(BootOptionParameter::BOOT_FLAGS))
+     {
+-
+         *data_len = static_cast<uint8_t>(BootOptionResponseSize::BOOT_FLAGS);
+         using namespace chassis::internal;
+         using namespace chassis::internal::cache;
+ 
+         try
+         {
++            resp->parm = 5;
++            resp->data[0] = SET_PARM_BOOT_FLAGS_VALID_ONE_TIME;
++
+             settings::Objects& objects = getObjects();
+             auto bootSetting = settings::boot::setting(objects, bootSourceIntf);
+             const auto& bootSourceSetting =
+@@ -1605,7 +1612,12 @@ ipmi_ret_t ipmi_chassis_get_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+             {
+                 bootOption = modeDbusToIpmi.at(bootMode);
+             }
+-            resp->data[1] = (bootOption << 2);
++            resp->data[1] = ((bootOption << 2) & 0x7f);
++
++            if(biosCMOSclear)
++            {
++                resp->data[1] |= SET_PARM_BOOT_FLAGS_CMOS_CLEAR;
++            }
+ 
+             resp->data[0] = oneTimeEnabled
+                                 ? SET_PARM_BOOT_FLAGS_VALID_ONE_TIME
+@@ -1648,7 +1660,31 @@ ipmi_ret_t ipmi_chassis_get_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+         else
+             rc = IPMI_CC_OK;
+     }
++    else if (reqptr->parameter ==
++             static_cast<uint8_t>(BootOptionParameter::BOOT_SET_IN_PROGRESS))
++    {
++        resp->parm = 0;
++        *data_len = static_cast<uint8_t>(BootOptionResponseSize::BOOT_SET_IN_PROGRESS);
++
++        resp->data[0] = 0x0;
++        if(setInProgress)
++        {
++            resp->data[0] = SET_PARM_BOOT_SET_IN_PROCESS;
++        }
++        rc = IPMI_CC_OK;
++    }
++    else if (reqptr->parameter ==
++             static_cast<uint8_t>(BootOptionParameter::BOOT_FLAG_VALID_BIT_CLEARING))
++    {
++        resp->parm = 3;
++        *data_len = static_cast<uint8_t>(BootOptionResponseSize::BOOT_FLAG_VALID_BIT_CLEARING);
+ 
++        if (biosCMOSclearValid)
++        {
++            resp->data[0] |= SET_PARM_BOOT_FLAGS_CMOS_CLEAR_VALID;
++        }
++        rc = IPMI_CC_OK;
++    }
+     else
+     {
+         log<level::ERR>("Unsupported parameter",
+@@ -1675,10 +1711,10 @@ ipmi_ret_t ipmi_chassis_set_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+     using namespace boot_options;
+     ipmi_ret_t rc = IPMI_CC_OK;
+     set_sys_boot_options_t* reqptr = (set_sys_boot_options_t*)request;
+-
++/*
+     std::printf("IPMI SET_SYS_BOOT_OPTIONS reqptr->parameter =[%d]\n",
+                 reqptr->parameter);
+-
++*/
+     // This IPMI command does not have any resposne data
+     *data_len = 0;
+ 
+@@ -1687,7 +1723,8 @@ ipmi_ret_t ipmi_chassis_set_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+      * This is the only parameter used by petitboot.
+      */
+ 
+-    if (reqptr->parameter == (uint8_t)BootOptionParameter::BOOT_FLAGS)
++    if (reqptr->parameter == (uint8_t)BootOptionParameter::BOOT_FLAGS ||
++        reqptr->parameter == (uint8_t)BootOptionParameter::BIOS_OEM)
+     {
+         IpmiValue bootOption = ((reqptr->data[1] & 0x3C) >> 2);
+         using namespace chassis::internal;
+@@ -1709,10 +1746,15 @@ ipmi_ret_t ipmi_chassis_set_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                 biosUefiBoot =
+                     (reqptr->data[0] & SET_PARM_BOOT_FLAGS_BOOT_TYPE_UEFI) ==
+                     SET_PARM_BOOT_FLAGS_BOOT_TYPE_UEFI;
++
++                biosCMOSclear =
++                    (reqptr->data[1] & SET_PARM_BOOT_FLAGS_CMOS_CLEAR) ==
++                    SET_PARM_BOOT_FLAGS_CMOS_CLEAR;
+             }
+             else
+             {
+                 biosUefiBoot = true; // Set default boot type UEFI
++                biosCMOSclear = false;
+             }
+ 
+             settings::Objects& objects = getObjects();
+@@ -1814,6 +1856,22 @@ ipmi_ret_t ipmi_chassis_set_sys_boot_options(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+         // flags.
+         rc = IPMI_CC_OK;
+     }
++    else if (reqptr->parameter ==
++             static_cast<uint8_t>(BootOptionParameter::BOOT_SET_IN_PROGRESS))
++    {
++        setInProgress =
++            (reqptr->data[0] & SET_PARM_BOOT_SET_IN_PROCESS) ==
++            SET_PARM_BOOT_SET_IN_PROCESS;
++        rc = IPMI_CC_OK;
++    }
++    else if (reqptr->parameter ==
++             static_cast<uint8_t>(BootOptionParameter::BOOT_FLAG_VALID_BIT_CLEARING))
++    {
++        biosCMOSclearValid =
++            (reqptr->data[0] & SET_PARM_BOOT_FLAGS_CMOS_CLEAR_VALID) ==
++            SET_PARM_BOOT_FLAGS_CMOS_CLEAR_VALID;
++            rc = IPMI_CC_OK;
++    }
+     else
+     {
+         log<level::ERR>("Unsupported parameter",
+diff --git a/chassishandler.hpp b/chassishandler.hpp
+index dcaf06c..96eff9f 100644
+--- a/chassishandler.hpp
++++ b/chassishandler.hpp
+@@ -46,13 +46,18 @@ enum ipmi_chassis_control_cmds : uint8_t
+ };
+ enum class BootOptionParameter : size_t
+ {
++    BOOT_SET_IN_PROGRESS = 0x0,
++    BOOT_FLAG_VALID_BIT_CLEARING = 0x3,
+     BOOT_INFO = 0x4,
+     BOOT_FLAGS = 0x5,
+-    OPAL_NETWORK_SETTINGS = 0x61
++    OPAL_NETWORK_SETTINGS = 0x61,
++    BIOS_OEM = 0x85
+ };
+ 
+ enum class BootOptionResponseSize : size_t
+ {
++    BOOT_SET_IN_PROGRESS = 1,
++    BOOT_FLAG_VALID_BIT_CLEARING = 1,
+     BOOT_FLAGS = 5,
+     OPAL_NETWORK_SETTINGS = 50
+ };
+-- 
+2.17.1
+
