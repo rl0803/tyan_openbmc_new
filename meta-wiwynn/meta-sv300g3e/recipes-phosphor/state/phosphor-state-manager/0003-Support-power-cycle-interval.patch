@@ -1,0 +1,27 @@
+From cd82ec5552ac0402f80095a3998bf617b75714c1 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 23 Nov 2020 10:50:02 +0800
+Subject: [PATCH] Support power cycle interval
+
+---
+ service_files/phosphor-reboot-host@.service | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/service_files/phosphor-reboot-host@.service b/service_files/phosphor-reboot-host@.service
+index 0dd8bbb..fd13a61 100644
+--- a/service_files/phosphor-reboot-host@.service
++++ b/service_files/phosphor-reboot-host@.service
+@@ -13,7 +13,9 @@ After=obmc-host-stopped@%i.target
+ # solution does the job.
+ # Since this is a part of the reboot target, call the startmin
+ # target which does the minimum required to start the host.
+-ExecStart=/bin/sh -c "sleep 5 && systemctl start obmc-host-startmin@%i.target"
++# ExecStart=/bin/sh -c "sleep 5 && systemctl start obmc-host-startmin@%i.target"
++EnvironmentFile=/etc/default/obmc/phosphor-reboot-host/reboot.conf
++ExecStart=/bin/sh -c "sleep ${{REBOOT_DELAY}} && systemctl start obmc-host-startmin@%i.target"
+ 
+ [Install]
+ WantedBy=obmc-host-reboot@%i.target
+-- 
+2.17.1
+
