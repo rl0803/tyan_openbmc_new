@@ -3,6 +3,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 SRC_URI += "file://0001-Add-download-method-for-host-console-log.patch \
             file://0002-Enlarge-time-frame-for-TFTP-uploading-BMC-image.patch \
             file://0003-Add-http-download-method-for-ACD-crashdump.patch \
+            file://0004-Add-Process-Name-to-BMC-Journal-Log-JSON-Response.patch \
             "
 # Enable CPU Log and Raw PECI support
 EXTRA_OECMAKE_append += "-DBMCWEB_ENABLE_REDFISH_CPU_LOG=ON"
