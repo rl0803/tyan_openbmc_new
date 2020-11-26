@@ -1,0 +1,59 @@
+From a2096392532e7c0c59ec745776d4bb012da03e24 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 26 Nov 2020 12:15:01 +0800
+Subject: [PATCH] Refer to the AC-lost flag for AC-lost SEL recording
+
+---
+ src/EventSensor.cpp | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/src/EventSensor.cpp b/src/EventSensor.cpp
+index 8371bda..fe84c2f 100644
+--- a/src/EventSensor.cpp
++++ b/src/EventSensor.cpp
+@@ -28,6 +28,7 @@
+ #include <openbmc/libmisc.h>
+ #include <future>
+ #include <systemd/sd-journal.h>
++#include <filesystem>
+ 
+ EventOnlySensor::EventOnlySensor(
+     sdbusplus::asio::object_server& objectServer,
+@@ -121,6 +122,7 @@ void EventOnlySensor::bmcRebootEventLog(
+ void EventOnlySensor::sysAClostEventLog(
+     std::shared_ptr<sdbusplus::asio::connection>& conn)
+ {
++/*
+     uint32_t regReadValue = 0;
+     uint32_t sysRstStusReg = 0x1e6e203c;   // SCU3C
+ 
+@@ -130,7 +132,6 @@ void EventOnlySensor::sysAClostEventLog(
+         return;
+     }
+ 
+-    /* AC lost */
+     if( 1 == (regReadValue & 0x1))
+     {
+         // Clear Reset status register
+@@ -147,7 +148,18 @@ void EventOnlySensor::sysAClostEventLog(
+             // Lock SCU
+             write_register(scuProtKeyReg, 0);
+         }
++*/
++    /* AC lost */
++    std::filesystem::path dirPath("/run/openbmc");
++    if (!std::filesystem::exists(dirPath))
++    {
++        std::cerr<<"AC-lost flag dir does not exist\n";
++        return;
++    }
+ 
++    std::filesystem::path filePath("/run/openbmc/AC-lost@0");
++    if(std::filesystem::exists(filePath))
++    {
+         // SEL Add
+         uint16_t genId = 0x20;
+         std::vector<uint8_t> eventData(3, 0xFF);
+-- 
+2.17.1
+

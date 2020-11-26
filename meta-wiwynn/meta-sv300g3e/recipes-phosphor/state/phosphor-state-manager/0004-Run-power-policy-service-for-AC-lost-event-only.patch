@@ -1,0 +1,42 @@
+From 35952a51a1bce985451dbfa05eb31d017a1460de Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 25 Nov 2020 17:12:14 +0800
+Subject: [PATCH] Run power policy service for AC-lost event only
+
+---
+ discover_system_state.cpp                             | 6 ++++++
+ service_files/phosphor-discover-system-state@.service | 1 +
+ 2 files changed, 7 insertions(+)
+
+diff --git a/discover_system_state.cpp b/discover_system_state.cpp
+index b1f6264..452a113 100644
+--- a/discover_system_state.cpp
++++ b/discover_system_state.cpp
+@@ -246,6 +246,12 @@ int main(int argc, char** argv)
+         // Read last requested state and re-request it to execute it
+         auto hostReqState =
+             getProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition");
++
++        if (hostReqState != convertForMessage(server::Host::Transition::Off))
++        {
++            uint32_t sleepTime = getRandomDelayTime(bus, settings);
++            std::this_thread::sleep_for (std::chrono::seconds(sleepTime));
++        }
+         setProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition",
+                     hostReqState);
+     }
+diff --git a/service_files/phosphor-discover-system-state@.service b/service_files/phosphor-discover-system-state@.service
+index 2e8868f..19ea7c8 100644
+--- a/service_files/phosphor-discover-system-state@.service
++++ b/service_files/phosphor-discover-system-state@.service
+@@ -9,6 +9,7 @@ After=mapper-wait@-xyz-openbmc_project-state-chassis%i.service
+ After=op-reset-chassis-on@%i.service
+ ConditionPathExists=!/run/openbmc/chassis@%i-on
+ ConditionPathExists=!/run/openbmc/power-restore-checked@%i
++ConditionPathExists=/run/openbmc/AC-lost@%i
+ 
+ [Service]
+ Restart=no
+-- 
+2.17.1
+

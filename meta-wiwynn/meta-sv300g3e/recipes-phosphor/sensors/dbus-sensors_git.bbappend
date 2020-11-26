@@ -46,6 +46,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0054-Add-PSU-STATUS-entry-to-the-500ms-delay-sel-add-queue.patch \
             file://0055-Add-boundary-retry-for-ADC-sensor.patch \
             file://0056-Add-Battery-event-only-sensor.patch \
+            file://0057-Refer-to-the-AC-lost-flag-for-AC-lost-SEL-recording.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
