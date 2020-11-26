@@ -1,0 +1,44 @@
+From 275261dbbad0345d708a2a68d23be95b753c7d30 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 19 Nov 2020 16:51:20 +0800
+Subject: [PATCH 1/2] Free ASD MSG memory after running asd_msg_free function
+
+---
+ asd_main.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/asd_main.c b/asd_main.c
+index 3fde728..3b31959 100644
+--- a/asd_main.c
++++ b/asd_main.c
+@@ -298,6 +298,8 @@ void deinit_asd_state(asd_state* state)
+     {
+         asd_msg_free(state->asd_msg);
+     }
++    free(state->asd_msg);
++    state->asd_msg = NULL;
+ }
+ 
+ STATUS send_out_msg_on_socket(void* state, unsigned char* buffer, size_t length)
+@@ -705,7 +707,8 @@ STATUS on_client_connect(asd_state* state, extnet_conn_t* p_extcon)
+     if (result == ST_OK)
+     {
+         state->asd_msg =
+-            asd_msg_init(&send_out_msg_on_socket, (ReadFunctionPtr)&read_data,
++            asd_msg_init((SendFunctionPtr)&send_out_msg_on_socket,
++                         (ReadFunctionPtr)&read_data,
+                          (void*)state, &state->config);
+         if (!state->asd_msg)
+         {
+@@ -799,6 +802,8 @@ STATUS on_client_disconnect(asd_state* state)
+                     ASD_LogOption_None, "Failed to de-initialize the asd_msg");
+             result = ST_ERR;
+         }
++        free(state->asd_msg);
++        state->asd_msg = NULL;
+     }
+ 
+     if (result == ST_OK)
+-- 
+2.17.1
+
