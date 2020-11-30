@@ -1,0 +1,267 @@
+From 6b40640bbe0dd0ce1cbc6ea7800a221229818ad8 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Sun, 29 Nov 2020 23:45:28 +0800
+Subject: [PATCH] Get PSU FRU via ME proxy
+
+---
+ .../xyz.openbmc_project.FruDevice.service     |   2 +
+ src/FruDevice.cpp                             | 195 +++++++++++++++++-
+ 2 files changed, 196 insertions(+), 1 deletion(-)
+
+diff --git a/service_files/xyz.openbmc_project.FruDevice.service b/service_files/xyz.openbmc_project.FruDevice.service
+index cf4e5e9..c61c8f8 100644
+--- a/service_files/xyz.openbmc_project.FruDevice.service
++++ b/service_files/xyz.openbmc_project.FruDevice.service
+@@ -2,6 +2,8 @@
+ Description=Fru Device
+ StopWhenUnneeded=true
+ After=xyz.openbmc_project.CloseMuxes.service dbus.service
++Wants=mapper-wait@-xyz-openbmc_project-Ipmi-Channel-Ipmb.service
++After=mapper-wait@-xyz-openbmc_project-Ipmi-Channel-Ipmb.service
+ 
+ [Service]
+ ExecStart=/usr/bin/fru-device
+diff --git a/src/FruDevice.cpp b/src/FruDevice.cpp
+index 3ae71b1..99a997e 100644
+--- a/src/FruDevice.cpp
++++ b/src/FruDevice.cpp
+@@ -56,6 +56,9 @@ constexpr size_t MAX_FRU_SIZE = 512;
+ constexpr size_t MAX_EEPROM_PAGE_INDEX = 255;
+ constexpr size_t busTimeoutSeconds = 5;
+ 
++constexpr int PSU_FRU_ADDR = 80; // 0x50 - 7-bit address
++constexpr int PSU_FRU_BUS = 7;
++
+ constexpr const char* blacklistPath = PACKAGE_DIR "blacklist.json";
+ 
+ const static constexpr char* BASEBOARD_FRU_LOCATION =
+@@ -90,6 +93,40 @@ using ReadBlockFunc =
+     std::function<int64_t(int flag, int file, uint16_t address, uint16_t offset,
+                           uint8_t length, uint8_t* outBuf)>;
+ 
++std::vector<uint8_t> sendMeRawPmbusCmd(uint8_t length, uint8_t offset)
++{
++    uint8_t commandAddress = 1;
++    uint8_t netfn = 0x2e;
++    uint8_t lun = 0;
++    uint8_t command = 0xd9;
++    std::vector<uint8_t> res;
++    std::vector<uint8_t> CmdData =
++                {0x57, 0x1, 0x0, 0x1a, 0x2, 0xa0, 0x0, 0x0, 0x0, 0x20, 0x01, length, offset};
++    std::tuple<int32_t, uint8_t, uint8_t, uint8_t, uint8_t, std::vector<uint8_t>> cmdResponses;
++
++    auto method = systemBus->new_method_call("xyz.openbmc_project.Ipmi.Channel.Ipmb",
++                                             "/xyz/openbmc_project/Ipmi/Channel/Ipmb",
++                                             "org.openbmc.Ipmb", "sendRequest");
++    method.append(commandAddress, netfn, lun, command, CmdData);
++    try
++    {
++        auto reply = systemBus->call(method);
++        reply.read(cmdResponses);
++        res = std::get<5>(cmdResponses);
++        if(res.size() != (3 + static_cast<uint32_t>(length)))
++        {
++            res.clear();
++        }
++    }
++    catch (const sdbusplus::exception::SdBusError& e)
++    {
++        std::cerr << "Not able to get psu fru data\n";
++        res.clear();
++    }
++
++    return res;
++}
++
+ // Read and validate FRU contents, given the flag required for raw i2c, the open
+ // file handle, a read method, and a helper string for failures.
+ std::vector<char> readFruContents(int flag, int file, uint16_t address,
+@@ -217,6 +254,129 @@ std::vector<char> readFruContents(int flag, int file, uint16_t address,
+     return device;
+ }
+ 
++std::vector<char> readPsuFruContents(void)
++{
++    uint8_t offset;
++    uint8_t length;
++    bool hasMultiRecords = false;
++    std::vector<char> device;
++    std::vector<uint8_t> tmp;
++
++    //Obtain Fru Common Header 8 Bytes
++    offset = 0x0;
++    length = 0x8;
++    tmp = sendMeRawPmbusCmd(length, offset);
++    if(tmp.empty())
++    {
++        device.clear();
++        return device;
++    }
++    device.insert(std::end(device), tmp.begin()+3, tmp.end());
++
++    for (size_t jj = 1; jj <= FRU_AREAS.size(); jj++)
++    {
++        // Offset value can be 255.
++        int areaOffset = static_cast<uint8_t>(device[jj]);
++        if (areaOffset == 0)
++        {
++            continue;
++        }
++
++        // MultiRecords are different.  jj is not tracking section, it's walking
++        // the common header.
++        if (std::string(FRU_AREAS[jj - 1]) == std::string("MULTIRECORD"))
++        {
++            hasMultiRecords = true;
++            break;
++        }
++
++        areaOffset *= 8;
++
++        //Obtain Fru Product Area Length (at Byte 2)
++        length = 0x8;
++        offset = static_cast<uint8_t>(areaOffset);
++
++        tmp.clear();
++        tmp = sendMeRawPmbusCmd(length, offset);
++        if(tmp.empty())
++        {
++            device.clear();
++            return device;
++        }
++        device.insert(std::end(device), tmp.begin()+3, tmp.end());
++
++        uint8_t dataLen = tmp.at(4);
++        for(uint8_t i = 1 ; i < dataLen ; i++)
++        {
++            offset = static_cast<uint8_t>(offset + 8);
++            tmp.clear();
++            tmp = sendMeRawPmbusCmd(length, offset);
++            if(tmp.empty())
++            {
++                device.clear();
++                return device;
++            }
++            device.insert(std::end(device), tmp.begin()+3, tmp.end());
++        }
++    }
++
++    if (hasMultiRecords)
++    {
++        // device[area count] is the index to the last area because the 0th
++        // entry is not an offset in the common header.
++        int areaOffset = static_cast<uint8_t>(device[FRU_AREAS.size()]);
++        areaOffset *= 8;
++
++        // the multi-area record header is 5 bytes long.
++        constexpr int multiRecordHeaderSize = 5;
++        constexpr int multiRecordEndOfList = 0x80;
++
++        // Sanity hard-limit to 64KB.
++        while (areaOffset < std::numeric_limits<uint16_t>::max())
++        {
++            // In multi-area, the area offset points to the 0th record, each
++            // record has 3 bytes of the header we care about.
++            length = 0x5;
++            offset = static_cast<uint8_t>(areaOffset);
++
++            tmp.clear();
++            tmp = sendMeRawPmbusCmd(length, offset);
++            if(tmp.empty())
++            {
++                device.clear();
++                return device;
++            }
++            device.insert(std::end(device), tmp.begin()+3, tmp.end());
++
++            // Ok, let's check the record length, which is in bytes (unsigned,
++            // up to 255, so blockData should hold uint8_t not char)
++            int recordLength = tmp[5];
++            areaOffset += (recordLength + multiRecordHeaderSize);
++
++            //Obtain Fru MultiRecord Area Data
++            length = static_cast<uint8_t>(recordLength);
++            offset = static_cast<uint8_t>(offset + 0x5);
++
++            tmp.clear();
++            tmp = sendMeRawPmbusCmd(length, offset);
++            if(tmp.empty())
++            {
++                device.clear();
++                return device;
++            }
++            device.insert(std::end(device), tmp.begin()+3, tmp.end());
++
++            // If this is the end of the list bail.
++            if ((tmp[4] & multiRecordEndOfList))
++            {
++                break;
++            }
++        }
++    }
++
++    return device;
++}
++
+ // Given a bus/address, produce the path in sysfs for an eeprom.
+ static std::string getEepromPath(size_t bus, size_t address)
+ {
+@@ -424,6 +584,27 @@ bool validateHeader(const std::array<uint8_t, I2C_SMBUS_BLOCK_MAX>& blockData)
+ // with some tweaks.
+ static std::vector<char> processEeprom(int bus, int address)
+ {
++    if( bus == PSU_FRU_BUS &&
++        address == PSU_FRU_ADDR)
++    {
++        int retry_num = 3;
++        std::vector<char> psuDev;
++
++        while(retry_num)
++        {
++            psuDev.clear();
++            psuDev = readPsuFruContents();
++            if(!psuDev.empty())
++            {
++                break;
++            }
++
++            retry_num--;
++        }
++
++        return psuDev;
++    }
++
+     auto path = getEepromPath(bus, address);
+ 
+     int file = open(path.c_str(), O_RDONLY);
+@@ -521,6 +702,18 @@ int getBusFrus(int file, int first, int last, int bus,
+         std::set<int> skipList = findI2CEeproms(bus, devices);
+         std::set<size_t>& failedItems = failedAddresses[bus];
+ 
++        // Load PSU FRU, bus: 7, addr: 0x50(80)
++        if(bus == PSU_FRU_BUS)
++        {
++            std::vector<char> psuDev =
++                       processEeprom(bus, PSU_FRU_ADDR);
++            if (!psuDev.empty())
++            {
++                devices->emplace(PSU_FRU_ADDR, psuDev);
++                skipList.insert(PSU_FRU_ADDR);
++            }
++        }
++
+         std::set<size_t>* rootFailures = nullptr;
+         int rootBus = getRootBus(bus);
+ 
+@@ -1371,7 +1564,7 @@ int main()
+ 
+             if (on)
+             {
+-                rescanBusses(busMap, dbusInterfaceMap);
++                // rescanBusses(busMap, dbusInterfaceMap);
+             }
+         };
+ 
+-- 
+2.17.1
+
