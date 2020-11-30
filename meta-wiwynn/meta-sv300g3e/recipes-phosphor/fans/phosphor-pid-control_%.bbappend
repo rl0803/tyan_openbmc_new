@@ -14,6 +14,7 @@ SRC_URI += " file://0001-Add-fan-control-linear.patch \
              file://0012-Fix-for-PWM-accumulation.patch \
              file://0013-Fix-fan-mode-switch-issue-and-keep-fan-mode-after-dc.patch \
              file://0014-Set-fan-pwm-to-80-percent-before-end-of-post.patch \
+             file://0015-Fixed-the-wrong-PWM-value-at-the-beginning.patch \
              file://writePwm.sh \
              file://phosphor-pid-control.sh \
              file://fan-table.json \

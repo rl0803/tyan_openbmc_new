@@ -1,0 +1,45 @@
+From 621749f5ef8afb86011ddc6d69d98c594fc0f9df Mon Sep 17 00:00:00 2001
+From: Eilin <eilin_li@wiwynn.com>
+Date: Thu, 26 Nov 2020 16:26:16 +0800
+Subject: [PATCH] Fixed the wrong PWM value at the beginning
+
+---
+ pid/pidcontroller.cpp | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+ mode change 100644 => 100755 pid/pidcontroller.cpp
+
+diff --git a/pid/pidcontroller.cpp b/pid/pidcontroller.cpp
+old mode 100644
+new mode 100755
+index d62bc78..6809420
+--- a/pid/pidcontroller.cpp
++++ b/pid/pidcontroller.cpp
+@@ -41,6 +41,12 @@ void PIDController::process(void)
+ 
+     auto info = getPIDInfo();
+ 
++    // initialize if not set yet
++    if (std::isnan(lastInput))
++    {
++        lastInput = setpt;
++    }
++
+     // if no hysteresis, maintain previous behavior
+     if (info->positiveHysteresis == 0 && info->negativeHysteresis == 0)
+     {
+@@ -53,12 +59,6 @@ void PIDController::process(void)
+     }
+     else
+     {
+-        // initialize if not set yet
+-        if (std::isnan(lastInput))
+-        {
+-            lastInput = setpt;
+-        }
+-
+         // over the hysteresis bounds, keep counting pid
+         if (input > setpt + info->positiveHysteresis)
+         {
+-- 
+2.17.1
+
