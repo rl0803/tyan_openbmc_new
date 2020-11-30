@@ -8,11 +8,11 @@ FILESEXTRAPATHS_append := "${THISDIR}/files:"
 DEPENDS = "boost cjson sdbusplus safec gtest libpeci"
 
 LICENSE = "Proprietary"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=26bb6d0733830e7bab774914a8f8f20a"
-SRCREV = "0.5"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=43c09494f6b77f344027eea0a1c22830"
+SRCREV = "1.0.4"
 
 S = "${WORKDIR}/"
-SRC_URI = "file://crashdump.tgz \
+SRC_URI = "file://crashdump-1.0.4.tgz \
            file://LICENSE  \
           "
 

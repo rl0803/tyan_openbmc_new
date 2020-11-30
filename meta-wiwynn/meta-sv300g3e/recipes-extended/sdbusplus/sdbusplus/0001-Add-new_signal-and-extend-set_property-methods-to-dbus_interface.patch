@@ -1,0 +1,60 @@
+From d2c13b6e064f0df3ae96aa01494b63ef0a3edd58 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 2 Nov 2020 15:39:38 +0800
+Subject: [PATCH] Add new_signal and extend set_property methods to
+ dbus_interface
+
+---
+ sdbusplus/asio/object_server.hpp | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/sdbusplus/asio/object_server.hpp b/sdbusplus/asio/object_server.hpp
+index a9d5fbf..c60cedd 100644
+--- a/sdbusplus/asio/object_server.hpp
++++ b/sdbusplus/asio/object_server.hpp
+@@ -494,7 +494,7 @@ class dbus_interface
+ 
+         return true;
+     }
+-    template <typename PropertyType>
++    template <typename PropertyType, bool changesOnly = false>
+     bool set_property(const std::string& name, const PropertyType& value)
+     {
+         if (!initialized_)
+@@ -511,8 +511,12 @@ class dbus_interface
+                 if (status != SetPropertyReturnValue::sameValueUpdated)
+                 {
+                     signal_property(name);
++                    return true;
++                }
++                if constexpr (!changesOnly)
++                {
++                    return true;
+                 }
+-                return true;
+             }
+         }
+         return false;
+@@ -693,6 +697,19 @@ class dbus_interface
+         return sd_bus_error_set_const(error, SD_BUS_ERROR_INVALID_ARGS, NULL);
+     }
+ 
++    /** @brief Create a new signal message.
++     *
++     *  @param[in] member - The signal name to create.
++     */
++    auto new_signal(const char* member)
++    {
++        if (!initialized_)
++        {
++            return message::message(nullptr);
++        }
++        return interface_->new_signal(member);
++    }
++
+     bool initialize(const bool skipPropertyChangedSignal = false)
+     {
+         // can only register once
+-- 
+2.24.1
+
