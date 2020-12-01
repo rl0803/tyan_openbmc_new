@@ -42,9 +42,9 @@ static const std::string thresholdConfigPath = "/etc/leaky-bucket-threshold.json
 static const uint8_t maxThresholdNum = 3;
 static const uint32_t reduceEventTimeSec = 86400;   // 24 hours
 
-static const uint16_t defaultT1 = 40;
-static const uint16_t defaultT2 = 7;
-static const uint16_t defaultT3 = 10;
+static const uint16_t defaultT1 = 1;
+static const uint16_t defaultT2 = 0;
+static const uint16_t defaultT3 = 65535;
 
 extern uint16_t thresholdT1;
 extern uint16_t thresholdT2;
