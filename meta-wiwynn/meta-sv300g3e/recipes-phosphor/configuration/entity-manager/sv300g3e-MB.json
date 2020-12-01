@@ -1334,21 +1334,24 @@
             "Size": 512,
             "Index": 0,
             "Bus": 6,
-            "Address": "0x54"
+            "Address": "0x54",
+            "ReadOnly": false
         },
         {
             "Name": "PSU FRU",
             "Size": 256,
             "Index": 1,
             "Bus": 7,
-            "Address": "0x50"
+            "Address": "0x50",
+            "ReadOnly": true
         },
         {
             "Name": "NIC FRU",
             "Size": 512,
             "Index": 2,
             "Bus": 1,
-            "Address": "0x51"
+            "Address": "0x51",
+            "ReadOnly": true
         }
     ],
     "Name": "SV300G3-E Main Board",

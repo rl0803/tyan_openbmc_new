@@ -10,6 +10,7 @@ SRC_URI += "file://sv300g3e-MB.json \
             file://blacklist.json \
             file://0002-Set-the-boot-order-of-EntityManager-after-FruDevice.patch \
             file://0003-Get-PSU-FRU-via-ME-proxy.patch \
+            file://0004-Add-FRU-device-read-only-property.patch \
             "
 
 do_install_append(){

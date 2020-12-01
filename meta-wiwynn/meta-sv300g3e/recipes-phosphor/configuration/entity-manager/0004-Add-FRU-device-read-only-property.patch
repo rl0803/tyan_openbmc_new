@@ -1,0 +1,170 @@
+From 460998013bdf427170321407d8d0f19fade4345f Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Tue, 1 Dec 2020 09:17:01 +0800
+Subject: [PATCH] Add FRU device read-only property
+
+---
+ src/FruDevice.cpp | 112 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 112 insertions(+)
+
+diff --git a/src/FruDevice.cpp b/src/FruDevice.cpp
+index 99a997e..2e15a23 100644
+--- a/src/FruDevice.cpp
++++ b/src/FruDevice.cpp
+@@ -61,20 +61,33 @@ constexpr int PSU_FRU_BUS = 7;
+ 
+ constexpr const char* blacklistPath = PACKAGE_DIR "blacklist.json";
+ 
++// FRU configuration JSON
++constexpr const char* fruConfig =
++    "/usr/share/entity-manager/configurations/sv300g3e-MB.json";
++
+ const static constexpr char* BASEBOARD_FRU_LOCATION =
+     "/etc/fru/baseboard.fru.bin";
+ 
+ const static constexpr char* I2C_DEV_LOCATION = "/dev";
+ 
++struct DeviceInfo
++{
++    uint32_t deviceID;
++    size_t size;
++    bool readOnly;
++};
++
+ static constexpr std::array<const char*, 5> FRU_AREAS = {
+     "INTERNAL", "CHASSIS", "BOARD", "PRODUCT", "MULTIRECORD"};
+ const static std::regex NON_ASCII_REGEX("[^\x01-\x7f]");
+ using DeviceMap = boost::container::flat_map<int, std::vector<char>>;
++using DeviceInfoMap = std::unordered_map<std::string, struct DeviceInfo>;
+ using BusMap = boost::container::flat_map<int, std::shared_ptr<DeviceMap>>;
+ 
+ static std::set<size_t> busBlacklist;
+ struct FindDevicesWithCallback;
+ 
++static DeviceInfoMap deviceInfoMap;
+ static BusMap busMap;
+ 
+ static boost::container::flat_map<
+@@ -861,6 +874,96 @@ void loadBlacklist(const char* path)
+     return;
+ }
+ 
++static void getFruDevices(void)
++{
++    // Find fru device from motherboard config json.
++    std::ifstream motherboardConf(fruConfig);
++    if (motherboardConf.is_open() == false)
++    {
++        std::cerr << "Failed to open file: " << fruConfig << "\n";
++        return;
++    }
++    auto data = nlohmann::json::parse(motherboardConf, nullptr, false);
++    if (data.is_discarded())
++    {
++        std::cerr << "Invalid json format: " << fruConfig << "\n";
++        return;
++    }
++
++    auto fruFind = data.find("Fru");
++    if (fruFind != data.end())
++    {
++        for (auto& fru : *fruFind)
++        {
++            uint32_t index;
++            size_t size;
++            bool readOnly = false;
++            int bus;
++            std::string address;
++
++            auto indexFind = fru.find("Index");
++            if (indexFind != fru.end())
++            {
++                indexFind->get_to(index);
++            }
++            else
++            {
++                std::cerr << "Can't find Index in fru json\n";
++                continue;
++            }
++
++            auto sizeFind = fru.find("Size");
++            if (sizeFind != fru.end())
++            {
++                sizeFind->get_to(size);
++            }
++            else
++            {
++                std::cerr << "Can't find Size in fru json\n";
++                continue;
++            }
++
++            auto busFind = fru.find("Bus");
++            if (busFind != fru.end())
++            {
++                busFind->get_to(bus);
++            }
++            else
++            {
++                std::cerr << "Can't find Bus in fru json\n";
++                continue;
++            }
++
++            auto addressFind = fru.find("Address");
++            if (addressFind != fru.end())
++            {
++                addressFind->get_to(address);
++            }
++            else
++            {
++                std::cerr << "Can't find Address in fru json\n";
++                continue;
++            }
++
++            auto readOnlyFind = fru.find("ReadOnly");
++            if (readOnlyFind != fru.end())
++            {
++                readOnlyFind->get_to(readOnly);
++            }
++
++            const int hexBase = 16;
++            int addressInt = std::stoi(address, nullptr, hexBase);
++
++            struct DeviceInfo deviceInfo = {index, size, readOnly};
++
++            std::stringstream deviceBusAddr;
++            deviceBusAddr << bus << "-" << std::right << std::setfill('0')
++                          << std::setw(4) << std::hex << addressInt;
++            deviceInfoMap.emplace(deviceBusAddr.str(), deviceInfo);
++        }
++    }
++}
++
+ static void FindI2CDevices(const std::vector<fs::path>& i2cBuses,
+                            BusMap& busmap)
+ {
+@@ -948,6 +1051,7 @@ struct FindDevicesWithCallback
+     void run()
+     {
+         FindI2CDevices(_i2cBuses, _busMap);
++        getFruDevices();
+     }
+ 
+     const std::vector<fs::path>& _i2cBuses;
+@@ -1250,6 +1354,14 @@ void AddFruObjectToDbus(
+     iface->register_property("BUS", bus);
+     iface->register_property("ADDRESS", address);
+ 
++    std::stringstream deviceBusAddr;
++    deviceBusAddr << bus << "-" << std::right << std::setfill('0')
++                  << std::setw(4) << std::hex << address;
++    auto deviceInfo = deviceInfoMap[deviceBusAddr.str()];
++    iface->register_property("INDEX", deviceInfo.deviceID);
++    iface->register_property("SIZE", deviceInfo.size);
++    iface->register_property("READONLY", deviceInfo.readOnly);
++
+     iface->initialize();
+ }
+ 
+-- 
+2.17.1
+
