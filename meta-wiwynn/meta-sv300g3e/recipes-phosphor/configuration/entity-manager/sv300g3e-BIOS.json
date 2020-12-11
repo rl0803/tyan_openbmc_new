@@ -96,6 +96,12 @@
           "sensorName" : "MRC Error"
      },
      {
+          "ownerId" : "0x33",
+          "sensorNumber" : 245,
+          "sensorType" : "0x2b",
+          "sensorName" : "IB BIOS UPDATE"
+     },
+     {
           "ownerId" : "0x20",
           "sensorNumber" : 250,
           "sensorType" : "0x0D",
