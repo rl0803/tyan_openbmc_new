@@ -14,5 +14,7 @@ SRC_URI += "file://f5i.cfg \
             file://0011-irqchip-Add-Aspeed-SCU-Interrupt-Controller.patch \
             file://0012-Support-interrupt-handle-for-aspeed-bmc-misc.patch \
             file://0013-Add-debug-log-for-dimm-hwmon-sensor.patch \
+            file://0014-misc-Add-clock-control-logic-into-Aspeed-LPC-SNOOP-d.patch \
+            file://0015-media-aspeed-fix-clock-handling-logic.patch \
             "
 
