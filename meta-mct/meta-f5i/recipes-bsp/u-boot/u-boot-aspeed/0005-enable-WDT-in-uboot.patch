@@ -1,0 +1,36 @@
+From 2a0c00954d76d57726e7489b610d833964f4deae Mon Sep 17 00:00:00 2001
+From: Ray Lue <ray.lue@mic.com.tw>
+Date: Wed, 8 Jul 2020 19:40:31 +0800
+Subject: [PATCH 1/1] enable WDT in uboot
+
+---
+ board/aspeed/ast-g5/ast-g5.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/board/aspeed/ast-g5/ast-g5.c b/board/aspeed/ast-g5/ast-g5.c
+index 2748bcc9ec..9df40c0ff0 100755
+--- a/board/aspeed/ast-g5/ast-g5.c
++++ b/board/aspeed/ast-g5/ast-g5.c
+@@ -47,6 +47,10 @@ int board_init(void)
+ 
+ 	Light_BMC_Heartbeat_LED();
+     Set_Default_UART_Route();
++	//set timeout to 180 second
++	writel(0xABA9500, AST_WDT2_BASE + 0x04);
++	writel(0x4755, AST_WDT2_BASE + 0x08);
++	writel(0x13, AST_WDT2_BASE + 0x0c);
+     
+ 	return 0;
+ }
+@@ -79,7 +83,7 @@ int board_eth_init(bd_t *bd)
+ void hw_watchdog_reset(void)
+ {
+ 	/* Restart WD2 timer */
+-	writel(0x4755, AST_WDT2_BASE + 0x08);
++	//writel(0x4755, AST_WDT2_BASE + 0x08);
+ }
+ #endif /* CONFIG_WATCHDOG */
+ #if defined(CONFIG_SYS_I2C_MAC_OFFSET)
+-- 
+2.26.2
+
