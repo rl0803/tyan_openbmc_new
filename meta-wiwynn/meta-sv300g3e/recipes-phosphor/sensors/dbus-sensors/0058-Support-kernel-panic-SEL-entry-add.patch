@@ -1,0 +1,122 @@
+From 185bba3d5af1737096781424c3afd3a5e0aad53f Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 16 Dec 2020 10:53:53 +0800
+Subject: [PATCH] Support kernel panic SEL entry add
+
+---
+ src/EventSensor.cpp | 79 ++++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 67 insertions(+), 12 deletions(-)
+
+diff --git a/src/EventSensor.cpp b/src/EventSensor.cpp
+index fe84c2f..5467f73 100644
+--- a/src/EventSensor.cpp
++++ b/src/EventSensor.cpp
+@@ -77,31 +77,81 @@ EventOnlySensor::~EventOnlySensor()
+ void EventOnlySensor::bmcRebootEventLog(
+     std::shared_ptr<sdbusplus::asio::connection>& conn)
+ {
+-    uint32_t regReadValue = 0;
+-    uint32_t wdt1ToStusReg = 0x1e785010;
+-    if (read_register(wdt1ToStusReg, &regReadValue) < 0)
++    const uint32_t clsToCntValue = 0x76;
++    const uint32_t wdt1ToStusReg = 0x1e785010;
++    const uint32_t wdt2ToStusReg = 0x1e785030;
++    const uint32_t wdt3ToStusReg = 0x1e785050;
++    const uint32_t wdt1ClrToStusReg = 0x1e785014;
++    const uint32_t wdt2ClrToStusReg = 0x1e785034;
++    const uint32_t wdt3ClrToStusReg = 0x1e785054;
++
++    uint32_t regReadValueWDT1 = 0;
++    if (read_register(wdt1ToStusReg, &regReadValueWDT1) < 0)
+     {
+         std::cerr<<"failed to read register WDT10 \n";
+         return;
+     }
+ 
++    uint32_t regReadValueWDT2 = 0;
++    if (read_register(wdt2ToStusReg, &regReadValueWDT2) < 0)
++    {
++        std::cerr<<"failed to read register WDT30 \n";
++        return;
++    }
++
++    uint32_t regReadValueWDT3 = 0;
++    if (read_register(wdt3ToStusReg, &regReadValueWDT3) < 0)
++    {
++        std::cerr<<"failed to read register WDT50 \n";
++        return;
++    }
++
+     /* BMC reboots */
+-    if( 0 != regReadValue)
++    if (((regReadValueWDT1 & 0xFF00) != 0) ||
++        ((regReadValueWDT2 & 0xFF00) != 0) ||
++        ((regReadValueWDT3 & 0xFF00) != 0))
+     {
+-        // WDT event counter clear
+-        uint32_t clsToCntValue = 0x76;
+-        uint32_t wdt1ClrToStusReg = 0x1e785014;
+-        write_register(wdt1ClrToStusReg, clsToCntValue);
++        const uint32_t sRAMReg = 0x1e723000;
++        // ASCII pani
++        const uint32_t panicRegValue1 = 0x50414E49;
++        // ASCII c & checksum
++        const uint32_t panicRegValue2 = 0x43950000;
++
++        // Check if it was caused by BMC kernel panic
++        uint32_t sRAM1RegValue = 0;
++        uint32_t sRAM2RegValue = 0;
++
++        if (read_register(sRAMReg, &sRAM1RegValue) < 0)
++        {
++            std::cerr<<"failed to read register SRAM_1 \n";
++        }
++
++        if (read_register(sRAMReg + 4, &sRAM2RegValue) < 0)
++        {
++            std::cerr<<"failed to read register SRAM_2 \n";
++        }
+ 
+         // SEL Add
++        // Sensor type: Management Subsystem Health (0x28)
+         uint16_t genId = 0x20;
+         std::vector<uint8_t> eventData(3, 0xFF);
+         bool assert = true;
+ 
+-        /* Sensor type: Management Subsystem Health (0x28)
+-            Sensor specific offset: 02h - management controller off-line
+-        */
+-        eventData[0] = 0x2;
++        if (sRAM1RegValue == panicRegValue1 &&
++            sRAM2RegValue == panicRegValue2)
++        {
++            // Sensor specific offset: 01h - controller access degraded or unavailable
++            eventData.at(0) = 0x01;
++
++            // SRAM content clear
++            write_register(sRAMReg, 0x0);
++            write_register(sRAMReg + 4, 0x0);
++        }
++        else
++        {
++            // Sensor specific offset: 02h - management controller off-line
++            eventData.at(0) = 0x02;
++        }
+ 
+         sdbusplus::message::message writeSEL = conn->new_method_call(
+             ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
+@@ -116,6 +166,11 @@ void EventOnlySensor::bmcRebootEventLog(
+             std::cerr<<"failed to log BMC Reboot SEL\n";
+         }
+     }
++
++    // WDT event counter clear
++    write_register(wdt1ClrToStusReg, clsToCntValue);
++    write_register(wdt2ClrToStusReg, clsToCntValue);
++    write_register(wdt3ClrToStusReg, clsToCntValue);
+ }
+ 
+ /* BMC AC lost SEL Record */
+-- 
+2.17.1
+
