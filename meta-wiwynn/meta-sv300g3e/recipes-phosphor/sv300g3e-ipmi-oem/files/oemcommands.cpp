@@ -1565,6 +1565,108 @@ ipmi_ret_t ipmiAccessCpldJtag(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/*
+    Enable or disable a service
+    NetFn: 0x30 / CMD: 0x0D
+    Request:
+        Byte 1: Set Service
+            [7-1]: reserved
+            [0]:
+              0h: Disable Web Service
+              1h: Enable Web Service
+    Response:
+        Byte 1: Response Code
+*/
+ipmi_ret_t ipmiSetService(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                            ipmi_request_t request, ipmi_response_t response,
+                            ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    constexpr auto service = "xyz.openbmc_project.Settings";
+    constexpr auto path = "/xyz/openbmc_project/oem/ServiceStatus";
+    constexpr auto serviceStatusInterface = "xyz.openbmc_project.OEM.ServiceStatus";
+    constexpr auto webService = "WebService";
+
+    auto bus = sdbusplus::bus::new_default();
+
+    ServiceSettingReq* reqData = reinterpret_cast<ServiceSettingReq*>(request);
+
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    if(reqDataLen != 1)
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    //Set web service status
+    try
+    {
+        auto method = bus.new_method_call(service, path, propertyInterface, "Set");
+        method.append(serviceStatusInterface, webService, std::variant<bool>((bool)(reqData->serviceSetting & 0x01)));
+        bus.call_noreply(method);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR, "[%s] Error in Set Service: %s", __FUNCTION__, e.what());
+        return IPMI_CC_PARM_OUT_OF_RANGE;
+    }
+
+    return IPMI_CC_OK;
+}
+
+/*
+    Retrieve a service's enabled or disabled status
+    NetFn: 0x30 / CMD: 0x0E
+    Request:
+    Response:
+        Byte 1: Response Code
+        Byte 2:
+            [7-1]: reserved
+            [0]:
+              0h: Disabled Web Service
+              1h: Enabled Web Service
+*/
+ipmi_ret_t ipmiGetService(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                            ipmi_request_t request, ipmi_response_t response,
+                            ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    uint8_t serviceResponse = 0;
+
+    constexpr auto service = "xyz.openbmc_project.Settings";
+    constexpr auto path = "/xyz/openbmc_project/oem/ServiceStatus";
+    constexpr auto serviceStatusInterface = "xyz.openbmc_project.OEM.ServiceStatus";
+    constexpr auto webService = "WebService";
+
+    auto bus = sdbusplus::bus::new_default();
+
+    ServiceSettingReq* resData = reinterpret_cast<ServiceSettingReq*>(response);
+    std::variant<bool> result;
+
+    try
+    {
+        //Get web service status
+        auto method = bus.new_method_call(service, path, propertyInterface, "Get");
+        method.append(serviceStatusInterface, webService);
+        auto reply = bus.call(method);
+        reply.read(result);
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        sd_journal_print(LOG_ERR, "Error in Get Service %s", e.what());
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+    auto webServiceStatus = std::get<bool>(result);
+
+    serviceResponse = (uint8_t)(webServiceStatus);
+
+    resData->serviceSetting = serviceResponse;
+    *data_len = sizeof(ServiceSettingReq);
+
+    return IPMI_CC_OK;
+}
+
 static void register_oem_functions(void)
 {
     // <Get Random Power On Status>
@@ -1574,6 +1676,13 @@ static void register_oem_functions(void)
     // <Set Random Power On Status>
     ipmi_register_callback(netFnSv300g3eOEM1, CMD_SET_RANDOM_PWRON_STUS,
                            NULL, IpmiSetRandomPwrOnStus, PRIVILEGE_USER);
+
+    // <Set Service>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_SET_SERVICE, NULL, ipmiSetService,
+                          PRIVILEGE_USER);
+    // <Get Service>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_SERVICE, NULL, ipmiGetService,
+                          PRIVILEGE_USER);
 
     // <Get Post Code>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_POST_CODE,

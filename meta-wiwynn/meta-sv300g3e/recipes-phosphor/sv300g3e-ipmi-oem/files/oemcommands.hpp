@@ -36,6 +36,8 @@ enum ipmi_sv300g3e_oem1_cmds : uint8_t
 
 enum ipmi_sv300g3e_oem2_cmds : uint8_t
 {
+    CMD_SET_SERVICE = 0x0D,
+    CMD_GET_SERVICE = 0x0E,
     CMD_GET_POST_CODE = 0x10,
     CMD_SET_FAN_PWM = 0x11,
     CMD_SET_FSC_MODE = 0x12,
@@ -249,3 +251,8 @@ typedef struct
 {
     uint32_t result;
 }__attribute__((packed)) AccessCpldJtagCmdRes;
+
+typedef struct
+{
+    uint8_t serviceSetting;
+}__attribute__((packed)) ServiceSettingReq;
