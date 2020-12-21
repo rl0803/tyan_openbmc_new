@@ -17,6 +17,7 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0014-write-SRAM-panic-words-to-record-kernel-panic.patch \
             file://0015-misc-Add-clock-control-logic-into-Aspeed-LPC-SNOOP-d.patch \
             file://0016-media-aspeed-fix-clock-handling-logic.patch \
+            file://0017-Remove-Unregister-SMC-Partitions.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
