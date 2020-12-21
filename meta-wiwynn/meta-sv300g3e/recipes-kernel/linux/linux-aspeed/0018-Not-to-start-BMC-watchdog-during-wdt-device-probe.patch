@@ -1,0 +1,32 @@
+From c2b29e8d7fb5bb240251beb9029144040c702d8b Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 21 Dec 2020 23:06:50 +0800
+Subject: [PATCH] Not to start BMC watchdog during wdt device probe
+
+---
+ drivers/watchdog/aspeed_wdt.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/watchdog/aspeed_wdt.c b/drivers/watchdog/aspeed_wdt.c
+index 740d3857d7d3..9fa43bb6326b 100644
+--- a/drivers/watchdog/aspeed_wdt.c
++++ b/drivers/watchdog/aspeed_wdt.c
+@@ -309,6 +309,7 @@ static int aspeed_wdt_probe(struct platform_device *pdev)
+ 	if (of_property_read_bool(np, "aspeed,alt-boot"))
+ 		wdt->ctrl |= WDT_CTRL_BOOT_SECONDARY;
+ 
++#if 0
+ 	if (readl(wdt->base + WDT_CTRL) & WDT_CTRL_ENABLE)  {
+ 		/*
+ 		 * The watchdog is running, but invoke aspeed_wdt_start() to
+@@ -319,6 +320,7 @@ static int aspeed_wdt_probe(struct platform_device *pdev)
+ 		aspeed_wdt_start(&wdt->wdd);
+ 		set_bit(WDOG_HW_RUNNING, &wdt->wdd.status);
+ 	}
++#endif
+ 
+ 	if ((of_device_is_compatible(np, "aspeed,ast2500-wdt")) ||
+ 		(of_device_is_compatible(np, "aspeed,ast2600-wdt"))) {
+-- 
+2.17.1
+
