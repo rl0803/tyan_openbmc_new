@@ -392,6 +392,7 @@
 &lpc_snoop {
     status = "okay";
     snoop-ports = <0x80>;
+	clocks = <&syscon ASPEED_CLK_GATE_LCLK>;
 };
 
 &jtag {

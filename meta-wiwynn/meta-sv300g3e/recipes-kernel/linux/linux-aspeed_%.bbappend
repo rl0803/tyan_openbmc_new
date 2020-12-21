@@ -15,6 +15,8 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0012-Add-clear-buffer-in-slave-mqueue-driver.patch \
             file://0013-Clear-the-i2c-slave-state-when-a-bmc-i2c-master-cmd-times-out.patch \
             file://0014-write-SRAM-panic-words-to-record-kernel-panic.patch \
+            file://0015-misc-Add-clock-control-logic-into-Aspeed-LPC-SNOOP-d.patch \
+            file://0016-media-aspeed-fix-clock-handling-logic.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
