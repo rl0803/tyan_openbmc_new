@@ -1,0 +1,71 @@
+From b0dd5e70cb5a89599a875ce634da70554f42f633 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 28 Dec 2020 18:19:11 +0800
+Subject: [PATCH] Initialize the Power LED control pin to logic low
+
+---
+ board/aspeed/ast-g5/ast-g5.c | 34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/board/aspeed/ast-g5/ast-g5.c b/board/aspeed/ast-g5/ast-g5.c
+index 5178c1a12e..5c27f87a12 100644
+--- a/board/aspeed/ast-g5/ast-g5.c
++++ b/board/aspeed/ast-g5/ast-g5.c
+@@ -48,6 +48,7 @@ DECLARE_GLOBAL_DATA_PTR;
+ #define GPIO_EFGH_DIR             0x024
+ #define GPIO_YZAAAB_DATA          0x1e0
+ #define GPIO_YZAAAB_DIR           0x1e4
++#define GPIO_YZAAAB_TOL           0x18c
+ 
+ #define SCU_REG_BASE              0x1e6e2000
+ #define MULTI_FUNC_PIN_CTL4       0x8c
+@@ -251,6 +252,38 @@ void Set_Default_Caterr_LED()
+     *((volatile ulong *) reg_addr) = temp;
+ }
+ 
++/*--------------------------------------------------------------------
++ * @fn Set_Default_Power_LED
++ * @brief Set the BMC power LED control pin to low (ON) as default.
++ * @brief The power LED would be mainly contrlled by SLP-S4 from PCH.
++ *--------------------------------------------------------------------*/
++void Set_Default_Power_LED()
++{
++    ulong reg_addr = 0;
++    ulong temp = 0;
++
++    /* Set GPIOAA5 (Power) to O(L) - ON
++     */
++
++    // Data
++    reg_addr = GPIO_REG_BASE + GPIO_YZAAAB_DATA;
++    temp = *((volatile ulong *) reg_addr);
++    temp &= ~(0x00200000);  // GPIOAA5 (Power) to low
++    *((volatile ulong *) reg_addr) = temp;
++
++    // Direction
++    reg_addr = GPIO_REG_BASE + GPIO_YZAAAB_DIR;
++    temp = *((volatile ulong *) reg_addr);
++    temp |= 0x00200000;     // GPIOAA5 (Power) to output
++    *((volatile ulong *) reg_addr) = temp;
++
++    // Tolerance
++    reg_addr = GPIO_REG_BASE + GPIO_YZAAAB_TOL;
++    temp = *((volatile ulong *) reg_addr);
++    temp |= 0x00200000;     // GPIOAA5 (Power) to output be tolerance
++    *((volatile ulong *) reg_addr) = temp;
++}
++
+ void Set_GPIOD2_Passthru_to_GPIOD3()
+ {
+     ulong reg_addr = 0;
+@@ -375,6 +408,7 @@ int board_init(void)
+     Set_Default_UART_Route();
+     Set_Default_Status_LED();
+     Set_Default_Caterr_LED();
++    Set_Default_Power_LED();
+     Set_GPIOD2_Passthru_to_GPIOD3();
+     Set_Failover_WDT();
+ 
+-- 
+2.17.1
+

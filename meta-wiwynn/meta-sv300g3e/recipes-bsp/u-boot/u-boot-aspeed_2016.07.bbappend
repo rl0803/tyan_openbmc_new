@@ -7,4 +7,5 @@ SRC_URI += "file://0001-Set-the-default-UART-route-setting.patch \
             file://0005-Initialize-the-CATERR-LED-to-Off.patch \
             file://0006-Set-the-power-button-GPIOs-to-pass-through-mode.patch \
             file://0007-Enable-wdt2-for-BMC-FW-failover-recovery-feature.patch \
+            file://0008-Initialize-the-Power-LED-control-pin-to-logic-low.patch \
            "

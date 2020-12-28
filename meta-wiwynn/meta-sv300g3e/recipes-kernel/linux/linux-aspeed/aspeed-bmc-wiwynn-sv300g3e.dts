@@ -68,10 +68,11 @@
 			gpios = <&gpio ASPEED_GPIO(AA, 1) GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
-
+/*
 		power {
 			gpios = <&gpio ASPEED_GPIO(AA, 5) GPIO_ACTIVE_LOW>;
 		};
+*/
 	};
 
 	gpio-keys {
