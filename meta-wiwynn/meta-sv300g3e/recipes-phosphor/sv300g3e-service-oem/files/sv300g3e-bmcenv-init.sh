@@ -41,3 +41,15 @@ if [ $((${VAL} & 0x01)) -eq 1 ]; then
     VAL=$(( $VAL & ~0x01 ))
     devmem ${SCU3C} 32 ${VAL}
 fi
+
+# Check BMC in primary or secondary
+SCU10=0x1e785010
+SCU30=0x1e785030
+SCU50=0x1e785050
+VALWDT1=$(devmem ${SCU10} 32)
+VALWDT2=$(devmem ${SCU30} 32)
+VALWDT3=$(devmem ${SCU50} 32)
+if [ $((${VALWDT1} & 0x02)) -eq 2 ] || [ $((${VALWDT2} & 0x02)) -eq 2 ] || [ $((${VALWDT3} & 0x02)) -eq 2 ]; then
+    mkdir -p /run/openbmc
+    touch /run/openbmc/boot_from_backup
+fi

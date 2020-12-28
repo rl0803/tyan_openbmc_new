@@ -1362,6 +1362,42 @@ ipmi_ret_t ipmiSetAsdServiceMode(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+*   Get BMC Boot from Information
+*   NetFn: 0x3E / CMD: 0xBB
+*   Response:
+*           - 1: Primary
+*           - 2: Backup
+**/
+ipmi_ret_t ipmiGetBmcBootFrom(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                              ipmi_request_t request, ipmi_response_t response,
+                              ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    if (*data_len != 0)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetBMCBootFrom request data len invalid, "
+                         "received: %d, required: 0\n",
+                         *data_len);
+        *data_len = 0;
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetBMC* resData = reinterpret_cast<GetBMC*>(response);
+
+    if (std::filesystem::exists("/run/openbmc/boot_from_backup"))
+    {
+        resData->readBootAtNum = backupBMC;
+    }
+    else
+    {
+        resData->readBootAtNum = primaryBMC;
+    }
+    *data_len = sizeof(GetBMC);
+
+    return IPMI_CC_OK;
+}
+
 /*
     Get VR FW version func
     NetFn: 0x3C / CMD: 0x51
@@ -1739,6 +1775,10 @@ static void register_oem_functions(void)
     // <Set Intel-ASD Service Mode>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_ASD_SERVICE_MODE,
                            NULL, ipmiSetAsdServiceMode, PRIVILEGE_USER);
+
+    // <Get BMC Boot from Information>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_BMC_BOOT_FROM,
+                           NULL, ipmiGetBmcBootFrom, PRIVILEGE_USER);
 
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,

@@ -1,0 +1,79 @@
+From 7a6f87dd7157fe220dd2fc2ffe3267012e73c8bc Mon Sep 17 00:00:00 2001
+From: "Shao-Yu, Wang" <shaw_wang@wiwynn.com>
+Date: Wed, 23 Dec 2020 15:00:25 +0800
+Subject: [PATCH] Support SEL to record BMC boot info sensors
+
+---
+ include/EventSensor.hpp |  6 +++++-
+ src/EventSensor.cpp     | 25 +++++++++++++++++++++++++
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+ mode change 100644 => 100755 include/EventSensor.hpp
+ mode change 100644 => 100755 src/EventSensor.cpp
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+old mode 100644
+new mode 100755
+index 2acbdf0..ed4d23d
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -69,7 +69,9 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "Watchdog_2", .sensorType = "watchdog2/"},
+     {.sensorName = "Fast_Prochot", .sensorType = "oem1/"},
+     {.sensorName = "Fan_Failure", .sensorType = "slotconnector/"},
+-    {.sensorName = "Battery", .sensorType = "battery/"}
++    {.sensorName = "Battery", .sensorType = "battery/"},
++    {.sensorName = "BMC_Image_1", .sensorType = "oem1/"},
++    {.sensorName = "BMC_Image_2", .sensorType = "oem1/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+@@ -89,6 +91,8 @@ enum class sensorListIdx : uint8_t
+     Fast_Prochot = 12,
+     Fan_Failure = 13,
+     Battery = 14,
++    BMC_Image_1 = 15,
++    BMC_Image_2 = 16,
+ };
+ 
+ class EventOnlySensor
+diff --git a/src/EventSensor.cpp b/src/EventSensor.cpp
+old mode 100644
+new mode 100755
+index 5467f73..9255d1e
+--- a/src/EventSensor.cpp
++++ b/src/EventSensor.cpp
+@@ -171,6 +171,31 @@ void EventOnlySensor::bmcRebootEventLog(
+     write_register(wdt1ClrToStusReg, clsToCntValue);
+     write_register(wdt2ClrToStusReg, clsToCntValue);
+     write_register(wdt3ClrToStusReg, clsToCntValue);
++
++    // SEL record if load secondary BMC
++    if (((regReadValueWDT1 & 0x2) != 0) ||
++        ((regReadValueWDT2 & 0x2) != 0) ||
++        ((regReadValueWDT3 & 0x2) != 0))
++    {
++        uint16_t genId = 0x20;
++        std::vector<uint8_t> eventData(3, 0xFF);
++        bool assert = true;
++        std::string dbusPath = sensorPathPrefix + "oem1/BMC_Image_2";
++
++        sdbusplus::message::message writeSEL = conn->new_method_call(
++            ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
++        writeSEL.append(ipmiSelAddMessage, dbusPath, eventData, assert, genId);
++
++        try
++        {
++            conn->call_noreply(writeSEL);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            std::cerr<<"failed to log BMC start from secondary SEL\n";
++        }
++    }
++
+ }
+ 
+ /* BMC AC lost SEL Record */
+-- 
+2.17.1
+

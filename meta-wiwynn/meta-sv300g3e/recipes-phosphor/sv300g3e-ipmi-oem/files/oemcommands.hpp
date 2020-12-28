@@ -56,6 +56,7 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_GET_LBA_RELATIVE_CNT = 0xB7,
     CMD_SET_BMC_TIMESYNC_MODE = 0xB8,
     CMD_SET_ASD_SERVICE_MODE = 0xB9,
+    CMD_GET_BMC_BOOT_FROM = 0xBB,
 };
 
 enum ipmi_sv300g3e_oem4_cmds : uint8_t
@@ -98,6 +99,12 @@ enum asd_mode : uint8_t
 {
     ASD_STOP = 0x0,
     ASD_START = 0x1,
+};
+
+enum bmc_from : uint8_t
+{
+    primaryBMC = 0x1,
+    backupBMC = 0x2,
 };
 
 enum asd_jtag_mux : uint8_t
@@ -230,6 +237,11 @@ typedef struct
 {
     uint8_t asdMode;
 }__attribute__((packed)) SetAsdServiceMode;
+
+typedef struct
+{
+    uint8_t readBootAtNum;  // 1 -> BMC1, 2 -> BMC2
+}__attribute__((packed)) GetBMC;
 
 typedef struct
 {
