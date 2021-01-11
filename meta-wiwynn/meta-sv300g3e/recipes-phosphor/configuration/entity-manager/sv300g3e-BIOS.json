@@ -103,6 +103,12 @@
      },
      {
           "ownerId" : "0x20",
+          "sensorNumber" : 241,
+          "sensorType" : "0x12",
+          "sensorName" : "System_Event"
+     },
+     {
+          "ownerId" : "0x20",
           "sensorNumber" : 250,
           "sensorType" : "0x0D",
           "sensorName" : "SSD0_Presense"

@@ -1,0 +1,50 @@
+From a5b013c0fc520329f19d57ce0597f4a861d9351a Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 11 Jan 2021 16:42:09 +0800
+Subject: [PATCH] Add timestamp clock synch event log
+
+---
+ src/storagecommands.cpp | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/src/storagecommands.cpp b/src/storagecommands.cpp
+index a2fcb97..e2554bb 100755
+--- a/src/storagecommands.cpp
++++ b/src/storagecommands.cpp
+@@ -1312,6 +1312,33 @@ ipmi::RspType<> ipmiStorageSetSELTime(uint32_t selTime)
+         return ipmi::responseUnspecifiedError();
+     }
+ 
++    // Add System Event - Time Clock Synch SEL
++    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
++    std::vector<uint8_t> eventData(9, 0xFF);
++    const uint8_t recordType = 0x02;
++    eventData.at(0) = 0x20;
++    eventData.at(1) = 0x00;
++    eventData.at(2) = 0x04;
++    eventData.at(3) = 0x12;  // sensorType;
++    eventData.at(4) = 0xf1;  // sensorNum
++    eventData.at(5) = 0x6f;  // eventType;
++    eventData.at(6) = 0x05;  // Time Clock Synch
++    eventData.at(7) = 0x00;
++    eventData.at(8) = 0xFF;
++
++    sdbusplus::message::message addSEL = dbus->new_method_call(
++        ipmiSELService, ipmiSELPath, ipmiSELAddInterface, "IpmiSelAddOem");
++    addSEL.append(ipmiSELAddMessage, eventData, recordType);
++
++    try
++    {
++        dbus->call_noreply(addSEL);
++    }
++    catch (sdbusplus::exception_t& e)
++    {
++        phosphor::logging::log<phosphor::logging::level::ERR>(e.what());
++    }
++
+     return ipmi::responseSuccess();
+ }
+ 
+-- 
+2.17.1
+
