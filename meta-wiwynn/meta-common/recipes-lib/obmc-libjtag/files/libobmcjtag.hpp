@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 int open_jtag_dev();
+int jtag_interface_status_get(int fd, uint32_t* state);
 int jtag_interface_end_tap_state(int fd, uint8_t reset,
                                  uint8_t endstate, uint8_t tck);
 int jtag_interface_set_freq(int fd, unsigned int freq);
