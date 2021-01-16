@@ -1,0 +1,25 @@
+From b1bff003cdf8fbc359fecb67eaf36665a0ba20f1 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 15 Jan 2021 23:54:20 +0800
+Subject: [PATCH] Change ACD log path to var-lib-crashdump
+
+---
+ include/openbmc_dbus_rest.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/openbmc_dbus_rest.hpp b/include/openbmc_dbus_rest.hpp
+index 0a7a71c..85032f3 100644
+--- a/include/openbmc_dbus_rest.hpp
++++ b/include/openbmc_dbus_rest.hpp
+@@ -2259,7 +2259,7 @@ template <typename... Middlewares> void requestRoutes(Crow<Middlewares...> &app)
+         .methods("GET"_method)([](const crow::Request &req, crow::Response &res,
+                                   const std::string &crashdumpFile) {
+ 
+-            std::string objectPath = "/tmp/crashdumps/" + crashdumpFile;
++            std::string objectPath = "/var/lib/crashdump/" + crashdumpFile;
+ 
+             std::filesystem::path loc(objectPath);
+ 
+-- 
+2.17.1
+

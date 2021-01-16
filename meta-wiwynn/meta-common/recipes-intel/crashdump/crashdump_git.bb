@@ -9,10 +9,10 @@ DEPENDS = "boost cjson sdbusplus safec gtest libpeci"
 
 LICENSE = "Proprietary"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=43c09494f6b77f344027eea0a1c22830"
-SRCREV = "1.0.4"
+SRCREV = "1.0.4.1"
 
 S = "${WORKDIR}/"
-SRC_URI = "file://crashdump-1.0.4.tgz \
+SRC_URI = "file://crashdump-1.0.4.1.tgz \
            file://LICENSE  \
           "
 
