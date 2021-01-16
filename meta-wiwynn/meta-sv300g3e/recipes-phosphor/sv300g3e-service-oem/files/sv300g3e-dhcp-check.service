@@ -1,0 +1,12 @@
+[Unit]
+Description=Workaround for restarting the dedicated network port 
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env sv300g3e-dhcp-check.sh
+SyslogIdentifier=sv300g3e-dhcp-check
+
+[Install]
+WantedBy=basic.target
+
