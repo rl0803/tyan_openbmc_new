@@ -49,6 +49,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0057-Refer-to-the-AC-lost-flag-for-AC-lost-SEL-recording.patch \
             file://0058-Support-kernel-panic-SEL-entry-add.patch \
             file://0059-Support-SEL-to-record-BMC-boot-from-info.patch \
+            file://0060-Support-to-record-failover-SEL.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \

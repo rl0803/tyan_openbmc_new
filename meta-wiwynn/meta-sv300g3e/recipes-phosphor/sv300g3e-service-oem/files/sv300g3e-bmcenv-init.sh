@@ -53,3 +53,18 @@ if [ $((${VALWDT1} & 0x02)) -eq 2 ] || [ $((${VALWDT2} & 0x02)) -eq 2 ] || [ $((
     mkdir -p /run/openbmc
     touch /run/openbmc/boot_from_backup
 fi
+
+# Check if SRAM records FAILOVER message
+SRAMFS1=0x1e723008
+SRAMFS2=0x1e72300c
+FAILS1=$(devmem ${SRAMFS1} 32)
+FAILS2=$(devmem ${SRAMFS2} 32)
+FAILEDS1=0x53544152
+FAILEDS21=0x545F32E1
+FAILEDS22=0x545F46CD
+if [ ${FAILS1} == ${FAILEDS1} ]; then
+    if [ ${FAILS2} == ${FAILEDS21} ] || [ ${FAILS2} == ${FAILEDS22} ] ; then
+        mkdir -p /run/openbmc
+        touch /run/openbmc/fail_over_wdt_timeout
+    fi
+fi

@@ -1,0 +1,75 @@
+From 481154a2a21f0e443a3d5f25ab24ec1bc1316929 Mon Sep 17 00:00:00 2001
+From: "Shao-Yu, Wang" <shaw_wang@wiwynn.com>
+Date: Mon, 11 Jan 2021 17:43:55 +0800
+Subject: [PATCH] Support to record failover SEL
+
+---
+ include/EventSensor.hpp |  4 +++-
+ src/EventSensor.cpp     | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 32 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index ed4d23d..dbf9bf6 100755
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -71,7 +71,8 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "Fan_Failure", .sensorType = "slotconnector/"},
+     {.sensorName = "Battery", .sensorType = "battery/"},
+     {.sensorName = "BMC_Image_1", .sensorType = "oem1/"},
+-    {.sensorName = "BMC_Image_2", .sensorType = "oem1/"}
++    {.sensorName = "BMC_Image_2", .sensorType = "oem1/"},
++    {.sensorName = "HW_WDT_Timeout", .sensorType = "oem1/"}
+ };
+ 
+ enum class sensorListIdx : uint8_t
+@@ -93,6 +94,7 @@ enum class sensorListIdx : uint8_t
+     Battery = 14,
+     BMC_Image_1 = 15,
+     BMC_Image_2 = 16,
++    HW_WDT_Timeout = 17,
+ };
+ 
+ class EventOnlySensor
+diff --git a/src/EventSensor.cpp b/src/EventSensor.cpp
+index 9255d1e..1c99af7 100755
+--- a/src/EventSensor.cpp
++++ b/src/EventSensor.cpp
+@@ -196,6 +196,35 @@ void EventOnlySensor::bmcRebootEventLog(
+         }
+     }
+ 
++    /*Check BMC start kernel had been failover */
++    std::filesystem::path dirPath("/run/openbmc");
++    if (!std::filesystem::exists(dirPath))
++    {
++        std::cerr<<"AC-lost flag dir does not exist\n";
++        return;
++    }
++
++    std::filesystem::path filePath("/run/openbmc/fail_over_wdt_timeout");
++    if(std::filesystem::exists(filePath))
++    {
++        uint16_t genId = 0x20;
++        std::vector<uint8_t> eventData(3, 0xFF);
++        bool assert = true;
++        std::string dbusPath = sensorPathPrefix + "oem1/HW_WDT_Timeout";
++        
++        sdbusplus::message::message writeSEL = conn->new_method_call(
++            ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
++        writeSEL.append(ipmiSelAddMessage, dbusPath, eventData, assert, genId);
++
++        try
++        {
++            conn->call_noreply(writeSEL);
++        }
++        catch (sdbusplus::exception_t& e)
++        {
++            std::cerr<<"failed to log BMC failover SEL\n";
++        }
++    }
+ }
+ 
+ /* BMC AC lost SEL Record */
+-- 
+2.17.1
+
