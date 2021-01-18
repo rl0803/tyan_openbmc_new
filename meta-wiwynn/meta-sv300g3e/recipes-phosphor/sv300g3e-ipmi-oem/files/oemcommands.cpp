@@ -1398,6 +1398,71 @@ ipmi_ret_t ipmiGetBmcBootFrom(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+
+/**
+*   Set BMC Boot from command
+*   NetFn: 0x3E / CMD: 0xBC
+*   Request data:
+*           - 1: Primary
+*           - 2: Backup
+**/
+const std::string bmcBootFromPrimary =
+                  "sv300g3e-bmc-restart-from-primary.service";
+const std::string bmcBootFromBackup =
+                  "sv300g3e-bmc-restart-from-backup.service";
+
+ipmi_ret_t ipmiSetBMCBootFrom(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                              ipmi_request_t request, ipmi_response_t response,
+                              ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    if (*data_len != sizeof(SetBMC))
+    {
+        sd_journal_print(LOG_ERR,
+                        "IPMI SetBMCBootFrom request data len invalid, "
+                        "received: %d, required: %d\n",
+                        *data_len, sizeof(SetBMC));
+        *data_len = 0;
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    SetBMC* reqData = reinterpret_cast<SetBMC*>(request);
+    uint8_t setBootAtNum = reqData->setBootAtNum ;
+    *data_len = 0;
+
+    if (setBootAtNum != primaryBMC &&
+        setBootAtNum != backupBMC)
+    {
+        return IPMI_CC_PARM_OUT_OF_RANGE;
+    }
+
+    std::string bmcSelect;
+    if (setBootAtNum == primaryBMC) //primary
+    {
+        bmcSelect = bmcBootFromPrimary;
+    }
+    else //backup
+    {
+        bmcSelect = bmcBootFromBackup;
+    }
+
+    sdbusplus::bus::bus bus(ipmid_get_sd_bus_connection());
+
+    try
+    {
+        auto method = bus.new_method_call(systemdBusName, systemdObjPath,
+                                          systemdMagIface, "StartUnit");
+        method.append(bmcSelect, "replace");
+        bus.call_noreply(method);
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Failed to start bmc boot from service" << std::endl;
+        return IPMI_CC_BUSY;
+    }
+
+    return IPMI_CC_OK;
+}
+
 /*
     Get VR FW version func
     NetFn: 0x3C / CMD: 0x51
@@ -1779,6 +1844,10 @@ static void register_oem_functions(void)
     // <Get BMC Boot from Information>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_GET_BMC_BOOT_FROM,
                            NULL, ipmiGetBmcBootFrom, PRIVILEGE_USER);
+
+    // <Set BMC Boot from>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_BMC_BOOT_FROM,
+                           NULL, ipmiSetBMCBootFrom, PRIVILEGE_USER);
 
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,

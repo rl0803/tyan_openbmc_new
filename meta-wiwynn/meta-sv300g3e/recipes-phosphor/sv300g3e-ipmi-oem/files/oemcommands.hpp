@@ -57,6 +57,7 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_SET_BMC_TIMESYNC_MODE = 0xB8,
     CMD_SET_ASD_SERVICE_MODE = 0xB9,
     CMD_GET_BMC_BOOT_FROM = 0xBB,
+    CMD_SET_BMC_BOOT_FROM = 0xBC,
 };
 
 enum ipmi_sv300g3e_oem4_cmds : uint8_t
@@ -242,6 +243,11 @@ typedef struct
 {
     uint8_t readBootAtNum;  // 1 -> BMC1, 2 -> BMC2
 }__attribute__((packed)) GetBMC;
+
+typedef struct
+{
+    uint8_t setBootAtNum;  // 1 -> BMC1, 2 -> BMC2
+}__attribute__((packed)) SetBMC;
 
 typedef struct
 {

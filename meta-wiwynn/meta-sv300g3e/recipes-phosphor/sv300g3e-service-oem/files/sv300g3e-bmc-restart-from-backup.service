@@ -1,0 +1,8 @@
+[Unit]
+Description=SV300G3-E BMC Restart from backup image
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/sv300g3e-bmc-restart-from-backup.sh
+SyslogIdentifier=sv300g3e-bmc-restart-from-backup
