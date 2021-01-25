@@ -1,0 +1,39 @@
+From 44b581296d1a62b75a2e5f0363d389c287cafd36 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 25 Jan 2021 15:57:11 +0800
+Subject: [PATCH] Set PECI temperature sensor reading 255 as invalid
+
+---
+ include/CPUSensor.hpp | 1 +
+ src/CPUSensor.cpp     | 3 ++-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/CPUSensor.hpp b/include/CPUSensor.hpp
+index d425508..dc40f9b 100644
+--- a/include/CPUSensor.hpp
++++ b/include/CPUSensor.hpp
+@@ -34,6 +34,7 @@ class CPUSensor : public Sensor
+     // static constexpr double minReading = -128;
+     static constexpr const char* labelTcontrol = "Tcontrol";
+     static constexpr const double deviceAbsent = 0;
++    static constexpr const double readingInvalid = 255;
+ 
+   private:
+     sdbusplus::asio::object_server& objServer;
+diff --git a/src/CPUSensor.cpp b/src/CPUSensor.cpp
+index f91ce27..113b14e 100644
+--- a/src/CPUSensor.cpp
++++ b/src/CPUSensor.cpp
+@@ -162,7 +162,8 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+             responseStream.clear();
+             nvalue /= CPUSensor::sensorScaleFactor;
+ 
+-            if (nvalue == deviceAbsent)
++            if (nvalue == deviceAbsent ||
++                nvalue == readingInvalid)
+             {
+                 updateValueInvalid(true);
+             }
+-- 
+2.17.1
+

@@ -50,6 +50,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0058-Support-kernel-panic-SEL-entry-add.patch \
             file://0059-Support-SEL-to-record-BMC-boot-from-info.patch \
             file://0060-Support-to-record-failover-SEL.patch \
+            file://0061-Set-PECI-temperature-sensor-reading-255-as-invalid.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
