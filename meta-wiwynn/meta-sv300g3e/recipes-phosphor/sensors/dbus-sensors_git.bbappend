@@ -51,6 +51,7 @@ SRC_URI += "file://0001-Add-to-configure-MaxValue-and-MinValue-in-ADC-sensor.pat
             file://0059-Support-SEL-to-record-BMC-boot-from-info.patch \
             file://0060-Support-to-record-failover-SEL.patch \
             file://0061-Set-PECI-temperature-sensor-reading-255-as-invalid.patch \
+            file://0062-Remove-unused-sensor-services.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
@@ -60,6 +61,13 @@ SYSTEMD_SERVICE_${PN} += "xyz.openbmc_project.vrsensor.service \
                           xyz.openbmc_project.fanextsensor.service \
                           xyz.openbmc_project.psuproxymesensor.service \
                          "
+
+SYSTEMD_SERVICE_${PN}_remove += "xyz.openbmc_project.exitairsensor.service \
+                                 xyz.openbmc_project.intrusionsensor.service \
+                                 xyz.openbmc_project.mcutempsensor.service \
+                                 xyz.openbmc_project.psusensor.service \
+                                "
+
 
 DEPENDS += "obmc-libi2c \
             obmc-libmisc \

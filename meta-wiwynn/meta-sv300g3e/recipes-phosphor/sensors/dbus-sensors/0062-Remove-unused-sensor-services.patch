@@ -1,0 +1,41 @@
+From 4994d5c924169b93032b05f19e9c26c29c7c03c8 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Mon, 28 Dec 2020 18:03:48 +0800
+Subject: [PATCH] Remove non-use sensors.
+
+---
+ CMakeLists.txt | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+ mode change 100644 => 100755 CMakeLists.txt
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+old mode 100644
+new mode 100755
+index ab5d0b8..8a07be5
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -38,17 +38,17 @@ option (HUNTER_ENABLED "Enable hunter package pulling" OFF)
+ 
+ option (DISABLE_ADC "Disable installing ADC sensor" OFF)
+ option (DISBALE_CPU "Disable installing CPU sensor" OFF)
+-option (DISABLE_EXIT_AIR "Disable installing Exit Air Temp sensor" OFF)
++option (DISABLE_EXIT_AIR "Disable installing Exit Air Temp sensor" ON)
+ option (DISABLE_FAN "Disable installing fan sensor" OFF)
+ option (DISABLE_FANEXT "Disable installing extened fan sensor" OFF)
+ option (DISABLE_HWMON_TEMP "Disable installing hwmon temp sensor" OFF)
+ option (DISABLE_VR "Disable installing VR sensor" OFF)
+ option (DISABLE_EVENT "Disable installing EVENT sensor" OFF)
+ option (DISABLE_NIC "Disable installing NIC sensor" OFF)
+-option (DISABLE_INTRUSION "Disable installing intrusion sensor" OFF)
++option (DISABLE_INTRUSION "Disable installing intrusion sensor" ON)
+ option (DISABLE_IPMB "Disable installing IPMB sensor" OFF)
+-option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" OFF)
+-option (DISABLE_PSU "Disable installing PSU sensor" OFF)
++option (DISABLE_MCUTEMP "Disable installing MCU temperature sensor" ON)
++option (DISABLE_PSU "Disable installing PSU sensor" ON)
+ option (DISABLE_NVME "Disable installing NVME sensor" OFF)
+ option (DISABLE_PSUPROXYME "Disable installing PSU Proxy ME sensor" OFF)
+ option (BMC_CPU_SENSOR_TCONTROL "Enable Tcontrol Threshold setting" ON)
+-- 
+2.17.1
+
