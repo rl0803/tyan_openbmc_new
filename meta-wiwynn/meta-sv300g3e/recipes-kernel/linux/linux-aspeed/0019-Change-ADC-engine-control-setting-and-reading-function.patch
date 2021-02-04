@@ -1,0 +1,57 @@
+From 6dd9a668ca6c02bdb602383d139e641e914dcd32 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Tue, 2 Feb 2021 16:19:21 +0800
+Subject: [PATCH] Change ADC engine control setting and reading function
+
+---
+ drivers/iio/adc/aspeed_adc.c | 24 +++++++++++++++++++++++-
+ 1 file changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iio/adc/aspeed_adc.c b/drivers/iio/adc/aspeed_adc.c
+index d3fc39df535d..5a1070aefb7f 100644
+--- a/drivers/iio/adc/aspeed_adc.c
++++ b/drivers/iio/adc/aspeed_adc.c
+@@ -95,9 +95,31 @@ static int aspeed_adc_read_raw(struct iio_dev *indio_dev,
+ 	const struct aspeed_adc_model_data *model_data =
+ 			of_device_get_match_data(data->dev);
+ 
++	u32 adc_engine_control_reg_val;
++	unsigned long control_bit;
++
+ 	switch (mask) {
+ 	case IIO_CHAN_INFO_RAW:
++		// The offset of address transfers to ADC engine control bit.
++		control_bit = 16 + ((chan->address - 16) / 2);
++
++		// Open ADC channel which needs be read.
++		adc_engine_control_reg_val = BIT(control_bit) |
++			ASPEED_OPERATION_MODE_NORMAL | ASPEED_ENGINE_ENABLE;
++		writel(adc_engine_control_reg_val,
++			data->base + ASPEED_REG_ENGINE_CONTROL);
++		
++		// Sleep 1ms(wait for channel charging)
++		msleep(1);
++
+ 		*val = readw(data->base + chan->address);
++
++		// Close ADC channel after read.
++		adc_engine_control_reg_val = 
++			ASPEED_OPERATION_MODE_NORMAL | ASPEED_ENGINE_ENABLE;
++		writel(adc_engine_control_reg_val,
++			data->base + ASPEED_REG_ENGINE_CONTROL);
++
+ 		return IIO_VAL_INT;
+ 
+ 	case IIO_CHAN_INFO_SCALE:
+@@ -247,7 +269,7 @@ static int aspeed_adc_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		goto clk_enable_error;
+ 
+-	adc_engine_control_reg_val = GENMASK(31, 16) |
++	adc_engine_control_reg_val = 
+ 		ASPEED_OPERATION_MODE_NORMAL | ASPEED_ENGINE_ENABLE;
+ 	writel(adc_engine_control_reg_val,
+ 		data->base + ASPEED_REG_ENGINE_CONTROL);
+-- 
+2.17.1
+

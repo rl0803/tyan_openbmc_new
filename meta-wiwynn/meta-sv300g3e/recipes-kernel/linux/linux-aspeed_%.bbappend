@@ -19,6 +19,7 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0016-media-aspeed-fix-clock-handling-logic.patch \
             file://0017-Remove-Unregister-SMC-Partitions.patch \
             file://0018-Not-to-start-BMC-watchdog-during-wdt-device-probe.patch \
+            file://0019-Change-ADC-engine-control-setting-and-reading-function.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
