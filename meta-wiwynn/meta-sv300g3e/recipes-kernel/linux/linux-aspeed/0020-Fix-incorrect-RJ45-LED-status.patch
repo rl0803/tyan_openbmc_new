@@ -1,0 +1,32 @@
+From 23cda60fa37efa5efccba5a7ada13322c795a575 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Fri, 19 Feb 2021 09:33:13 +0800
+Subject: [PATCH] Fix RJ45 LED status is incorrect
+
+---
+ drivers/net/ethernet/faraday/ftgmac100.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+ mode change 100644 => 100755 drivers/net/ethernet/faraday/ftgmac100.c
+
+diff --git a/drivers/net/ethernet/faraday/ftgmac100.c b/drivers/net/ethernet/faraday/ftgmac100.c
+old mode 100644
+new mode 100755
+index 4fbfd8bd8676..16875975199b
+--- a/drivers/net/ethernet/faraday/ftgmac100.c
++++ b/drivers/net/ethernet/faraday/ftgmac100.c
+@@ -1994,6 +1994,12 @@ static int ftgmac100_probe(struct platform_device *pdev)
+ 
+ 	netdev_info(netdev, "irq %d, mapped at %p\n", netdev->irq, priv->base);
+ 
++	/* Set LED1 and LED 2 to LINKSPD[1] and LINKSPD[2] */
++	ftgmac100_mdiobus_write(priv->mii_bus, 0x01, 0x1c, 0xb410);
++
++	/* Set LED LOM-LED Mode */
++	ftgmac100_mdiobus_write(priv->mii_bus, 0x01, 0x1c, 0x8806);
++
+ 	return 0;
+ 
+ err_register_netdev:
+-- 
+2.17.1
+
