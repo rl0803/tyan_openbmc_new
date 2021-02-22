@@ -1463,6 +1463,124 @@ ipmi_ret_t ipmiSetBMCBootFrom(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+*   Control BIOS AMT Status from EEPROM
+*   NetFn: 0x3E / CMD: 0xBE
+*   Request data:
+*           - 0: get status
+*           - 1: set status
+                - 0: disable
+                - 1: enable
+**/
+static constexpr const char* i2cbus_eeprom = "6";
+static constexpr const char* i2caddr_eeprom = "54";
+static constexpr auto offset_AMT_status = 0x1960;
+static constexpr auto AMT_status_length = 2;
+static auto AMT_status_first_time = true;
+static uint8_t AMT_status_value = 0xff;
+static uint8_t AMT_status_checksum = 0xff;
+
+ipmi_ret_t ipmiCtrlBiosAMTStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                ipmi_request_t request, ipmi_response_t response,
+                                ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    CtrlBiosAMTStatusReq* reqData = reinterpret_cast<CtrlBiosAMTStatusReq*>(request);
+    CtrlBiosAMTStatusRes* resData = reinterpret_cast<CtrlBiosAMTStatusRes*>(response);
+
+    int32_t reqDataLen = (int32_t)*data_len;
+    *data_len = 0;
+
+    uint8_t status;
+    uint8_t buffer[2] = {0};
+    uint32_t offset = offset_AMT_status;
+
+    uint8_t controlMode = reqData->controlMode;
+
+    if(controlMode == getAMTStatus)
+    {
+        if(reqDataLen != 1)
+        {
+            sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                            __FUNCTION__, reqDataLen);
+            return IPMI_CC_REQ_DATA_LEN_INVALID;
+        }
+
+        if(!AMT_status_first_time)
+        {
+            buffer[0] = AMT_status_value;
+            buffer[1] = AMT_status_checksum;
+        }
+        else
+        {
+            status = i2cEEPROMGet(i2cbus_eeprom, i2caddr_eeprom, offset_AMT_status, AMT_status_length, buffer);
+
+            AMT_status_value = buffer[0];
+            AMT_status_checksum = buffer[1];
+
+            if(status == 0xFF)
+            {
+                sd_journal_print(LOG_CRIT, "Failed to get BIOS AMT status\n");
+                return IPMI_CC_UNSPECIFIED_ERROR;
+            }
+
+            AMT_status_first_time = false;
+        }
+
+        if((AMT_status_value != 0x00 && AMT_status_value != 0x01) ||
+          ((AMT_status_value + AMT_status_checksum) & 0xFF) != 0x00)
+        {
+            sd_journal_print(LOG_CRIT, "Invalid BIOS AMT status\n");
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+
+        memcpy(&(resData->AMTStatus), &buffer[0], AMT_status_length);
+        *data_len = 1;
+    }
+    else if(controlMode == setAMTStatus)
+    {
+        if(reqDataLen != 2)
+        {
+            sd_journal_print(LOG_ERR, "[%s] invalid cmd data length %d\n",
+                            __FUNCTION__, reqDataLen);
+            return IPMI_CC_REQ_DATA_LEN_INVALID;
+        }
+
+        uint8_t AMTStatus = reqData->AMTStatus;
+        buffer[0] = AMTStatus;
+
+        if(buffer[0] != 0x0 && buffer[0] != 0x1)
+        {
+            sd_journal_print(LOG_CRIT, "[%s] invalid cmd data %d\n",
+                            __FUNCTION__, buffer[0]);
+            return IPMI_CC_PARM_OUT_OF_RANGE;
+        }
+
+        uint8_t checksum = (~buffer[0])+1;
+        buffer[1] = checksum;
+
+        status = i2cEEPROMSet(i2cbus_eeprom, i2caddr_eeprom, offset_AMT_status, AMT_status_length, buffer);
+
+        if(status == 0xFF)
+        {
+            sd_journal_print(LOG_CRIT, "Failed to set BIOS AMT status\n");
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+
+        // memcpy(&(resData->AMTStatus), &buffer[0], AMT_status_length);
+        // *data_len = 1;
+
+        AMT_status_first_time = true;
+    }
+    else
+    {
+        sd_journal_print(LOG_ERR, "[%s] invalid cmd data %d\n",
+                         __FUNCTION__, reqDataLen);
+        return IPMI_CC_PARM_OUT_OF_RANGE;
+    }
+
+    return IPMI_CC_OK;
+}
+
 /*
     Get VR FW version func
     NetFn: 0x3C / CMD: 0x51
@@ -1848,6 +1966,10 @@ static void register_oem_functions(void)
     // <Set BMC Boot from>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_BMC_BOOT_FROM,
                            NULL, ipmiSetBMCBootFrom, PRIVILEGE_USER);
+
+    // <Control BIOS AMT Status>
+    ipmi_register_callback(netFnSv300g3eOEM3, CMD_CTRL_BIOS_AMT_STATUS,
+                           NULL, ipmiCtrlBiosAMTStatus, PRIVILEGE_USER);
 
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,

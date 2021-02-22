@@ -58,6 +58,7 @@ enum ipmi_sv300g3e_oem3_cmds : uint8_t
     CMD_SET_ASD_SERVICE_MODE = 0xB9,
     CMD_GET_BMC_BOOT_FROM = 0xBB,
     CMD_SET_BMC_BOOT_FROM = 0xBC,
+    CMD_CTRL_BIOS_AMT_STATUS = 0xBE,
 };
 
 enum ipmi_sv300g3e_oem4_cmds : uint8_t
@@ -106,6 +107,12 @@ enum bmc_from : uint8_t
 {
     primaryBMC = 0x1,
     backupBMC = 0x2,
+};
+
+enum ctrl_bios_amt_status : uint8_t
+{
+    getAMTStatus = 0x0,
+    setAMTStatus = 0x1,
 };
 
 enum asd_jtag_mux : uint8_t
@@ -248,6 +255,17 @@ typedef struct
 {
     uint8_t setBootAtNum;  // 1 -> BMC1, 2 -> BMC2
 }__attribute__((packed)) SetBMC;
+
+typedef struct
+{
+    uint8_t controlMode;
+    uint8_t AMTStatus;
+}__attribute__((packed)) CtrlBiosAMTStatusReq;
+
+typedef struct
+{
+    uint8_t AMTStatus;
+}__attribute__((packed)) CtrlBiosAMTStatusRes;
 
 typedef struct
 {
