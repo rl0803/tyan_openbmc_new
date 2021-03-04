@@ -49,6 +49,7 @@ SRC_URI += "file://0001-add-supported-pmbus-name-cffps1.patch \
             file://0056-create-bmc-reset-flag.patch \
             file://0057-Add-Fast-Prochot-event-only-sensor.patch \
             file://0058-Filter-out-dimm-temperature-boundary-value-and-retry.patch \
+            file://0059-Add-retries-into-power-control-status-commands.patch \
             "
 
 SYSTEMD_SERVICE_${PN} += " xyz.openbmc_project.processorsensor.service"

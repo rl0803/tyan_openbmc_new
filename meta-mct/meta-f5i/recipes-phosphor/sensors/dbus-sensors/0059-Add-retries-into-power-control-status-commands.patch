@@ -1,0 +1,172 @@
+From 1b6cc70e02e0d1bf93cfcd87d4476c70477c5165 Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Wed, 3 Feb 2021 16:21:00 +0800
+Subject: [PATCH] Add retries into power control status commands
+
+On first boot we're seeing an occasional miss of the
+power status, but the match never being fired. This seems
+to be caused by the sensors overwelming power control
+by requesting too often. Add in a couple retries to
+make sure we get the status.
+
+Tested: On system with 100% production rate, cpu sensor
+readings were valid
+
+Change-Id: I19d3a342558db95c3a55ed8cb287df6629818c6a
+Signed-off-by: James Feist <james.feist@linux.intel.com>
+
+%% original patch: 0059-Add-retries-into-power-control-status-commands.patch
+---
+ include/Utils.hpp |  3 +-
+ src/CPUSensor.cpp |  2 +-
+ src/Utils.cpp     | 87 +++++++++++++++++++++++++++++++++----------------------
+ 3 files changed, 56 insertions(+), 36 deletions(-)
+
+diff --git a/include/Utils.hpp b/include/Utils.hpp
+index 92efbe3..87d0c72 100755
+--- a/include/Utils.hpp
++++ b/include/Utils.hpp
+@@ -46,7 +46,8 @@ bool findFiles(const std::filesystem::path dirPath,
+                unsigned int symlinkDepth = 1);
+ bool isPowerOn(void);
+ bool hasBiosPost(void);
+-bool getPowerStatus(const std::shared_ptr<sdbusplus::asio::connection>& conn);
++void getPowerStatus(const std::shared_ptr<sdbusplus::asio::connection>& conn, size_t retries);
++void getPostStatus(const std::shared_ptr<sdbusplus::asio::connection>& conn, size_t retries);
+ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn);
+ bool getSensorConfiguration(
+     const std::string& type,
+diff --git a/src/CPUSensor.cpp b/src/CPUSensor.cpp
+index f45d010..06ef86d 100755
+--- a/src/CPUSensor.cpp
++++ b/src/CPUSensor.cpp
+@@ -114,7 +114,7 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+     }
+     size_t pollTime = CPUSensor::sensorPollMs;
+ 
+-    getPowerStatus(connCPURead);
++    getPowerStatus(connCPURead,0);
+ 
+     // Set as sensor reading invalid for cup peci sensors
+     if (!isPowerOn())
+diff --git a/src/Utils.cpp b/src/Utils.cpp
+index 9e54185..6693829 100755
+--- a/src/Utils.cpp
++++ b/src/Utils.cpp
+@@ -136,23 +136,70 @@ bool hasBiosPost(void)
+     return biosHasPost;
+ }
+ 
+-bool getPowerStatus(const std::shared_ptr<sdbusplus::asio::connection>& conn)
++
++void
++    getPowerStatus(const std::shared_ptr<sdbusplus::asio::connection>& conn,
++                   size_t retries = 2)
+ {
+     conn->async_method_call(
+-        [](boost::system::error_code ec,
+-           const std::variant<int>& state) {
++        [conn, retries](boost::system::error_code ec,
++                        const std::variant<int>& state) {
+             if (ec)
+             {
++                if (retries)
++                {
++                    auto timer = std::make_shared<boost::asio::steady_timer>(
++                        conn->get_io_context());
++                    timer->expires_after(std::chrono::seconds(15));
++                    timer->async_wait(
++                        [timer, conn, retries](boost::system::error_code) {
++                            getPowerStatus(conn, retries - 1);
++                        });
++                    return;
++                }
++
+                 // we commonly come up before power control, we'll capture the
+                 // property change later
++                std::cerr << "error getting power status " << ec.message()
++                          << "\n";
+                 return;
+             }
+             powerStatusOn = (1 == (std::get<int>(state))) ? true : false;
+         },
+         power::busname, power::path, properties::interface, properties::get,
+         power::interface, power::property);
++}
+ 
+-    return powerStatusOn;
++void
++    getPostStatus(const std::shared_ptr<sdbusplus::asio::connection>& conn,
++                  size_t retries = 2)
++{
++    conn->async_method_call(
++        [conn, retries](boost::system::error_code ec,
++                        const std::variant<std::string>& state) {
++            if (ec)
++            {
++                if (retries)
++                {
++                    auto timer = std::make_shared<boost::asio::steady_timer>(
++                        conn->get_io_context());
++                    timer->expires_after(std::chrono::seconds(15));
++                    timer->async_wait(
++                        [timer, conn, retries](boost::system::error_code) {
++                            getPostStatus(conn, retries - 1);
++                        });
++                    return;
++                }
++                // we commonly come up before power control, we'll capture the
++                // property change later
++                std::cerr << "error getting post status " << ec.message()
++                          << "\n";
++                return;
++            }
++            biosHasPost = std::get<std::string>(state) != "Inactive";
++        },
++        post::busname, post::path, properties::interface, properties::get,
++        post::interface, post::property);
+ }
+ 
+ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+@@ -219,36 +266,8 @@ void setupPowerMatch(const std::shared_ptr<sdbusplus::asio::connection>& conn)
+                     std::get<std::string>(findState->second) != "Inactive";
+             }
+         });
+-
+-    conn->async_method_call(
+-        [](boost::system::error_code ec,
+-           const std::variant<int>& state) {
+-            if (ec)
+-            {
+-                // we commonly come up before power control, we'll capture the
+-                // property change later
+-                std::cerr << "Get power method error" << ec.message() << std::endl;
+-                return;
+-            }
+-            powerStatusOn = (1 == (std::get<int>(state))) ? true : false;
+-        },
+-        power::busname, power::path, properties::interface, properties::get,
+-        power::interface, power::property);
+-
+-    conn->async_method_call(
+-        [](boost::system::error_code ec,
+-           const std::variant<std::string>& state) {
+-            if (ec)
+-            {
+-                // we commonly come up before power control, we'll capture the
+-                // property change later
+-                std::cerr << "Get bios has post method error" << ec.message() << std::endl;
+-                return;
+-            }
+-            biosHasPost = std::get<std::string>(state) != "Inactive";
+-        },
+-        post::busname, post::path, properties::interface, properties::get,
+-        post::interface, post::property);
++    getPowerStatus(conn);
++    getPostStatus(conn);
+ }
+ 
+ // replaces limits if MinReading and MaxReading are found.
+-- 
+2.7.4
+
