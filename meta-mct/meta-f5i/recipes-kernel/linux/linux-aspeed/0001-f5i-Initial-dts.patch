@@ -4,8 +4,8 @@ Date: Thu, 6 Feb 2020 21:11:09 +0800
 Subject: [PATCH] [F5i] Initial dts
 
 ---
- arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts | 499 +++++++++++++++++++++++++++++++
- 1 file changed, 499 insertions(+)
+ arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts | 504 +++++++++++++++++++++++++++++++
+ 1 file changed, 504 insertions(+)
  create mode 100755 arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts
 
 diff --git a/arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts b/arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts
@@ -13,7 +13,7 @@ new file mode 100755
 index 0000000..a25b769
 --- /dev/null
 +++ b/arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts
-@@ -0,0 +1,499 @@
+@@ -0,0 +1,504 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright (c) 2017 Intel Corporation
 +/dts-v1/;
@@ -335,6 +335,11 @@ index 0000000..a25b769
 +		reg = <3>;
 +		#address-cells = <1>;
 +		#size-cells = <0>;
++       eeprom@51 {
++           compatible = "atmel,24c256";
++           reg = <0x51>;
++           pagesize = <32>;
++       };
 +	};
 +};
 +

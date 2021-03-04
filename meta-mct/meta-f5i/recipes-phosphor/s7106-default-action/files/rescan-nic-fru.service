@@ -1,0 +1,14 @@
+[Unit]
+Description=Rescan NIC FRU for intel NIC card
+Requires=host-gpio.service
+After=host-gpio.service
+Conflicts=obmc-chassis-poweroff@0.target
+
+[Service]
+RemainAfterExit=no
+Type=oneshot
+ExecStart=/usr/bin/env rescan-nic-fru.sh
+SyslogIdentifier=Rescan-NIC-FRU
+
+[Install]
+WantedBy=obmc-chassis-poweron@0.target
