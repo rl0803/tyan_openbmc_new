@@ -4,8 +4,8 @@ Date: Thu, 6 Feb 2020 21:11:09 +0800
 Subject: [PATCH] [F5i] Initial dts
 
 ---
- arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts | 493 +++++++++++++++++++++++++++++++
- 1 file changed, 493 insertions(+)
+ arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts | 499 +++++++++++++++++++++++++++++++
+ 1 file changed, 499 insertions(+)
  create mode 100755 arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts
 
 diff --git a/arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts b/arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts
@@ -13,7 +13,7 @@ new file mode 100755
 index 0000000..a25b769
 --- /dev/null
 +++ b/arch/arm/boot/dts/aspeed-bmc-mct-f5i.dts
-@@ -0,0 +1,493 @@
+@@ -0,0 +1,499 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright (c) 2017 Intel Corporation
 +/dts-v1/;
@@ -39,6 +39,12 @@ index 0000000..a25b769
 +		#size-cells = <1>;
 +		ranges;
 +
++        gfx_memory: framebuffer@96000000 {
++            no-map;
++            compatible = "shared-dma-pool";
++            reg = <0x96000000 0x02000000>; /* 32M */
++        };
++
 +		flash_memory: region@98000000 {
 +            no-map;
 +            reg = <0x98000000 0x04000000>; /* 64M */
@@ -53,7 +59,7 @@ index 0000000..a25b769
 +            max-reason = <3>; /* KMSG_DUMP_EMERG */
 +        };
 +
-+        gfx_memory: framebuffer@9f000000 {
++        vga_memory: framebuffer@9f000000 {
 +            no-map;
 +            compatible = "shared-dma-pool";
 +            reg = <0x9f000000 0x01000000>; /* 16M */
