@@ -1,0 +1,4 @@
+FILESEXTRAPATHS_prepend_f5i := "${THISDIR}/${PN}:"
+
+SRCREV = "580d91ddb50d4aee9e3085e129c952f26654b4d0"
+

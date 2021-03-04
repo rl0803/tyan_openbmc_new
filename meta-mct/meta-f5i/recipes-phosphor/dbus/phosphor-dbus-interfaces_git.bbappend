@@ -9,5 +9,7 @@ SRC_URI += "file://0002-Add-interface-for-caterr-logging.patch \
             file://0008-Set-watchdog-initialized-action-to-None-as-default.patch \
             file://0009-Add-the-version-ID-parameter-to-software-version-int.patch \
             file://0010-Add-interface-for-setting-specified-host-status.patch \
+            file://0011-Update-dump-entry-and-add-Notify-method.patch \
+            file://0012-InitiateOffload-method-for-the-dump-entry.patch \
             "
 

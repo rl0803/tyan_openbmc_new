@@ -1,0 +1,52 @@
+From 86d1ab141212fd5380ac220217e46d01108b995f Mon Sep 17 00:00:00 2001
+From: Dhruvaraj Subhashchandran <dhruvaraj@in.ibm.com>
+Date: Fri, 24 Jan 2020 01:03:52 -0600
+Subject: [PATCH] InitiateOffload method for the dump entry
+
+The InitiateOffload method is for retrieving the dump stored
+in the BMC or Host memory. The transfer of the dump will be
+initiated once this method is called on an entry.
+
+Signed-off-by: Dhruvaraj Subhashchandran <dhruvaraj@in.ibm.com>
+Change-Id: Id3b92d0a3cea4ada145f82df969c5b596680c2e2
+---
+ xyz/openbmc_project/Dump/Entry.interface.yaml | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/xyz/openbmc_project/Dump/Entry.interface.yaml b/xyz/openbmc_project/Dump/Entry.interface.yaml
+index 2ac8c90..1c86aa6 100644
+--- a/xyz/openbmc_project/Dump/Entry.interface.yaml
++++ b/xyz/openbmc_project/Dump/Entry.interface.yaml
+@@ -8,6 +8,21 @@ description: >
+     xyz.openbmc_project.Object.Delete to allow the deletion of
+     individual Dump objects.
+ 
++methods:
++    - name: InitiateOffload
++      description: >
++         This method initiates the offload of the dump from the dump storage.
++         The transfer will be initiated to the target provide. The caller of
++         this function should set up a method to transfer and pass the URI to
++         to this function. If there is no exceptions the caller can assume the
++         transfer is successfully initiated. Once the transfer is completed.
++         The application which is transferring the dump should set offloaded
++         property to true to indicate offload is completed.
++      parameters:
++       - name: OffloadUri
++         type: string
++         description: >
++            The location to offload dump file.
+ properties:
+     - name: Size
+       type: uint64
+@@ -20,3 +35,7 @@ properties:
+           The BMC application which knows the status of the offload
+           operation should set this to true once the entire dump is
+           offloaded.
++    - name: OffloadUri
++      type: string
++      description: >
++          The URI to write the dump file.
+-- 
+2.7.4
+

@@ -1,0 +1,132 @@
+From 5006cdf30d8042a4a59fd754460d50bad2d8ee46 Mon Sep 17 00:00:00 2001
+From: Dhruvaraj Subhashchandran <dhruvaraj@in.ibm.com>
+Date: Mon, 20 Jan 2020 04:08:10 -0600
+Subject: [PATCH] Update dump entry and add Notify method
+
+This commit add a new method named Notify to notify the dump
+manager about a the creation of a new dump which is ready to be
+offloaded. This interface is similar to existing Create interface
+which is not exported, the main differnce is in the cases of
+internal create the packaging has to be initiated by dump manager.
+Add following additional properties in the dump entry.
+Type - To differente between different types of dumps so far only
+       BMC dump is supported.
+Offloaded - Indicate whether the dump is offloaded.
+SourceId - Id provided by source of the dump for dumps not stored
+           on the BMC.
+
+Signed-off-by: Dhruvaraj Subhashchandran <dhruvaraj@in.ibm.com>
+Change-Id: I0ef9e5f7342dfe362898b30853a98e185a63b091
+---
+ xyz/openbmc_project/Dump/Entry.interface.yaml      |  7 ++++
+ xyz/openbmc_project/Dump/Entry/BMC.interface.yaml  |  5 +++
+ .../Dump/Entry/System.interface.yaml               | 19 ++++++++++
+ xyz/openbmc_project/Dump/NewDump.interface.yaml    | 43 ++++++++++++++++++++++
+ 4 files changed, 74 insertions(+)
+ create mode 100644 xyz/openbmc_project/Dump/Entry/BMC.interface.yaml
+ create mode 100644 xyz/openbmc_project/Dump/Entry/System.interface.yaml
+ create mode 100644 xyz/openbmc_project/Dump/NewDump.interface.yaml
+
+diff --git a/xyz/openbmc_project/Dump/Entry.interface.yaml b/xyz/openbmc_project/Dump/Entry.interface.yaml
+index 1f12089..2ac8c90 100644
+--- a/xyz/openbmc_project/Dump/Entry.interface.yaml
++++ b/xyz/openbmc_project/Dump/Entry.interface.yaml
+@@ -13,3 +13,10 @@ properties:
+       type: uint64
+       description: >
+           Size of the Dump.
++    - name: Offloaded
++      type: boolean
++      description: >
++          Indicates whether the dump is offloaded to a client.
++          The BMC application which knows the status of the offload
++          operation should set this to true once the entire dump is
++          offloaded.
+diff --git a/xyz/openbmc_project/Dump/Entry/BMC.interface.yaml b/xyz/openbmc_project/Dump/Entry/BMC.interface.yaml
+new file mode 100644
+index 0000000..562939b
+--- /dev/null
++++ b/xyz/openbmc_project/Dump/Entry/BMC.interface.yaml
+@@ -0,0 +1,5 @@
++description: >
++    Implement this to add BMC dump management.
++
++    BMC dump is generated on the BMC with debug data
++    for debugging the issues encountered on the BMC.
+diff --git a/xyz/openbmc_project/Dump/Entry/System.interface.yaml b/xyz/openbmc_project/Dump/Entry/System.interface.yaml
+new file mode 100644
+index 0000000..634c3b7
+--- /dev/null
++++ b/xyz/openbmc_project/Dump/Entry/System.interface.yaml
+@@ -0,0 +1,19 @@
++description: >
++    Implement this to add system dump management.
++
++    System dumps are dump of the host memory and hardware states
++    generated during a failure in the host firmware. This can be a huge
++    dump stored in the host memory, the BMC doesnt store this dump but
++    stream this dump to an external client based on the offload request.
++    Apart from system generated system dump, users can also request for
++    this kind of dump.
++
++properties:
++    - name: SourceDumpId
++      type: uint32
++      description: >
++          The dump id provided by the source of the dump.
++          There are dumps which get generated outside the BMC, like a
++          system dump which gets generated and stored in the host memory.
++          All dumps will have a  unique id  but when communicating
++          to the source of the dump the SourceDumpId will be used.
+diff --git a/xyz/openbmc_project/Dump/NewDump.interface.yaml b/xyz/openbmc_project/Dump/NewDump.interface.yaml
+new file mode 100644
+index 0000000..1e37990
+--- /dev/null
++++ b/xyz/openbmc_project/Dump/NewDump.interface.yaml
+@@ -0,0 +1,43 @@
++description: >
++    Implement to notify the creation of new dump.
++    Use this interface when the dump is already created and ready
++    to be offloaded. This interface will add a new dump object with the
++    properties provided. The existing internal create interface should
++    be used when the data is collected and the dump needs to be packaged.
++
++    Any OpenBMC implementation must provide exactly one implementation of
++    xyz.openbmc_project.Dump.NewDump on /xyz/openbmc_project/dump.
++
++methods:
++    - name: Notify
++      description: >
++         Create a dump entry based on the parameters.
++      parameters:
++       - name: DumpType
++         type: enum[self.DumpType]
++         description: >
++            Type of the dump
++       - name: SourceDumpId
++         type: uint32
++         description: >
++             The dump id provided by the source of the dump.
++             There are dumps which get generated outside the BMC, like a
++             system dump which gets generated and stored in the host memory.
++             All dumps will have a  unique id  but when communicating
++             to the source of the dump the SourceDumpId will be used.
++       - name: Size
++         type: uint64
++         description: >
++            Size of the dump in bytes
++      errors:
++        - xyz.openbmc_project.Common.Error.InternalFailure
++        - xyz.openbmc_project.Dump.Create.Error.Disabled
++
++enumerations:
++    - name: DumpType
++      description:
++          Type of the dump
++      values:
++        - name: System
++          description: >
++              A dump created during a critical failure in the host.
+-- 
+2.7.4
+
