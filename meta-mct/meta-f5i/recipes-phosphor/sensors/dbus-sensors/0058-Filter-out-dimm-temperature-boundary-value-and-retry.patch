@@ -1,0 +1,55 @@
+From 86395c74ed9b125ccf2587f232e7a85588b2b020 Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Wed, 3 Feb 2021 10:55:49 +0800
+Subject: [PATCH] Filter out dimm temperature boundary value and retry
+
+---
+ include/CPUSensor.hpp |  1 +
+ src/CPUSensor.cpp     | 12 +++++++++++-
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/include/CPUSensor.hpp b/include/CPUSensor.hpp
+index 4d3baf0..3ec457c 100755
+--- a/include/CPUSensor.hpp
++++ b/include/CPUSensor.hpp
+@@ -47,6 +47,7 @@ class CPUSensor : public Sensor
+     double privTcontrol;
+     double dtsOffset;
+     bool show;
++    int retry = 0;
+     size_t errCount;
+     thresholds::ThresholdTimer thresholdTimer;
+     void setupRead(void);
+diff --git a/src/CPUSensor.cpp b/src/CPUSensor.cpp
+index 3b2d3ef..f45d010 100755
+--- a/src/CPUSensor.cpp
++++ b/src/CPUSensor.cpp
+@@ -161,6 +161,16 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+             responseStream.clear();
+             nvalue /= CPUSensor::sensorScaleFactor;
+ 
++            if(path.find("peci-dimmtemp")!= std::string::npos && nvalue >= 85)
++            {
++                if(retry < 10){
++                    retry++;
++                }
++            }
++            else{
++                retry = 0;
++            }
++
+             if(path.find("peci-dimmtemp")!= std::string::npos && nvalue > 80)
+             {
+                 std::cerr << "path:" << path << ", value:" << nvalue << "\n";
+@@ -172,7 +182,7 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+             }
+             else
+             {
+-                if (nvalue != value)
++                if ((nvalue != value) && ((nvalue < 85) || (retry >= 2)))
+                 {
+                     if (show)
+                     {
+-- 
+2.7.4
+
