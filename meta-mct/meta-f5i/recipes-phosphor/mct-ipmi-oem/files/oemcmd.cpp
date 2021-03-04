@@ -596,6 +596,28 @@ ipmi::RspType<std::optional<uint8_t>, // T1
 //================================================================================================
 static boost::container::flat_map<uint8_t, std::string> eccMap;
 
+struct csrData {
+    uint32_t device;
+    uint32_t function;
+    uint32_t bus;
+};
+
+std::map<std::string,csrData> dimmCsr =
+{
+    {"CPU0_MC0_A0",{0x0a,0x03,0x02}},
+    {"CPU0_MC0_B0",{0x0a,0x07,0x02}},
+    {"CPU0_MC0_C0",{0x0b,0x03,0x02}},
+    {"CPU0_MC1_D0",{0x0c,0x03,0x02}},
+    {"CPU0_MC1_E0",{0x0c,0x07,0x02}},
+    {"CPU0_MC1_F0",{0x0d,0x03,0x02}},
+    {"CPU1_MC0_A0",{0x0a,0x03,0x02}},
+    {"CPU1_MC0_B0",{0x0a,0x07,0x02}},
+    {"CPU1_MC0_C0",{0x0b,0x03,0x02}},
+    {"CPU1_MC1_D0",{0x0c,0x03,0x02}},
+    {"CPU1_MC1_E0",{0x0c,0x07,0x02}},
+    {"CPU1_MC1_F0",{0x0d,0x03,0x02}},
+};
+
 //MCT ecc filter
 static constexpr const char* sdrFile = "/usr/share/ipmi-providers/sdr.json";
 constexpr static const uint16_t biosId = 0x3f;
@@ -655,6 +677,40 @@ static void loadEccMap(void)
    
 }
 
+int peciWrPkgConfig(uint8_t target, uint8_t u8Index, uint16_t u16Param,
+                    uint32_t u32Value, uint8_t u8WriteLen)
+{
+    uint8_t cc = 0;
+
+    if (peci_WrPkgConfig(target, u8Index, u16Param, u32Value, u8WriteLen, &cc) != PECI_CC_SUCCESS)
+    {
+        return -1;
+    }
+
+    if(cc != PECI_DEV_CC_SUCCESS)
+    {
+       return -1;
+    }
+    return 0;
+}
+
+int peciRdPkgConfig(uint8_t target, uint8_t u8Index, uint16_t u16Value,
+                    uint8_t u8ReadLen, uint8_t* pPkgConfig)
+{
+    uint8_t cc = 0;
+
+    if (peci_RdPkgConfig(target, u8Index, u16Value, u8ReadLen, pPkgConfig, &cc) != PECI_CC_SUCCESS)
+    {
+        return -1;
+    }
+
+    if(cc != PECI_DEV_CC_SUCCESS)
+    {
+       return -1;
+    }
+    return 0;
+}
+
 /*-------------------------------------
  * OemGetEccCount(NetFn: 0x2E, Cmd: 0x1B)
  * Request:
@@ -667,18 +723,22 @@ static void loadEccMap(void)
  *   Byte 2: 0xfd
  *   Byte 3: 0x19
  *   Byte 4: 0x00
- *   Byte 5: Correctable ECC Count
+ *   Byte 5: Correctable rank 0 ECC Count
+ *   Byte 6: Correctable rank 1 ECC Count
+ *   Byte 7: Correctable rank 2 ECC Count
+ *   Byte 8: Correctable rank 3 ECC Count
  *------------------------------------*/
-ipmi::RspType<uint8_t> ipmiGetEccCount(uint8_t sensorNum)
+ipmi::RspType<std::vector<uint8_t>> ipmiGetEccCount(uint8_t sensorNum)
 {
+    constexpr static const uint32_t DEFAULT_OFFSET = 0x104;
+    constexpr static const uint32_t DEFAULT_LENGTH = 0x03;
+    constexpr static const uint8_t CSR_INDEX = 0x80;
 
-    constexpr const char* leakyBucktPath =
-        "/xyz/openbmc_project/leakyBucket/HOST_DIMM_ECC";
-    constexpr const char* leakyBucktIntf =
-        "xyz.openbmc_project.Sensor.Value";
-    std::shared_ptr<sdbusplus::asio::connection> busp = getSdBus();
-    ipmi::Value result;
-    uint8_t count;
+    std::vector<uint8_t> rank(4,0);
+    uint32_t correrrcnt0 = 0xFFFFFFFF;
+    uint32_t correrrcnt1 = 0xFFFFFFFF;
+    uint8_t cpuId = 0x30;
+
     loadEccMap();
 
     auto ecc = eccMap.find(sensorNum);
@@ -688,23 +748,58 @@ ipmi::RspType<uint8_t> ipmiGetEccCount(uint8_t sensorNum)
         return ipmi::responseInvalidFieldRequest();
     }
 
-    std::string sensorPath = "/xyz/openbmc_project/leakyBucket/HOST_DIMM_ECC/"+ecc->second;
-    
-    auto service = ipmi::getService(*busp, leakyBucktIntf, leakyBucktPath);
+    std::map<std::string,csrData>::iterator it;
+    it = dimmCsr.find(ecc->second);
+    if (it == dimmCsr.end())
+    {
+        return ipmi::responseInvalidFieldRequest();
+    }
 
-    //get count
-    try
+    if(ecc->second.find("CPU0") != std::string::npos)
     {
-        result = ipmi::getDbusProperty(
-                    *busp, service, sensorPath, leakyBucktIntf, "count");    
-        count = std::get<uint8_t>(result);
+        cpuId = 0x30;
     }
-    catch (const std::exception& e)
+    else if(ecc->second.find("CPU1") != std::string::npos)
     {
-        //ecc bucket is not created, return count as 0;    
-        return ipmi::responseSuccess(0);
+        cpuId = 0x31;
     }
-    return ipmi::responseSuccess(count);
+
+    // calculate configuration data for CSR or MMIO configuration read sequence
+    uint32_t offset = (DEFAULT_OFFSET << 16) & 0xffff0000;
+    uint32_t device = (it->second.device << 11) & 0x0000F800;
+    uint32_t function = (it->second.function << 8) & 0x00000700;
+    uint32_t bus = (it->second.bus << 4) & 0x00000070;
+    uint32_t length = (DEFAULT_LENGTH) & 0x00000003;
+    uint32_t configData = offset + device + function + bus + length;
+
+    // PECI flow for CSR or MMIO configuration read sequence
+    if(peciWrPkgConfig(cpuId, CSR_INDEX, 0x0003, 0x00000002, sizeof(uint32_t)))
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+    if(peciWrPkgConfig(cpuId, CSR_INDEX, 0x0010, configData, sizeof(uint32_t)))
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+    if(peciRdPkgConfig(cpuId, CSR_INDEX, 0x0002, sizeof(uint32_t), reinterpret_cast<uint8_t*> (&correrrcnt0)))
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+    if(peciRdPkgConfig(cpuId, CSR_INDEX, 0x0002, sizeof(uint32_t), reinterpret_cast<uint8_t*> (&correrrcnt1)))
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+    if(peciWrPkgConfig(cpuId, CSR_INDEX, 0x0004, 0x00000002,sizeof(uint32_t)))
+    {
+        return ipmi::responseUnspecifiedError();
+    }
+
+    rank[0] = correrrcnt1 & 0x00007FFF;
+    rank[1] = (correrrcnt1 >> 16) & 0x00007FFF;
+    rank[2] = correrrcnt0 & 0x00007FFF;
+    rank[3] = (correrrcnt0 >> 16) & 0x00007FFF;
+
+    return ipmi::responseSuccess(rank);
    
 }
 
