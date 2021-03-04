@@ -8,5 +8,6 @@ SRC_URI += "file://0002-Add-interface-for-caterr-logging.patch \
             file://0007-Add-interface-for-DCMI-power.patch \
             file://0008-Set-watchdog-initialized-action-to-None-as-default.patch \
             file://0009-Add-the-version-ID-parameter-to-software-version-int.patch \
+            file://0010-Add-interface-for-setting-specified-host-status.patch \
             "
 

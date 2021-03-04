@@ -1,0 +1,6 @@
+---
+/xyz/openbmc_project/oem/HostStatus:
+    - Interface: xyz.openbmc_project.OEM.HostStatus
+      Properties:
+          AmtStatus:
+              Default: 0

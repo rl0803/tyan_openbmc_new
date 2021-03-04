@@ -32,4 +32,5 @@ enum ipmi_net_fns_oem_cmds
     IPMI_CMD_GetPostCode = 0x10,
     IPMI_CMD_RelinkLan = 0x12,
     IPMI_CMD_GetOcpCard = 0x14,
+    IPMI_CMD_ConfigAmt = 0x16,
 };

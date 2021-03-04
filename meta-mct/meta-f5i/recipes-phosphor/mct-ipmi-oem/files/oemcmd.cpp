@@ -1549,6 +1549,58 @@ ipmi::RspType<> ipmi_GenCrashdump()
     return ipmi::responseSuccess();
 }
 
+//=======================================================================
+/* Get or Set AMT status
+NetFun: 0x30
+Cmd : 0x16
+Request:
+    Byte 1 : Status (optional: To get AMT status directly)
+        00h : Disable AMT feature
+        01h : Enable AMT feature
+Response:
+    Byte 1 : Completion Code
+    Byte 2 : AMT status
+*/
+ipmi::RspType<uint8_t> ipmi_ConfigAmt(std::optional<uint8_t> configAmt)
+{
+    uint8_t amtResponse = 0;
+
+    constexpr auto service = "xyz.openbmc_project.Settings";
+    constexpr auto path = "/xyz/openbmc_project/oem/HostStatus";
+    constexpr auto hostStatusInterface = "xyz.openbmc_project.OEM.HostStatus";
+    constexpr auto amtStatus = "AmtStatus";
+
+    auto bus = sdbusplus::bus::new_default();
+
+    if(configAmt)
+    {
+        auto method = bus.new_method_call(service, path, PROPERTY_INTERFACE,"Set");
+        method.append(hostStatusInterface, amtStatus, sdbusplus::message::variant<bool>(configAmt.value() & 0x01));
+        bus.call_noreply(method);
+        amtResponse = (uint8_t)configAmt.value() & 0x01;
+    }
+    else
+    {
+        auto method = bus.new_method_call(service, path, PROPERTY_INTERFACE, "Get");
+        method.append(hostStatusInterface, amtStatus);
+
+        sdbusplus::message::variant<bool> result;
+        try
+        {
+            auto reply = bus.call(method);
+            reply.read(result);
+        }
+        catch (const sdbusplus::exception::SdBusError& e)
+        {
+            log<level::ERR>("Error in ConfigAmt Get",entry("ERROR=%s", e.what()));
+            return ipmi::responseUnspecifiedError();
+        }
+        amtResponse = (uint8_t)(sdbusplus::message::variant_ns::get<bool>(result));
+    }
+
+    return ipmi::responseSuccess(amtResponse);
+}
+
 void register_netfn_mct_oem()
 {
     ipmi::registerOemHandler(ipmi::prioMax, 0x0019fd, IPMI_CMD_FanPwmDuty, ipmi::Privilege::Admin, ipmi_tyan_FanPwmDuty);
@@ -1572,5 +1624,6 @@ void register_netfn_mct_oem()
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_SET_SOL_PATTERN, ipmi::Privilege::Admin, ipmiSetSolPattern);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GetOcpCard, ipmi::Privilege::Admin, ipmi_GetOcpCard);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GenCrashdump, ipmi::Privilege::Admin, ipmi_GenCrashdump);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_ConfigAmt, ipmi::Privilege::Admin, ipmi_ConfigAmt);
 }
 }
