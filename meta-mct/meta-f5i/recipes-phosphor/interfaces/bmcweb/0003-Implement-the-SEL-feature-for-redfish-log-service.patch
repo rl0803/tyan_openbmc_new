@@ -1,16 +1,17 @@
-From 4b1e80921aedea32aa72f1500cf31e365ed8ef3e Mon Sep 17 00:00:00 2001
+From 71485743aafee8687e47e0328022a18ca1c4b803 Mon Sep 17 00:00:00 2001
 From: John Chung <john.chung@mic.com.tw>
 Date: Mon, 26 Oct 2020 13:12:54 +0800
 Subject: [PATCH] Implement the SEL feature for redfish log service
 
+%% original patch: 0003-Implement-the-SEL-feature-for-redfish-log-service.patch
 ---
  CMakeLists.txt                                     |    1 -
  redfish-core/include/event_service_manager.hpp     |    4 +-
- redfish-core/include/logutils.hpp                  | 1146 ++++++++++++++++++++
+ redfish-core/include/logutils.hpp                  | 1791 ++++++++++++++++++++
  redfish-core/include/registries.hpp                |    2 +-
  .../registries/openbmc_message_registry.hpp        |  101 +-
- redfish-core/lib/log_services.hpp                  |  146 ++-
- 6 files changed, 1377 insertions(+), 23 deletions(-)
+ redfish-core/lib/log_services.hpp                  |  146 +-
+ 6 files changed, 2022 insertions(+), 23 deletions(-)
  mode change 100644 => 100755 redfish-core/include/event_service_manager.hpp
  create mode 100755 redfish-core/include/logutils.hpp
  mode change 100644 => 100755 redfish-core/include/registries.hpp
@@ -48,10 +49,10 @@ index ded8dbc..4768fea
  static int dirWatchDesc = -1;
 diff --git a/redfish-core/include/logutils.hpp b/redfish-core/include/logutils.hpp
 new file mode 100755
-index 0000000..e28e24c
+index 0000000..c61da83
 --- /dev/null
 +++ b/redfish-core/include/logutils.hpp
-@@ -0,0 +1,1146 @@
+@@ -0,0 +1,1791 @@
 +#include <boost/algorithm/string.hpp>
 +#include <boost/bimap.hpp>
 +#include <boost/container/flat_map.hpp>
@@ -62,6 +63,7 @@ index 0000000..e28e24c
 +#include <sstream>
 +#include <string>
 +#include <array>
++#include <exception>
 +
 +#pragma once
 +
@@ -69,7 +71,38 @@ index 0000000..e28e24c
 +#define DATA_BYTE2_SPECIFIED_MASK    0xc0 
 +#define SIZE_OF_DESC    128
 +
-+std::vector<std::string> logEntryBuffer;
++#define BSWAP_16(x) ((((x) & 0xff00) >> 8) | (((x) & 0x00ff) << 8))
++#define BSWAP_32(x) ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >> 8) |\
++                     (((x) & 0x0000ff00) << 8) | (((x) & 0x000000ff) << 24))
++
++#define tos32(val, bits)    ((val & ((1<<((bits)-1)))) ? (-((val) & (1<<((bits)-1))) | (val)) : (val))
++
++#define __TO_M(mtol)       (int16_t)(tos32((((BSWAP_16(mtol) & 0xff00) >> 8) | ((BSWAP_16(mtol) & 0xc0) << 2)), 10))
++#define __TO_B(bacc)       (int32_t)(tos32((((BSWAP_32(bacc) & 0xff000000) >> 24) | \
++                            ((BSWAP_32(bacc) & 0xc00000) >> 14)), 10))
++#define __TO_R_EXP(bacc)   (int32_t)(tos32(((BSWAP_32(bacc) & 0xf0) >> 4), 4))
++#define __TO_B_EXP(bacc)   (int32_t)(tos32((BSWAP_32(bacc) & 0xf), 4))
++
++#define SDR_SENSOR_L_LINEAR     0x00
++#define SDR_SENSOR_L_LN         0x01
++#define SDR_SENSOR_L_LOG10      0x02
++#define SDR_SENSOR_L_LOG2       0x03
++#define SDR_SENSOR_L_E          0x04
++#define SDR_SENSOR_L_EXP10      0x05
++#define SDR_SENSOR_L_EXP2       0x06
++#define SDR_SENSOR_L_1_X        0x07
++#define SDR_SENSOR_L_SQR        0x08
++#define SDR_SENSOR_L_CUBE       0x09
++#define SDR_SENSOR_L_SQRT       0x0a
++#define SDR_SENSOR_L_CUBERT     0x0b
++#define SDR_SENSOR_L_NONLINEAR  0x70
++
++#define UNIT_TYPE_MAX 92 /* This is the ID of "grams" */
++#define UNIT_TYPE_LONGEST_NAME 19 /* This is the length of "color temp deg K" */
++
++#define SDR_UNIT_MOD_NONE 0 /* none */
++#define SDR_UNIT_MOD_DIV 1 /* Basic Unit / Modifier Unit */
++#define SDR_UNIT_MOD_MUL 2 /* Basic Unit * Mofifier Unit */
 +
 +enum MessageID 
 +{ 
@@ -79,17 +112,53 @@ index 0000000..e28e24c
 +    SELEntryWarning
 +};
 +
-+const std::string MessageIDToString(MessageID value)
++enum class SensorTypeCodes : uint8_t
 +{
-+    static std::string table[] = { 
-+        "OpenBMC.0.1.SELEntry",
-+        "OpenBMC.0.1.SELEntryOK",
-+        "OpenBMC.0.1.SELEntryCritical",
-+        "OpenBMC.0.1.SELEntryWarning"
-+    };
-+	return table[value];
-+}
++    reserved = 0x0,
++    temperature = 0x1,
++    voltage = 0x2,
++    current = 0x3,
++    fan = 0x4,
++    processor = 0x07,
++    power_supply = 0x08,
++    power_unit = 0x09,
++    event_disabled = 0x10,
++    pwr_button = 0x14,
++    restart = 0x1d,
++    acpi = 0x22,
++    watchdog2 = 0x23,
++    mgtsubsyshealth = 0x28,
++    versionchange = 0x2b,
++    fru_state = 0x2c,
++    other = 0xB,
++};
 +
++enum class SensorUnits : uint8_t
++{
++    unspecified = 0x0,
++    degreesC = 0x1,
++    volts = 0x4,
++    amps = 0x5,
++    watts = 0x6,
++    rpm = 0x12,
++    hit = 0x4e
++};
++
++struct CmpStrVersion
++{
++    bool operator()(std::string a, std::string b) const
++    {
++        return strverscmp(a.c_str(), b.c_str()) < 0;
++    }
++};
++
++struct CmpStr
++{
++    bool operator()(const char* a, const char* b) const
++    {
++        return std::strcmp(a, b) < 0;
++    }
++};
 +
 +struct ipmiEventSensorTypes {
 +    uint8_t	code;
@@ -98,6 +167,21 @@ index 0000000..e28e24c
 +    uint8_t   data;
 +    const char  * desc;
 +};
++
++struct sensors{
++    uint8_t linearization;  /* 70h=non linear, 71h-7Fh=non linear, OEM */
++    uint16_t mtol;          /* M, tolerance */
++    uint32_t bacc;          /* accuracy, B, Bexp, Rexp */
++    uint8_t analog;         /* Analog(numeric) data format*/
++};
++
++using SensorSubTree = boost::container::flat_map<
++    std::string,
++    boost::container::flat_map<std::string, std::vector<std::string>>,
++    CmpStrVersion>;
++using SensorNumMap = boost::bimap<int, std::string>;
++
++std::vector<std::string> logEntryBuffer;
 +
 +const char *ipmiGenericSensorTypeVals[] = {
 +    "reserved",
@@ -590,22 +674,405 @@ index 0000000..e28e24c
 +    { 0x00, 0x00, 0xff, NULL },
 +};
 +
-+struct CmpStrVersion
-+{
-+    bool operator()(std::string a, std::string b) const
-+    {
-+        return strverscmp(a.c_str(), b.c_str()) < 0;
-+    }
++static const char *unit_desc[] = {
++	"unspecified",
++	"degrees C",
++	"degrees F",
++	"degrees K",
++	"Volts",
++	"Amps",
++	"Watts",
++	"Joules",
++	"Coulombs",
++	"VA",
++	"Nits",
++	"lumen",
++	"lux",
++	"Candela",
++	"kPa",
++	"PSI",
++	"Newton",
++	"CFM",
++	"RPM",
++	"Hz",
++	"microsecond",
++	"millisecond",
++	"second",
++	"minute",
++	"hour",
++	"day",
++	"week",
++	"mil",
++	"inches",
++	"feet",
++	"cu in",
++	"cu feet",
++	"mm",
++	"cm",
++	"m",
++	"cu cm",
++	"cu m",
++	"liters",
++	"fluid ounce",
++	"radians",
++	"steradians",
++	"revolutions",
++	"cycles",
++	"gravities",
++	"ounce",
++	"pound",
++	"ft-lb",
++	"oz-in",
++	"gauss",
++	"gilberts",
++	"henry",
++	"millihenry",
++	"farad",
++	"microfarad",
++	"ohms",
++	"siemens",
++	"mole",
++	"becquerel",
++	"PPM",
++	"reserved",
++	"Decibels",
++	"DbA",
++	"DbC",
++	"gray",
++	"sievert",
++	"color temp deg K",
++	"bit",
++	"kilobit",
++	"megabit",
++	"gigabit",
++	"byte",
++	"kilobyte",
++	"megabyte",
++	"gigabyte",
++	"word",
++	"dword",
++	"qword",
++	"line",
++	"hit",
++	"miss",
++	"retry",
++	"reset",
++	"overflow",
++	"underrun",
++	"collision",
++	"packets",
++	"messages",
++	"characters",
++	"error",
++	"correctable error",
++	"uncorrectable error",
++	"fatal error",
++	"grams"
 +};
 +
-+using SensorSubTree = boost::container::flat_map<
-+    std::string,
-+    boost::container::flat_map<std::string, std::vector<std::string>>,
-+    CmpStrVersion>;
++const static boost::container::flat_map<const char*, SensorTypeCodes, CmpStr>
++    sensorTypes{{{"temperature", SensorTypeCodes::temperature},
++                 {"voltage", SensorTypeCodes::voltage},
++                 {"current", SensorTypeCodes::current},
++                 {"fan_tach", SensorTypeCodes::fan},
++                 {"fan_pwm", SensorTypeCodes::fan},
++                 {"processor", SensorTypeCodes::processor},
++                 {"power_supply", SensorTypeCodes::power_supply},
++                 {"power_unit", SensorTypeCodes::power_unit},
++                 {"event_disabled", SensorTypeCodes::event_disabled},
++                 {"pwr_button", SensorTypeCodes::pwr_button},
++                 {"restart", SensorTypeCodes::restart},
++                 {"acpi", SensorTypeCodes::acpi},
++                 {"watchdog2", SensorTypeCodes::watchdog2},
++                 {"mgtsubsyshealth", SensorTypeCodes::mgtsubsyshealth},
++                 {"versionchange", SensorTypeCodes::versionchange},
++                 {"fru_state", SensorTypeCodes::fru_state},
++                 {"pattern", SensorTypeCodes::other},
++                 {"power", SensorTypeCodes::other}}};
 +
++const static boost::container::flat_map<const char *, SensorUnits, CmpStr>
++    sensorUnits{{{"temperature", SensorUnits::degreesC},
++                 {"voltage", SensorUnits::volts},
++                 {"current", SensorUnits::amps},
++                 {"fan_tach", SensorUnits::rpm},
++                 {"pattern", SensorUnits::hit},
++                 {"power", SensorUnits::watts}}};
 +
-+using SensorNumMap = boost::bimap<int, std::string>;
++const std::string MessageIDToString(MessageID value)
++{
++    static std::string table[] = {
++        "OpenBMC.0.1.SELEntry",
++        "OpenBMC.0.1.SELEntryOK",
++        "OpenBMC.0.1.SELEntryCritical",
++        "OpenBMC.0.1.SELEntryWarning"
++    };
++	return table[value];
++}
 +
++template <typename T>
++std::string toStringWithPrecision(const T value, const int precision = 6)
++{
++    std::ostringstream result;
++    result.precision(precision);
++    result << std::fixed << value;
++    return result.str();
++}
++
++template <class T>
++std::string hexToSring(T input,bool header)
++{
++  const char *hex = "0123456789ABCDEF";
++  std::stringstream ss;
++  if(header)
++  {
++     ss << "0x";
++  }
++  for(int i=sizeof(T)*2;i>0;i--)
++  {
++      ss << hex[input >> 4*(i-1) & 0xF];
++  }
++
++  return ss.str();
++}
++
++static int fromHexStr(const std::string hexStr, std::vector<uint8_t>& data)
++{
++    for (unsigned int i = 0; i < hexStr.size(); i += 2)
++    {
++        try
++        {
++            data.push_back(static_cast<uint8_t>(
++                std::stoul(hexStr.substr(i, 2), nullptr, 16)));
++        }
++        catch (std::invalid_argument& e)
++        {
++            return -1;
++        }
++        catch (std::out_of_range& e)
++        {
++            return -1;
++        }
++    }
++    return 0;
++}
++
++std::string getService(const std::string& intf, const std::string& path)
++{
++    auto bus = sdbusplus::bus::new_default();
++
++    auto mapperCall =
++        bus.new_method_call("xyz.openbmc_project.ObjectMapper",
++                            "/xyz/openbmc_project/object_mapper",
++                            "xyz.openbmc_project.ObjectMapper", "GetObject");
++
++    mapperCall.append(path);
++    mapperCall.append(std::vector<std::string>({intf}));
++
++    auto mapperResponseMsg = bus.call(mapperCall);
++
++    if (mapperResponseMsg.is_method_error())
++    {
++        throw std::runtime_error("ERROR in mapper call");
++    }
++
++    std::map<std::string, std::vector<std::string>> mapperResponse;
++    mapperResponseMsg.read(mapperResponse);
++
++    if (mapperResponse.begin() == mapperResponse.end())
++    {
++        throw std::runtime_error("ERROR in reading the mapper response");
++    }
++
++    return mapperResponse.begin()->first;
++}
++
++namespace ipmitool
++{
++std::string ipmiGetGenericSensorType(uint8_t sensorType)
++{
++    std::string sensorTypeStr;
++	if (sensorType <= SENSOR_TYPE_MAX) {
++        sensorTypeStr = ipmiGenericSensorTypeVals[sensorType];
++	}
++
++	return sensorTypeStr;
++}
++
++const struct ipmiEventSensorTypes *
++ipmiGetFirstEventSensorType(uint8_t sensorType, uint8_t eventType)
++{
++    const struct ipmiEventSensorTypes *evt, *start, *next = NULL;
++    uint8_t code;
++
++    if (eventType == 0x6f) {
++        /* check generic sensor types */
++        start = sensorSpecificEventTypes;
++        code = sensorType;
++    } else {
++        start = genericEventTypes;
++        code = eventType;
++    }
++
++    for (evt = start; evt->desc || next; evt++) {
++        /* check if VITA sensor event types has finished */
++        if (!evt->desc) {
++            /* proceed with next table */
++            evt = next;
++            next = NULL;
++        }
++
++        if (code == evt->code){
++            return evt;
++        }
++    }
++
++    return NULL;
++}
++
++const struct ipmiEventSensorTypes *
++ipmiGetNextEventSensorType(const struct ipmiEventSensorTypes *evt)
++{
++    const struct ipmiEventSensorTypes *start = evt;
++
++    for (evt = start + 1; evt->desc; evt++) {
++        if (evt->code == start->code) {
++            return evt;
++        }
++    }
++
++    return NULL;
++}
++
++double sdrConvertSensorReading(struct sensors *sensor, uint8_t val)
++{
++    int m, b, k1, k2;
++    double result;
++
++    m = __TO_M(sensor->mtol);
++    b = __TO_B(sensor->bacc);
++    k1 = __TO_B_EXP(sensor->bacc);
++    k2 = __TO_R_EXP(sensor->bacc);
++
++    switch (sensor->analog) {
++    case 0:
++        result = (double) (((m * val) +
++                    (b * pow(10, k1))) * pow(10, k2));
++        break;
++    case 1:
++        if (val & 0x80)
++            val++;
++        /* fall through */
++    case 2:
++        result = (double) (((m * (int8_t) val) +
++                    (b * pow(10, k1))) * pow(10, k2));
++        break;
++    default:
++        /* Oops! This isn't an analog sensor. */
++        return 0.0;
++    }
++
++    switch (sensor->linearization & 0x7f) {
++    case SDR_SENSOR_L_LN:
++        result = log(result);
++        break;
++    case SDR_SENSOR_L_LOG10:
++        result = log10(result);
++        break;
++    case SDR_SENSOR_L_LOG2:
++        result = (double) (log(result) / log(2.0));
++        break;
++    case SDR_SENSOR_L_E:
++        result = exp(result);
++        break;
++    case SDR_SENSOR_L_EXP10:
++        result = pow(10.0, result);
++        break;
++    case SDR_SENSOR_L_EXP2:
++        result = pow(2.0, result);
++        break;
++    case SDR_SENSOR_L_1_X:
++        result = pow(result, -1.0);    /*1/x w/o exception */
++        break;
++    case SDR_SENSOR_L_SQR:
++        result = pow(result, 2.0);
++        break;
++    case SDR_SENSOR_L_CUBE:
++        result = pow(result, 3.0);
++        break;
++    case SDR_SENSOR_L_SQRT:
++        result = sqrt(result);
++        break;
++    case SDR_SENSOR_L_CUBERT:
++        result = cbrt(result);
++        break;
++    case SDR_SENSOR_L_LINEAR:
++    default:
++        break;
++    }
++    return result;
++}
++
++const char* ipmiSdrGetUnitString(bool pct, uint8_t relation,
++                         uint8_t base, uint8_t modifier)
++{
++	/*
++	 * Twice as long as the longest possible unit name, plus
++	 * two characters for '%' and relation (either '*' or '/'),
++	 * plus the terminating null-byte.
++	 */
++	static char unitstr[2 * UNIT_TYPE_LONGEST_NAME + 2 + 1];
++
++	/*
++	 * By default, if units are supposed to be percent, we will pre-pend
++	 * the percent string  to the textual representation of the units.
++	 */
++	const char *pctstr = pct ? "% " : "";
++	const char *basestr;
++	const char *modstr;
++
++	if (base <= UNIT_TYPE_MAX) {
++		basestr = unit_desc[base];
++	}
++	else {
++		basestr = "invalid";
++	}
++
++	if (modifier <= UNIT_TYPE_MAX) {
++		modstr = unit_desc[base];
++	}
++	else {
++		modstr = "invalid";
++	}
++
++	switch (relation) {
++	case SDR_UNIT_MOD_MUL:
++		snprintf(unitstr, sizeof (unitstr), "%s%s*%s",
++			 pctstr, basestr, modstr);
++		break;
++	case SDR_UNIT_MOD_DIV:
++		snprintf(unitstr, sizeof (unitstr), "%s%s/%s",
++			 pctstr, basestr, modstr);
++		break;
++	case SDR_UNIT_MOD_NONE:
++	default:
++		/*
++		 * Display the text "percent" only when the Base unit is
++		 * "unspecified" and the caller specified to print percent.
++		 */
++		if (base == 0 && pct) {
++			snprintf(unitstr, sizeof(unitstr), "percent");
++		} else {
++			snprintf(unitstr, sizeof (unitstr), "%s%s",
++			         pctstr, basestr);
++		}
++		break;
++	}
++	return unitstr;
++}
++} // namespace ipmitool
++
++namespace ipmi
++{
 +namespace details
 +{
 +inline static bool getSensorSubtree(std::shared_ptr<SensorSubTree>& subtree)
@@ -710,55 +1177,6 @@ index 0000000..e28e24c
 +    return true;
 +}
 +
-+struct CmpStr
-+{
-+    bool operator()(const char* a, const char* b) const
-+    {
-+        return std::strcmp(a, b) < 0;
-+    }
-+};
-+
-+enum class SensorTypeCodes : uint8_t
-+{
-+    reserved = 0x0,
-+    temperature = 0x1,
-+    voltage = 0x2,
-+    current = 0x3,
-+    fan = 0x4,
-+    processor = 0x07,
-+    power_supply = 0x08,
-+    power_unit = 0x09,
-+    event_disabled = 0x10,
-+    pwr_button = 0x14,
-+    restart = 0x1d,
-+    acpi = 0x22,
-+    watchdog2 = 0x23,
-+    mgtsubsyshealth = 0x28,
-+    versionchange = 0x2b,
-+    fru_state = 0x2c,
-+    other = 0xB,
-+};
-+
-+const static boost::container::flat_map<const char*, SensorTypeCodes, CmpStr>
-+    sensorTypes{{{"temperature", SensorTypeCodes::temperature},
-+                 {"voltage", SensorTypeCodes::voltage},
-+                 {"current", SensorTypeCodes::current},
-+                 {"fan_tach", SensorTypeCodes::fan},
-+                 {"fan_pwm", SensorTypeCodes::fan},
-+                 {"processor", SensorTypeCodes::processor},   
-+                 {"power_supply", SensorTypeCodes::power_supply},
-+                 {"power_unit", SensorTypeCodes::power_unit},
-+                 {"event_disabled", SensorTypeCodes::event_disabled},
-+                 {"pwr_button", SensorTypeCodes::pwr_button},   
-+                 {"restart", SensorTypeCodes::restart},  
-+                 {"acpi", SensorTypeCodes::acpi},     
-+                 {"watchdog2", SensorTypeCodes::watchdog2},
-+                 {"mgtsubsyshealth", SensorTypeCodes::mgtsubsyshealth}, 
-+                 {"versionchange", SensorTypeCodes::versionchange},     
-+                 {"fru_state", SensorTypeCodes::fru_state},
-+                 {"pattern", SensorTypeCodes::other},
-+                 {"power", SensorTypeCodes::other}}};
-+
 +inline static std::string getSensorTypeStringFromPath(const std::string& path)
 +{
 +    // get sensor type string from path, path is defined as
@@ -800,7 +1218,7 @@ index 0000000..e28e24c
 +inline static uint8_t getSensorTypeFromPath(const std::string& path)
 +{
 +    uint8_t sensorType = 0;
-+    std::string type = getSensorTypeStringFromPath(path);
++    std::string type = ipmi::getSensorTypeStringFromPath(path);
 +    auto findSensor = sensorTypes.find(type.c_str());
 +    if (findSensor != sensorTypes.end())
 +    {
@@ -865,6 +1283,120 @@ index 0000000..e28e24c
 +    }
 +}
 +
++static inline bool getSensorAttributes(const double max, const double min,
++                                       int16_t& mValue, int8_t& rExp,
++                                       int16_t& bValue, int8_t& bExp,
++                                       bool& bSigned)
++{
++    static constexpr int16_t maxInt10 = 0x1FF;
++    static constexpr int16_t minInt10 = -0x200;
++    static constexpr int8_t maxInt4 = 7;
++    static constexpr int8_t minInt4 = -8;
++
++    // computing y = (10^rRexp) * (Mx + (B*(10^Bexp)))
++    // check for 0, assume always positive
++    double mDouble;
++    double bDouble;
++    if (max <= min)
++    {
++        std::cerr << "getSensorAttributes: Max must be greater than min\n";
++        return false;
++    }
++
++    mDouble = (max - min) / 0xFF;
++
++    if (min < 0)
++    {
++        bSigned = true;
++        bDouble = floor(0.5 + ((max + min) / 2));
++    }
++    else
++    {
++        bSigned = false;
++        bDouble = min;
++    }
++
++    rExp = 0;
++
++    // M too big for 10 bit variable
++    while (mDouble > maxInt10)
++    {
++        if (rExp >= maxInt4)
++        {
++            std::cerr << "rExp Too big, Max and Min range too far REXP=" << rExp
++                      << "\n";
++            return false;
++        }
++        mDouble /= 10;
++        rExp++;
++    }
++
++    // M too small, loop until we lose less than 1 eight bit count of precision
++    while (((mDouble - floor(mDouble)) / mDouble) > (1.0 / 255))
++    {
++        if (rExp <= minInt4)
++        {
++            std::cerr << "rExp Too Small, Max and Min range too close\n";
++            return false;
++        }
++        // check to see if we reached the limit of where we can adjust back the
++        // B value
++        if (bDouble / std::pow(10, rExp + minInt4 - 1) > bDouble)
++        {
++            if (mDouble < 1.0)
++            {
++                std::cerr << "Could not find mValue and B value with enough "
++                             "precision.\n";
++                return false;
++            }
++            break;
++        }
++        // can't multiply M any more, max precision reached
++        else if (mDouble * 10 > maxInt10)
++        {
++            break;
++        }
++        mDouble *= 10;
++        rExp--;
++    }
++
++    bDouble /= std::pow(10, rExp);
++    bExp = 0;
++
++    // B too big for 10 bit variable
++    while (bDouble > maxInt10 || bDouble < minInt10)
++    {
++        if (bExp >= maxInt4)
++        {
++            std::cerr
++                << "bExp Too Big, Max and Min range need to be adjusted\n";
++            return false;
++        }
++        bDouble /= 10;
++        bExp++;
++    }
++
++    while (((fabs(bDouble) - floor(fabs(bDouble))) / fabs(bDouble)) >
++           (1.0 / 255))
++    {
++        if (bExp <= minInt4)
++        {
++            std::cerr
++                << "bExp Too Small, Max and Min range need to be adjusted\n";
++            return false;
++        }
++        bDouble *= 10;
++        bExp -= 1;
++    }
++
++    mValue = static_cast<int16_t>(std::round(mDouble)) & maxInt10;
++    bValue = static_cast<int16_t>(bDouble) & maxInt10;
++
++    return true;
++}
++} // namespace ipmi
++
++
 +std::string getEventType(uint8_t eventType)
 +{
 +    uint8_t eventTypeSplit = (eventType & 0x7f);
@@ -882,61 +1414,6 @@ index 0000000..e28e24c
 +    return "Reserved";
 +}
 +
-+std::string ipmiGetGenericSensorType(uint8_t sensorType)
-+{
-+    std::string sensorTypeStr;
-+	if (sensorType <= SENSOR_TYPE_MAX) {
-+        sensorTypeStr = ipmiGenericSensorTypeVals[sensorType]; 
-+	}
-+
-+	return sensorTypeStr;
-+}
-+
-+const struct ipmiEventSensorTypes *
-+ipmiGetFirstEventSensorType(uint8_t sensorType, uint8_t eventType)
-+{
-+    const struct ipmiEventSensorTypes *evt, *start, *next = NULL;
-+    uint8_t code;
-+
-+    if (eventType == 0x6f) {
-+        /* check generic sensor types */
-+        start = sensorSpecificEventTypes;
-+        code = sensorType;
-+    } else {
-+        start = genericEventTypes;
-+        code = eventType;
-+    }
-+
-+    for (evt = start; evt->desc || next; evt++) {
-+        /* check if VITA sensor event types has finished */
-+        if (!evt->desc) {
-+            /* proceed with next table */
-+            evt = next;
-+            next = NULL;
-+        }
-+
-+        if (code == evt->code){
-+            return evt;
-+        }
-+    }
-+
-+    return NULL;
-+}
-+
-+const struct ipmiEventSensorTypes *
-+ipmiGetNextEventSensorType(const struct ipmiEventSensorTypes *evt)
-+{
-+    const struct ipmiEventSensorTypes *start = evt;
-+
-+    for (evt = start + 1; evt->desc; evt++) {
-+        if (evt->code == start->code) {
-+            return evt;
-+        }
-+    }
-+
-+    return NULL;
-+}
-+
 +std::string getEventDesc(uint8_t sensorType, uint8_t eventType, uint8_t eventData1,
 +                        uint8_t eventData2)
 +{
@@ -946,8 +1423,8 @@ index 0000000..e28e24c
 +
 +    uint8_t offset = eventData1 & 0xf;
 +
-+    for (evt = ipmiGetFirstEventSensorType(sensorType, eventTypeSplit);
-+         evt; evt = ipmiGetNextEventSensorType(evt))
++    for (evt = ipmitool::ipmiGetFirstEventSensorType(sensorType, eventTypeSplit);
++         evt; evt = ipmitool::ipmiGetNextEventSensorType(evt))
 +    {
 +        if ((evt->offset == offset && evt->desc) &&
 +            ((evt->data == ALL_OFFSETS_SPECIFIED) ||
@@ -960,6 +1437,151 @@ index 0000000..e28e24c
 +    }
 +
 +    return desc;
++}
++
++bool getSensorMaxMin(std::string path, double &max, double &min)
++{
++    auto bus = sdbusplus::bus::new_default();
++    constexpr auto PROP_INTERFACE = "org.freedesktop.DBus.Properties";
++    constexpr auto VALUE_INTERFACE = "xyz.openbmc_project.Sensor.Value";
++
++    std::map<std::string, std::variant<bool, uint8_t, int16_t, uint16_t, int32_t, uint32_t,
++                           int64_t, uint64_t, double, std::string>> properties;
++    try
++    {
++        auto method = bus.new_method_call(getService(VALUE_INTERFACE,path).c_str(), path.c_str(),
++                                        PROP_INTERFACE, "GetAll");
++        method.append(VALUE_INTERFACE);
++
++        auto reply = bus.call(method);
++
++        if (reply.is_method_error())
++        {
++            return false;
++        }
++
++        reply.read(properties);
++
++        max = std::get<double>(properties["MaxValue"]);
++        min = std::get<double>(properties["MinValue"]);
++    }
++    catch (const std::exception& e)
++    {
++        return false;
++    }
++
++    return true;
++}
++
++std::string thresholdReadingHandler(std::string path,uint8_t eventData1, 
++                                    uint8_t eventData2, uint8_t eventData3)
++{
++    std::string thresholdResult = "";
++    struct sensors sensor;
++    int16_t mValue = 0;
++    int8_t rExp = 0;
++    int16_t bValue = 0;
++    int8_t bExp = 0;
++    bool bSigned = false;
++
++    uint8_t m_lsb;
++    uint8_t m_msb_and_tolerance;
++    uint8_t b_lsb;
++    uint8_t b_msb_and_accuracy_lsb;
++    uint8_t accuracy_and_sensor_direction = 0x00;
++    uint8_t r_b_exponents;
++    uint8_t sensorUnits1 = 0x00;
++    uint8_t sensorUnits2Base = 0x00;
++    uint8_t sensorUnits3Modifier = 0x00;
++
++    sensor.linearization = 0x00;
++
++    double max = 128;
++    double min = -127;
++
++    if(!getSensorMaxMin(path,max,min))
++    {
++        return thresholdResult;
++    }
++
++    std::string type = ipmi::getSensorTypeStringFromPath(path);
++    auto typeCstr = type.c_str();
++    auto findUnits = sensorUnits.find(typeCstr);
++    if (findUnits != sensorUnits.end())
++    {
++        sensorUnits2Base =
++            static_cast<uint8_t>(findUnits->second);
++    } // else default 0x0 unspecified
++
++    if (!ipmi::getSensorAttributes(max, min, mValue, rExp, bValue, bExp, bSigned))
++    {
++        return thresholdResult;
++    }
++
++    // apply M, B, and exponents, M and B are 10 bit values, exponents are 4
++    m_lsb = mValue & 0xFF;
++
++    // move the smallest bit of the MSB into place (bit 9)
++    // the MSbs are bits 7:8 in m_msb_and_tolerance
++    uint8_t mMsb = (mValue & (1 << 8)) > 0 ? (1 << 6) : 0;
++
++    // assign the negative
++    if (mValue < 0)
++    {
++        mMsb |= (1 << 7);
++    }
++    m_msb_and_tolerance = mMsb;
++
++    b_lsb = bValue & 0xFF;
++
++    // move the smallest bit of the MSB into place
++    // the MSbs are bits 7:8 in b_msb_and_accuracy_lsb
++    uint8_t bMsb = (bValue & (1 << 8)) > 0 ? (1 << 6) : 0;
++
++    // assign the negative
++    if (bValue < 0)
++    {
++        bMsb |= (1 << 7);
++    }
++    b_msb_and_accuracy_lsb = bMsb;
++
++    r_b_exponents = bExp & 0x7;
++    if (bExp < 0)
++    {
++        r_b_exponents |= 1 << 3;
++    }
++    r_b_exponents = (rExp & 0x7) << 4;
++    if (rExp < 0)
++    {
++        r_b_exponents |= 1 << 7;
++    }
++
++    // todo fill out rest of units
++    if (bSigned)
++    {
++        sensorUnits1 = 1 << 7;
++    }
++
++    sensor.mtol = (m_msb_and_tolerance << 8) +
++                  m_lsb;
++    sensor.bacc = (r_b_exponents << 24) +
++                  (accuracy_and_sensor_direction << 16) +
++                  (b_msb_and_accuracy_lsb << 8) +
++                  b_lsb;
++    sensor.analog = (sensorUnits1 & 0xc0) >> 6;
++
++    thresholdResult = "Reading " +
++                      toStringWithPrecision(ipmitool::sdrConvertSensorReading(&sensor,eventData2),2) +
++                      (((eventData1 & 0xf) % 2) ? " > " : " < ") +
++                      "Threshold " +
++                      toStringWithPrecision(ipmitool::sdrConvertSensorReading(&sensor,eventData3),2) +
++                      " " +
++                      ipmitool::ipmiSdrGetUnitString((sensorUnits1 & 0x01),
++                                           ((sensorUnits1 & 0x06) >> 1),
++                                           sensorUnits2Base,
++                                           sensorUnits3Modifier);
++
++    return thresholdResult;
 +}
 +
 +bool checkEventExist(std::string logEntry)
@@ -977,44 +1599,6 @@ index 0000000..e28e24c
 +void clearEventBuffer()
 +{
 +    logEntryBuffer.clear();
-+}
-+
-+static int fromHexStr(const std::string hexStr, std::vector<uint8_t>& data)
-+{
-+    for (unsigned int i = 0; i < hexStr.size(); i += 2)
-+    {
-+        try
-+        {
-+            data.push_back(static_cast<uint8_t>(
-+                std::stoul(hexStr.substr(i, 2), nullptr, 16)));
-+        }
-+        catch (std::invalid_argument& e)
-+        {
-+            return -1;
-+        }
-+        catch (std::out_of_range& e)
-+        {
-+            return -1;
-+        }
-+    }
-+    return 0;
-+}
-+
-+template <class T>
-+std::string hexToSring(T input,bool header)
-+{
-+  const char *hex = "0123456789ABCDEF";
-+  std::stringstream ss;
-+  if(header)
-+  {
-+     ss << "0x";
-+  }
-+  for(int i=sizeof(T)*2;i>0;i--)
-+  {
-+      ss << hex[input >> 4*(i-1) & 0xF];
-+  }
-+
-+  return ss.str();
 +}
 +
 +void SELEntryHandler(std::vector<std::string>& logEntryFields, MessageID messageID,
@@ -1065,7 +1649,7 @@ index 0000000..e28e24c
 +        eventDir = "Assertion";
 +    }
 +
-+    path = getPathFromSensorNumber(sensorNum);
++    path = ipmi::getPathFromSensorNumber(sensorNum);
 +
 +    if (path.empty())
 +    {
@@ -1073,10 +1657,10 @@ index 0000000..e28e24c
 +    }
 +    else
 +    {
-+        sensorStr = getSensorNameStringFromPath(path);
++        sensorStr = ipmi::getSensorNameStringFromPath(path);
 +    }
 +
-+    sensorTypeStr = ipmiGetGenericSensorType(sensorType);
++    sensorTypeStr = ipmitool::ipmiGetGenericSensorType(sensorType);
 +
 +    if(sensorTypeStr.empty())
 +    {
@@ -1096,6 +1680,63 @@ index 0000000..e28e24c
 +    logEntryFields.insert(logEntryFields.end(),getEventType(eventType));
 +    logEntryFields.insert(logEntryFields.end(),getEventDesc(sensorType,eventType,eventData1,eventData2));
 +
++}
++
++void SELEntryThresholdHandler(std::vector<std::string>& logEntryFields, MessageID messageID,
++                    uint8_t recordType, uint16_t generatorID, uint8_t evmRev,
++                    uint8_t sensorType, uint8_t sensorNum, uint8_t eventType,
++                    uint8_t eventData1, uint8_t eventData2, uint8_t eventData3)
++{
++    std::string eventDir;
++    std::string connection;
++    std::string path;
++    std::string sensorStr;
++    std::string sensorTypeStr;
++    std::string eventDesc;
++
++    if(eventType & 0x80)
++    {
++        eventDir = "Deassertion";
++    }
++    else
++    {
++        eventDir = "Assertion";
++    }
++
++    path = ipmi::getPathFromSensorNumber(sensorNum);
++
++    if (path.empty())
++    {
++        sensorStr = hexToSring<uint8_t>(sensorNum,true);
++        eventDesc = getEventDesc(sensorType,eventType,eventData1,eventData2);
++    }
++    else
++    {
++        sensorStr = ipmi::getSensorNameStringFromPath(path);
++        eventDesc = getEventDesc(sensorType,eventType,eventData1,eventData2) +
++                    ", " +
++                    thresholdReadingHandler(path,eventData1,eventData2,eventData3);
++    }
++
++    sensorTypeStr = ipmitool::ipmiGetGenericSensorType(sensorType);
++
++    if(sensorTypeStr.empty())
++    {
++        sensorTypeStr = hexToSring<uint8_t>(sensorType,true);
++    }
++
++    logEntryFields.insert(logEntryFields.end(),"reserved");
++    logEntryFields.insert(logEntryFields.end(),hexToSring<uint8_t>(recordType,true));
++    logEntryFields.insert(logEntryFields.end(),hexToSring<uint16_t>(generatorID,true));
++    logEntryFields.insert(logEntryFields.end(),hexToSring<uint8_t>(evmRev,true));
++    logEntryFields.insert(logEntryFields.end(),hexToSring<uint8_t>(eventData1,true));
++    logEntryFields.insert(logEntryFields.end(),hexToSring<uint8_t>(eventData2,true));
++    logEntryFields.insert(logEntryFields.end(),hexToSring<uint8_t>(eventData3,true));
++    logEntryFields.insert(logEntryFields.end(),sensorTypeStr);
++    logEntryFields.insert(logEntryFields.end(),sensorStr);
++    logEntryFields.insert(logEntryFields.end(),eventDir);
++    logEntryFields.insert(logEntryFields.end(),getEventType(eventType));
++    logEntryFields.insert(logEntryFields.end(),eventDesc);
 +}
 +
 +MessageID setMessageID(uint8_t eventType, uint8_t eventData1)
@@ -1156,9 +1797,14 @@ index 0000000..e28e24c
 +                            eventData2, eventData3);
 +            break;
 +        case MessageID::SELEntryOK:
++            SELEntryOKHandler(logEntryFields, messageID, recordType,
++                            generatorID, evmRev, sensorType,
++                            sensorNum, eventType, eventData1,
++                            eventData2, eventData3);
++            break;
 +        case MessageID::SELEntryCritical:
 +        case MessageID::SELEntryWarning:
-+            SELEntryOKHandler(logEntryFields, messageID, recordType,
++            SELEntryThresholdHandler(logEntryFields, messageID, recordType,
 +                            generatorID, evmRev, sensorType,
 +                            sensorNum, eventType, eventData1,
 +                            eventData2, eventData3);
@@ -1338,7 +1984,7 @@ index 5eb9380..04e2a83
 diff --git a/redfish-core/lib/log_services.hpp b/redfish-core/lib/log_services.hpp
 old mode 100644
 new mode 100755
-index 0e93f5c..d428da1
+index 0e93f5c..e853cf2
 --- a/redfish-core/lib/log_services.hpp
 +++ b/redfish-core/lib/log_services.hpp
 @@ -33,9 +33,15 @@
@@ -1487,9 +2133,9 @@ index 0e93f5c..d428da1
 +        {
 +            std::string sensorPath = logEntryFields[4];
 +            bool eventDir = std::stoul(logEntryFields[5]) ? 0 : 1;
-+            uint8_t sensorType = getSensorTypeFromPath(sensorPath);
-+            uint8_t sensorNum = getSensorNumberFromPath(sensorPath);
-+            uint8_t eventType = (getSensorEventTypeFromPath(sensorPath) & 0x7f);
++            uint8_t sensorType = ipmi::getSensorTypeFromPath(sensorPath);
++            uint8_t sensorNum = ipmi::getSensorNumberFromPath(sensorPath);
++            uint8_t eventType = (ipmi::getSensorEventTypeFromPath(sensorPath) & 0x7f);
 +            uint16_t generatorID = std::stoul(logEntryFields[3], nullptr, 16);
 +            uint8_t evmRev = 0x04;
 +
