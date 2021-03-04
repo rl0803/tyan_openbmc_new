@@ -13,5 +13,6 @@ SRC_URI += "file://platform-config.json;subdir=git/ \
             file://0009-Fix-the-page-for-local-user-management-feature.patch \
             file://0010-Fix-the-BMC-version-display-issue.patch \
             file://0011-Fix-the-system-log-feature-issue-for-getting-too-muc.patch \
+            file://0012-Chnage-the-setting-IP-address-feature-to-read-only-i.patch \
 "
 
