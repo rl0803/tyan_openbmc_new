@@ -33,4 +33,5 @@ enum ipmi_net_fns_oem_cmds
     IPMI_CMD_RelinkLan = 0x12,
     IPMI_CMD_GetOcpCard = 0x14,
     IPMI_CMD_ConfigAmt = 0x16,
+    IPMI_CMD_ConfigWatchdog2 = 0x18,
 };

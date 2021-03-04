@@ -1,0 +1,44 @@
+From b862a40198d87e9a2ede5b4df10aef713b81eb1a Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Tue, 2 Feb 2021 19:18:23 +0800
+Subject: [PATCH] Add watchdog2 timeout flag setting feature
+
+---
+ watchdog.cpp | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/watchdog.cpp b/watchdog.cpp
+index 96f88f4..eaea9b5 100755
+--- a/watchdog.cpp
++++ b/watchdog.cpp
+@@ -347,6 +347,27 @@ void Watchdog::addWatchdogSEL(Base::Watchdog::Action action,Base::Watchdog::Time
+             log<level::ERR>("Failed to add oem post code SEL for FRB2 event\n");
+             return;
+         }
++
++        //Set watchdog2 tinmeout flag
++        if(timeUse==TimerUse::BIOSFRB2)
++        {
++            constexpr auto TIMEOUT_SERVICE = "xyz.openbmc_project.Settings";
++            constexpr auto TIMEOUT_PATH = "/xyz/openbmc_project/oem/HostStatus";
++            constexpr auto TIMEOUT_INTERFACE = "xyz.openbmc_project.OEM.HostStatus";
++            constexpr auto WATCHDOG2_STATUS = "watchdog2Status";
++            constexpr auto DBUS_PROPERTY_IFACE = "org.freedesktop.DBus.Properties";
++            try
++            {
++                auto method = bus.new_method_call(TIMEOUT_SERVICE, TIMEOUT_PATH, DBUS_PROPERTY_IFACE,"Set");
++                method.append(TIMEOUT_INTERFACE, WATCHDOG2_STATUS, sdbusplus::message::variant<bool>(0x01));
++                bus.call(method);
++            }
++            catch (sdbusplus::exception_t& e)
++            {
++                log<level::ERR>("Failed to set flag for watchdog2 timeout\n");
++                return;
++            }
++        }
+     }
+ }
+ 
+-- 
+2.7.4
+

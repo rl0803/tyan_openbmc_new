@@ -1601,6 +1601,58 @@ ipmi::RspType<uint8_t> ipmi_ConfigAmt(std::optional<uint8_t> configAmt)
     return ipmi::responseSuccess(amtResponse);
 }
 
+//=======================================================================
+/* Get or Set watchdog2 timeout flag status
+NetFun: 0x30
+Cmd : 0x18
+Request:
+    Byte 1 : Status (optional: To get watchdog2 timeout flag directly)
+        00h : Clear watchdog2 timeout flag
+        01h : Set watchdog2 timeout flag
+Response:
+    Byte 1 : Completion Code
+    Byte 2 : Watchdog2 timeout flag
+*/
+ipmi::RspType<uint8_t> ipmi_ConfigWatchdog2(std::optional<uint8_t> configWatchdog2)
+{
+    uint8_t watchdog2Response = 0;
+
+    constexpr auto service = "xyz.openbmc_project.Settings";
+    constexpr auto path = "/xyz/openbmc_project/oem/HostStatus";
+    constexpr auto hostStatusInterface = "xyz.openbmc_project.OEM.HostStatus";
+    constexpr auto watchdog2Status = "watchdog2Status";
+
+    auto bus = sdbusplus::bus::new_default();
+
+    if(configWatchdog2)
+    {
+        auto method = bus.new_method_call(service, path, PROPERTY_INTERFACE,"Set");
+        method.append(hostStatusInterface, watchdog2Status, sdbusplus::message::variant<bool>(configWatchdog2.value() & 0x01));
+        bus.call_noreply(method);
+        watchdog2Response = (uint8_t)configWatchdog2.value() & 0x01;
+    }
+    else
+    {
+        auto method = bus.new_method_call(service, path, PROPERTY_INTERFACE, "Get");
+        method.append(hostStatusInterface, watchdog2Status);
+
+        sdbusplus::message::variant<bool> result;
+        try
+        {
+            auto reply = bus.call(method);
+            reply.read(result);
+        }
+        catch (const sdbusplus::exception::SdBusError& e)
+        {
+            log<level::ERR>("Error in configWatchdog2 Get",entry("ERROR=%s", e.what()));
+            return ipmi::responseUnspecifiedError();
+        }
+        watchdog2Response = (uint8_t)(sdbusplus::message::variant_ns::get<bool>(result));
+    }
+
+    return ipmi::responseSuccess(watchdog2Response);
+}
+
 void register_netfn_mct_oem()
 {
     ipmi::registerOemHandler(ipmi::prioMax, 0x0019fd, IPMI_CMD_FanPwmDuty, ipmi::Privilege::Admin, ipmi_tyan_FanPwmDuty);
@@ -1625,5 +1677,6 @@ void register_netfn_mct_oem()
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GetOcpCard, ipmi::Privilege::Admin, ipmi_GetOcpCard);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_GenCrashdump, ipmi::Privilege::Admin, ipmi_GenCrashdump);
     ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_ConfigAmt, ipmi::Privilege::Admin, ipmi_ConfigAmt);
+    ipmi::registerHandler(ipmi::prioMax, NETFUN_TWITTER_OEM, IPMI_CMD_ConfigWatchdog2, ipmi::Privilege::Admin, ipmi_ConfigWatchdog2);
 }
 }
