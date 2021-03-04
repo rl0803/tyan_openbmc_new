@@ -1,0 +1,278 @@
+From 48bb357d26f2d8baee6808a5bca75ddb7e785c4f Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Fri, 8 Jan 2021 14:02:20 +0800
+Subject: [PATCH] Update PECI driver from intel kernel
+
+---
+ drivers/peci/busses/peci-aspeed.c | 78 ++++++++++++++++++++++++---------------
+ drivers/peci/busses/peci-npcm.c   |  0
+ drivers/peci/peci-core.c          | 24 ++++--------
+ drivers/peci/peci-dev.c           | 19 ++++++++--
+ 4 files changed, 71 insertions(+), 50 deletions(-)
+ mode change 100644 => 100755 drivers/peci/busses/peci-aspeed.c
+ mode change 100644 => 100755 drivers/peci/busses/peci-npcm.c
+ mode change 100644 => 100755 drivers/peci/peci-core.c
+ mode change 100644 => 100755 drivers/peci/peci-dev.c
+
+diff --git a/drivers/peci/busses/peci-aspeed.c b/drivers/peci/busses/peci-aspeed.c
+old mode 100644
+new mode 100755
+index 2673d4c..30cb418
+--- a/drivers/peci/busses/peci-aspeed.c
++++ b/drivers/peci/busses/peci-aspeed.c
+@@ -39,6 +39,7 @@
+ #define ASPEED_PECI_CMD				0x08
+ #define   ASPEED_PECI_CMD_PIN_MON		BIT(31)
+ #define   ASPEED_PECI_CMD_STS_MASK		GENMASK(27, 24)
++#define     ASPEED_PECI_CMD_STS_ADDR_T_NEGO	0x3
+ #define   ASPEED_PECI_CMD_IDLE_MASK		\
+ 	  (ASPEED_PECI_CMD_STS_MASK | ASPEED_PECI_CMD_PIN_MON)
+ #define   ASPEED_PECI_CMD_FIRE			BIT(0)
+@@ -125,11 +126,50 @@ struct aspeed_peci {
+ 	struct completion	xfer_complete;
+ 	u32			status;
+ 	u32			cmd_timeout_ms;
++	u32			msg_timing;
++	u32			addr_timing;
++	u32			rd_sampling_point;
++	u32			clk_div_val;
+ };
+ 
++static int aspeed_peci_init_regs(struct aspeed_peci *priv)
++{
++	writel(FIELD_PREP(ASPEED_PECI_CTRL_CLK_DIV_MASK,
++			  ASPEED_PECI_CLK_DIV_DEFAULT) |
++	       ASPEED_PECI_CTRL_PECI_CLK_EN, priv->base + ASPEED_PECI_CTRL);
++
++	/*
++	 * Timing negotiation period setting.
++	 * The unit of the programmed value is 4 times of PECI clock period.
++	 */
++	writel(FIELD_PREP(ASPEED_PECI_TIMING_MESSAGE_MASK, priv->msg_timing) |
++	       FIELD_PREP(ASPEED_PECI_TIMING_ADDRESS_MASK, priv->addr_timing),
++	       priv->base + ASPEED_PECI_TIMING_NEGOTIATION);
++
++	/* Clear interrupts */
++	writel(readl(priv->base + ASPEED_PECI_INT_STS) | ASPEED_PECI_INT_MASK,
++	       priv->base + ASPEED_PECI_INT_STS);
++
++	/* Set timing negotiation mode and enable interrupts */
++	writel(FIELD_PREP(ASPEED_PECI_TIMING_NEGO_SEL_MASK,
++			  ASPEED_PECI_1ST_BIT_OF_ADDR_NEGO) |
++	       ASPEED_PECI_INT_MASK, priv->base + ASPEED_PECI_INT_CTRL);
++
++	/* Read sampling point and clock speed setting */
++	writel(FIELD_PREP(ASPEED_PECI_CTRL_SAMPLING_MASK, priv->rd_sampling_point) |
++	       FIELD_PREP(ASPEED_PECI_CTRL_CLK_DIV_MASK, priv->clk_div_val) |
++	       ASPEED_PECI_CTRL_PECI_EN | ASPEED_PECI_CTRL_PECI_CLK_EN,
++	       priv->base + ASPEED_PECI_CTRL);
++}
++
+ static inline int aspeed_peci_check_idle(struct aspeed_peci *priv)
+ {
+-	u32 cmd_sts;
++	u32 cmd_sts = readl(priv->base + ASPEED_PECI_CMD);
++	int ret;
++
++	if (FIELD_GET(ASPEED_PECI_CMD_STS_MASK,
++		      cmd_sts) == ASPEED_PECI_CMD_STS_ADDR_T_NEGO)
++		aspeed_peci_init_regs(priv);
+ 
+ 	return readl_poll_timeout(priv->base + ASPEED_PECI_CMD,
+ 				  cmd_sts,
+@@ -305,8 +345,9 @@ static int aspeed_peci_init_ctrl(struct aspeed_peci *priv)
+ 
+ 	clk_divisor = clk_get_rate(priv->clk) / clk_freq;
+ 
+-	while ((clk_divisor >> 1) && (clk_div_val < ASPEED_PECI_CLK_DIV_MAX))
++	while ((clk_divisor >>= 1) && (clk_div_val < ASPEED_PECI_CLK_DIV_MAX))
+ 		clk_div_val++;
++	priv->clk_div_val = clk_div_val;
+ 
+ 	ret = device_property_read_u32(priv->dev, "msg-timing", &msg_timing);
+ 	if (ret || msg_timing > ASPEED_PECI_MSG_TIMING_MAX) {
+@@ -316,6 +357,7 @@ static int aspeed_peci_init_ctrl(struct aspeed_peci *priv)
+ 				 msg_timing, ASPEED_PECI_MSG_TIMING_DEFAULT);
+ 		msg_timing = ASPEED_PECI_MSG_TIMING_DEFAULT;
+ 	}
++	priv->msg_timing = msg_timing;
+ 
+ 	ret = device_property_read_u32(priv->dev, "addr-timing", &addr_timing);
+ 	if (ret || addr_timing > ASPEED_PECI_ADDR_TIMING_MAX) {
+@@ -325,6 +367,7 @@ static int aspeed_peci_init_ctrl(struct aspeed_peci *priv)
+ 				 addr_timing, ASPEED_PECI_ADDR_TIMING_DEFAULT);
+ 		addr_timing = ASPEED_PECI_ADDR_TIMING_DEFAULT;
+ 	}
++	priv->addr_timing = addr_timing;
+ 
+ 	ret = device_property_read_u32(priv->dev, "rd-sampling-point",
+ 				       &rd_sampling_point);
+@@ -336,6 +379,7 @@ static int aspeed_peci_init_ctrl(struct aspeed_peci *priv)
+ 				 ASPEED_PECI_RD_SAMPLING_POINT_DEFAULT);
+ 		rd_sampling_point = ASPEED_PECI_RD_SAMPLING_POINT_DEFAULT;
+ 	}
++	priv->rd_sampling_point = rd_sampling_point;
+ 
+ 	ret = device_property_read_u32(priv->dev, "cmd-timeout-ms",
+ 				       &priv->cmd_timeout_ms);
+@@ -349,32 +393,7 @@ static int aspeed_peci_init_ctrl(struct aspeed_peci *priv)
+ 		priv->cmd_timeout_ms = ASPEED_PECI_CMD_TIMEOUT_MS_DEFAULT;
+ 	}
+ 
+-	writel(FIELD_PREP(ASPEED_PECI_CTRL_CLK_DIV_MASK,
+-			  ASPEED_PECI_CLK_DIV_DEFAULT) |
+-	       ASPEED_PECI_CTRL_PECI_CLK_EN, priv->base + ASPEED_PECI_CTRL);
+-
+-	/*
+-	 * Timing negotiation period setting.
+-	 * The unit of the programmed value is 4 times of PECI clock period.
+-	 */
+-	writel(FIELD_PREP(ASPEED_PECI_TIMING_MESSAGE_MASK, msg_timing) |
+-	       FIELD_PREP(ASPEED_PECI_TIMING_ADDRESS_MASK, addr_timing),
+-	       priv->base + ASPEED_PECI_TIMING_NEGOTIATION);
+-
+-	/* Clear interrupts */
+-	writel(readl(priv->base + ASPEED_PECI_INT_STS) | ASPEED_PECI_INT_MASK,
+-	       priv->base + ASPEED_PECI_INT_STS);
+-
+-	/* Set timing negotiation mode and enable interrupts */
+-	writel(FIELD_PREP(ASPEED_PECI_TIMING_NEGO_SEL_MASK,
+-			  ASPEED_PECI_1ST_BIT_OF_ADDR_NEGO) |
+-	       ASPEED_PECI_INT_MASK, priv->base + ASPEED_PECI_INT_CTRL);
+-
+-	/* Read sampling point and clock speed setting */
+-	writel(FIELD_PREP(ASPEED_PECI_CTRL_SAMPLING_MASK, rd_sampling_point) |
+-	       FIELD_PREP(ASPEED_PECI_CTRL_CLK_DIV_MASK, clk_div_val) |
+-	       ASPEED_PECI_CTRL_PECI_EN | ASPEED_PECI_CTRL_PECI_CLK_EN,
+-	       priv->base + ASPEED_PECI_CTRL);
++	aspeed_peci_init_regs(priv);
+ 
+ 	return 0;
+ }
+@@ -452,9 +471,10 @@ static int aspeed_peci_remove(struct platform_device *pdev)
+ {
+ 	struct aspeed_peci *priv = dev_get_drvdata(&pdev->dev);
+ 
++	peci_del_adapter(priv->adapter);
++	complete(&priv->xfer_complete);
+ 	clk_disable_unprepare(priv->clk);
+ 	reset_control_assert(priv->rst);
+-	peci_del_adapter(priv->adapter);
+ 	of_node_put(priv->adapter->dev.of_node);
+ 
+ 	return 0;
+diff --git a/drivers/peci/busses/peci-npcm.c b/drivers/peci/busses/peci-npcm.c
+old mode 100644
+new mode 100755
+diff --git a/drivers/peci/peci-core.c b/drivers/peci/peci-core.c
+old mode 100644
+new mode 100755
+index 9aedb74..ba561bf
+--- a/drivers/peci/peci-core.c
++++ b/drivers/peci/peci-core.c
+@@ -397,25 +397,16 @@ static int peci_cmd_xfer(struct peci_adapter *adapter, void *vmsg)
+ 		case PECI_WRPCICFG_CMD:
+ 		case PECI_WRPCICFGLOCAL_CMD:
+ 		case PECI_WRENDPTCFG_CMD:
+-			/* Check if the AW FCS byte is already provided */
++			/*
++			 * The sender may not have supplied the AW FCS byte.
++			 * Unconditionally add an Assured Write Frame Check
++			 * Sequence byte
++			 */
+ 			ret = peci_aw_fcs(msg, 2 + msg->tx_len, &aw_fcs);
+ 			if (ret)
+ 				break;
+ 
+-			if (msg->tx_buf[msg->tx_len - 1] != (0x80 ^ aw_fcs)) {
+-				/*
+-				 * Add an Assured Write Frame Check Sequence
+-				 * byte and increment the tx_len to include
+-				 * the new byte.
+-				 */
+-				msg->tx_len++;
+-				ret = peci_aw_fcs(msg, 2 + msg->tx_len,
+-						  &aw_fcs);
+-				if (ret)
+-					break;
+-
+-				msg->tx_buf[msg->tx_len - 1] = 0x80 ^ aw_fcs;
+-			}
++			msg->tx_buf[msg->tx_len - 1] = 0x80 ^ aw_fcs;
+ 
+ 			ret = peci_xfer_with_retries(adapter, msg, true);
+ 			break;
+@@ -1040,7 +1031,6 @@ static int peci_cmd_wr_end_pt_cfg(struct peci_adapter *adapter, void *vmsg)
+ 				       >> 24); /* MSB - DWORD Register Offset */
+ 		if (umsg->params.mmio.addr_type ==
+ 		    PECI_ENDPTCFG_ADDR_TYPE_MMIO_Q) {
+-			msg->tx_len = PECI_WRENDPTCFG_MMIO_Q_WRITE_LEN_BASE;
+ 			msg->tx_buf[14] = (u8)(umsg->params.mmio.offset
+ 					       >> 32); /* Register Offset */
+ 			msg->tx_buf[15] = (u8)(umsg->params.mmio.offset
+@@ -1069,7 +1059,7 @@ static int peci_cmd_wr_end_pt_cfg(struct peci_adapter *adapter, void *vmsg)
+ 		return -EINVAL;
+ 	}
+ 
+-	ret = peci_xfer_with_retries(adapter, msg, false);
++	ret = peci_xfer_with_retries(adapter, msg, true);
+ 
+ out:
+ 	umsg->cc = msg->rx_buf[0];
+diff --git a/drivers/peci/peci-dev.c b/drivers/peci/peci-dev.c
+old mode 100644
+new mode 100755
+index e0fe094..8104468
+--- a/drivers/peci/peci-dev.c
++++ b/drivers/peci/peci-dev.c
+@@ -122,8 +122,8 @@ static long peci_dev_ioctl(struct file *file, uint iocmd, ulong arg)
+ 		}
+ 
+ 		xmsg = peci_get_xfer_msg(uxmsg.tx_len, uxmsg.rx_len);
+-		if (IS_ERR(xmsg)) {
+-			ret = PTR_ERR(xmsg);
++		if (!xmsg) {
++			ret = -ENOMEM;
+ 			break;
+ 		}
+ 
+@@ -138,8 +138,13 @@ static long peci_dev_ioctl(struct file *file, uint iocmd, ulong arg)
+ 		xmsg->tx_len = uxmsg.tx_len;
+ 		xmsg->rx_len = uxmsg.rx_len;
+ 
++		/*
++		 * Send the command and copy the results back to user space on
++		 * either success or timeout to provide the completion code to
++		 * the caller.
++		 */
+ 		ret = peci_command(peci_dev->adapter, cmd, xmsg);
+-		if (!ret && xmsg->rx_len &&
++		if ((!ret || ret == -ETIMEDOUT) && xmsg->rx_len &&
+ 		    copy_to_user((__u8 __user *)uxmsg.rx_buf, xmsg->rx_buf,
+ 				 xmsg->rx_len))
+ 			ret = -EFAULT;
+@@ -153,6 +158,11 @@ static long peci_dev_ioctl(struct file *file, uint iocmd, ulong arg)
+ 			break;
+ 		}
+ 
++		/*
++		 * Send the command and copy the results back to user space on
++		 * either success or timeout to provide the completion code to
++		 * the caller.
++		 */
+ 		ret = peci_command(peci_dev->adapter, cmd, msg);
+ 		if ((!ret || ret == -ETIMEDOUT) &&
+ 		    copy_to_user(umsg, msg, msg_len))
+@@ -162,7 +172,8 @@ static long peci_dev_ioctl(struct file *file, uint iocmd, ulong arg)
+ 	}
+ 
+ 	peci_put_xfer_msg(xmsg);
+-	kfree(msg);
++	if (!IS_ERR(msg))
++		kfree(msg);
+ 
+ 	return (long)ret;
+ }
+-- 
+2.7.4
+

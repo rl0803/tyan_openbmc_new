@@ -16,5 +16,6 @@ SRC_URI += "file://f5i.cfg \
             file://0013-Add-debug-log-for-dimm-hwmon-sensor.patch \
             file://0014-misc-Add-clock-control-logic-into-Aspeed-LPC-SNOOP-d.patch \
             file://0015-media-aspeed-fix-clock-handling-logic.patch \
+            file://0016-Update-PECI-driver-from-intel-kernel.patch \
             "
 
