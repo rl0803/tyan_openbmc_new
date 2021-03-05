@@ -37,6 +37,21 @@
                 "xyz.openbmc_project.caterr.service"
             ]
         }
+    },
+    {
+        "Name": "AMT",
+        "LineName": "AMT",
+        "EventMon": "BOTH",
+        "Continue": true,
+        "Target":
+        {
+            "FALLING": [
+                "SetAmtStart.service"
+            ],
+            "RISING": [
+                "SetAmtFinish.service"
+            ]
+        }
     }
  ]
 

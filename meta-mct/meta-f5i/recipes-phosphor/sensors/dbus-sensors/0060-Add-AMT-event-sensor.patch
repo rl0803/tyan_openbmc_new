@@ -1,0 +1,26 @@
+From de029d39a04f77e631d1acdbda86b293613a6ac8 Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Thu, 4 Mar 2021 20:20:41 +0800
+Subject: [PATCH] Add AMT event sensor
+
+---
+ src/eventSensor.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/eventSensor.cpp b/src/eventSensor.cpp
+index 5be6ef9..07c78a5 100755
+--- a/src/eventSensor.cpp
++++ b/src/eventSensor.cpp
+@@ -53,7 +53,8 @@ const static boost::container::flat_map<std::string, std::string>eventsensors
+         {"IPMI_POWER_RESET","fru_state"},
+         {"WATCHDOG2","watchdog2"},
+         {"EVENT_CLEARED","event_disabled"},
+-        {"Processor_fail","processor"}
++        {"Processor_fail","processor"},
++        {"AMT","system_event"}
+     };
+ 
+ struct eventSensor 
+-- 
+2.7.4
+

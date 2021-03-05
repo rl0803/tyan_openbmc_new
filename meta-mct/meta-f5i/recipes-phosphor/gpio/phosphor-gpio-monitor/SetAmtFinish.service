@@ -1,0 +1,6 @@
+[Unit]
+Description=Set Advanced Memory Testing Event Finishing
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/setAmtEvent.sh deassert
