@@ -1,0 +1,26 @@
+From ca40940db59c24189db10db253639bf968f57024 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Mon, 8 Mar 2021 13:37:37 +0800
+Subject: [PATCH] Set I2C msg buffer to NULL after the transaction
+
+---
+ drivers/i2c/busses/i2c-aspeed.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/i2c/busses/i2c-aspeed.c b/drivers/i2c/busses/i2c-aspeed.c
+index ec5ca22b7b9f..c0ceafb4bf2b 100644
+--- a/drivers/i2c/busses/i2c-aspeed.c
++++ b/drivers/i2c/busses/i2c-aspeed.c
+@@ -696,6 +696,9 @@ static int aspeed_i2c_master_xfer(struct i2c_adapter *adap,
+ 
+ 	time_left = wait_for_completion_timeout(&bus->cmd_complete,
+ 						bus->adap.timeout);
++	spin_lock_irqsave(&bus->lock, flags);
++	bus->msgs = NULL;
++	spin_unlock_irqrestore(&bus->lock, flags);
+ 
+ 	if (time_left == 0) {
+ 		/*
+-- 
+2.17.1
+
