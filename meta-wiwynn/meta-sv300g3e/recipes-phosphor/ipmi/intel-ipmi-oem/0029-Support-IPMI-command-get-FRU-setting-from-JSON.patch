@@ -1,0 +1,121 @@
+From f1bfd755fea51c742f46a23d5f5847f776589fb7 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Tue, 23 Mar 2021 17:34:06 +0800
+Subject: [PATCH] Support IPMI command get FRU setting from JSON
+
+---
+ src/storagecommands.cpp | 51 ++++++++++++++++++++++++-----------------
+ 1 file changed, 30 insertions(+), 21 deletions(-)
+
+diff --git a/src/storagecommands.cpp b/src/storagecommands.cpp
+index e2554bb..3c67a92 100755
+--- a/src/storagecommands.cpp
++++ b/src/storagecommands.cpp
+@@ -117,7 +117,7 @@ std::unique_ptr<phosphor::Timer> cacheTimer = nullptr;
+ 
+ // we unfortunately have to build a map of hashes in case there is a
+ // collision to verify our dev-id
+-boost::container::flat_map<uint8_t, std::pair<uint8_t, uint8_t>> deviceHashes;
++boost::container::flat_map<uint8_t, std::tuple<uint8_t, uint8_t, std::string>> deviceHashes;
+ 
+ boost::container::flat_map<uint8_t, struct deviceInfo> deviceMap;
+ 
+@@ -258,6 +258,7 @@ ipmi_ret_t replaceCacheFru(uint8_t devId)
+ 
+         // Set the fru default size to 256 bytes.
+         uint32_t fruSize = 256;
++        std::string deviceID = "";
+ 
+         if (fruBus != 0 || fruAddr != 0)
+         {
+@@ -300,11 +301,14 @@ ipmi_ret_t replaceCacheFru(uint8_t devId)
+                                     fruHash = static_cast<uint8_t>(data["Fru"][idx]["Index"]);
+                                 }
+ 
++                                if (!data["Fru"][idx]["Name"].is_null())
++                                {
++                                    deviceID = static_cast<std::string>(data["Fru"][idx]["Name"]);
++                                }
++
+                                 break;
+                             }
+-
+                         }
+-
+                         idx++;
+                     }
+                 }
+@@ -319,7 +323,7 @@ ipmi_ret_t replaceCacheFru(uint8_t devId)
+                 fruHash = 1;
+             }
+         }
+-        std::pair<uint8_t, uint8_t> newDev(fruBus, fruAddr);
++        std::tuple<uint8_t, uint8_t, std::string> newDev(fruBus, fruAddr, deviceID);
+ 
+         bool emplacePassed = false;
+         while (!emplacePassed)
+@@ -359,8 +363,8 @@ ipmi_ret_t replaceCacheFru(uint8_t devId)
+     sdbusplus::message::message getRawFru = dbus->new_method_call(
+         fruDeviceServiceName, "/xyz/openbmc_project/FruDevice",
+         "xyz.openbmc_project.FruDeviceManager", "GetRawFru");
+-    cacheBus = deviceFind->second.first;
+-    cacheAddr = deviceFind->second.second;
++    cacheBus = std::get<0>(deviceFind->second);
++    cacheAddr = std::get<1>(deviceFind->second);
+     getRawFru.append(cacheBus, cacheAddr);
+     try
+     {
+@@ -590,8 +594,8 @@ ipmi_ret_t getFruSdrs(size_t index, get_sdr::SensorDataFruRecord& resp)
+         return IPMI_CC_INVALID_FIELD_REQUEST;
+     }
+     auto device = deviceHashes.begin() + index;
+-    uint8_t& bus = device->second.first;
+-    uint8_t& address = device->second.second;
++    uint8_t& bus = std::get<0>(device->second);
++    uint8_t& address = std::get<1>(device->second);
+ 
+     ManagedObjectType frus;
+ 
+@@ -641,21 +645,26 @@ ipmi_ret_t getFruSdrs(size_t index, get_sdr::SensorDataFruRecord& resp)
+     {
+         return IPMI_CC_RESPONSE_ERROR;
+     }
+-    std::string name;
+-    auto findProductName = fruData->find("BOARD_PRODUCT_NAME");
+-    auto findBoardName = fruData->find("PRODUCT_PRODUCT_NAME");
+-    if (findProductName != fruData->end())
+-    {
+-        name = std::get<std::string>(findProductName->second);
+-    }
+-    else if (findBoardName != fruData->end())
+-    {
+-        name = std::get<std::string>(findBoardName->second);
+-    }
+-    else
++    std::string name = std::get<2>(device->second);
++
++    if(name.empty())
+     {
+-        name = "UNKNOWN";
++        auto findProductName = fruData->find("BOARD_PRODUCT_NAME");
++        auto findBoardName = fruData->find("PRODUCT_PRODUCT_NAME");
++        if (findProductName != fruData->end())
++        {
++            name = std::get<std::string>(findProductName->second);
++        }
++        else if (findBoardName != fruData->end())
++        {
++            name = std::get<std::string>(findBoardName->second);
++        }
++        else
++        {
++            name = "UNKNOWN";
++        }
+     }
++    
+     if (name.size() > maxFruSdrNameSize)
+     {
+         name = name.substr(0, maxFruSdrNameSize);
+-- 
+2.17.1
+

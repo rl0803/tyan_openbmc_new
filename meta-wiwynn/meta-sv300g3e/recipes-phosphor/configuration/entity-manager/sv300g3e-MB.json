@@ -1330,7 +1330,7 @@
     ],
     "Fru":[
         {
-            "Name": "Main BD FRU",
+            "Name": "MB FRU",
             "Size": 512,
             "Index": 0,
             "Bus": 6,
@@ -1348,7 +1348,7 @@
         {
             "Name": "NIC FRU",
             "Size": 512,
-            "Index": 2,
+            "Index": 3,
             "Bus": 1,
             "Address": "0x51",
             "ReadOnly": true
