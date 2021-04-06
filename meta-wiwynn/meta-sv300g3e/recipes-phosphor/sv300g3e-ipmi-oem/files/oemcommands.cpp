@@ -1966,11 +1966,11 @@ static void register_oem_functions(void)
     // <Set BMC Boot from>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_BMC_BOOT_FROM,
                            NULL, ipmiSetBMCBootFrom, PRIVILEGE_USER);
-/*
+
     // <Control BIOS AMT Status>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_CTRL_BIOS_AMT_STATUS,
                            NULL, ipmiCtrlBiosAMTStatus, PRIVILEGE_USER);
-*/
+
     // <Get VR Version>
     ipmi_register_callback(netFnSv300g3eOEM4, CMD_GET_VR_VERSION,
                            NULL, ipmiGetVrVersion, PRIVILEGE_USER);

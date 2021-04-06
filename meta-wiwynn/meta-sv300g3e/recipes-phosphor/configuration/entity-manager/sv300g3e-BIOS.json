@@ -102,6 +102,18 @@
           "sensorName" : "IB BIOS UPDATE"
      },
      {
+          "ownerId" : "0x21",
+          "sensorNumber" : 246,
+          "sensorType" : "0x12",
+          "sensorName" : "AMT START"
+     },
+     {
+          "ownerId" : "0x21",
+          "sensorNumber" : 247,
+          "sensorType" : "0x12",
+          "sensorName" : "AMT COMPLETE"
+     },
+     {
           "ownerId" : "0x20",
           "sensorNumber" : 241,
           "sensorType" : "0x12",
