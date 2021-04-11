@@ -1,0 +1,15 @@
+[Unit]
+Description=System Restart Monitor
+Wants=xyz.openbmc_project.State.BMC.service
+After=xyz.openbmc_project.State.BMC.service
+Requires=phosphor-ipmi-host.service
+After=phosphor-ipmi-host.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/env system-restart-monitor
+SyslogIdentifier=system-restart-monitor
+TimeoutSec=infinity
+
+[Install]
+WantedBy=multi-user.target

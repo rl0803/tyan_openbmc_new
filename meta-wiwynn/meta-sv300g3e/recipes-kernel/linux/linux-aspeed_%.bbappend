@@ -22,6 +22,8 @@ SRC_URI += "file://sv300g3e.cfg \
             file://0019-Change-ADC-engine-control-setting-and-reading-function.patch \
             file://0020-Fix-incorrect-RJ45-LED-status.patch \
             file://0021-Set-I2C-msg-buffer-to-NULL-after-the-transaction.patch \
+            file://0022-irqchip-Add-Aspeed-SCU-interrupt-controller.patch \
+            file://0023-Add-interrupt-handler-to-aspeed-bmc-misc.patch \
            "
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

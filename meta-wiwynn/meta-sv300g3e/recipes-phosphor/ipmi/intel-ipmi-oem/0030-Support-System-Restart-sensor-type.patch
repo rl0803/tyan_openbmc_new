@@ -1,0 +1,32 @@
+From 5ad63ed43bf3ff1ed644e6def8ca0a05411d9c45 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Wed, 7 Apr 2021 23:12:54 +0800
+Subject: [PATCH] Support System Restart sensor type
+
+---
+ include/sdrutils.hpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/sdrutils.hpp b/include/sdrutils.hpp
+index 9fa36d8..94ff75c 100644
+--- a/include/sdrutils.hpp
++++ b/include/sdrutils.hpp
+@@ -170,6 +170,7 @@ enum class SensorTypeCodes : uint8_t
+     watchdog1 = 0x11,
+     systemevent = 0x12,
+     button = 0x14,
++    systemrestart = 0x1d,
+     slotconnector = 0x21,
+     acpi = 0x22,
+     watchdog2 = 0x23,
+@@ -197,6 +198,7 @@ const static boost::container::flat_map<const char*, SensorTypeCodes, CmpStr>
+                  {"acpi", SensorTypeCodes::acpi},
+                  {"watchdog2", SensorTypeCodes::watchdog2},
+                  {"systemevent", SensorTypeCodes::systemevent},
++                 {"systemrestart", SensorTypeCodes::systemrestart},
+                  {"mgmtsystemhealth", SensorTypeCodes::mgmtsystemhealth},
+                  {"battery", SensorTypeCodes::battery},
+                  {"versionchange", SensorTypeCodes::versionchange},
+-- 
+2.17.1
+

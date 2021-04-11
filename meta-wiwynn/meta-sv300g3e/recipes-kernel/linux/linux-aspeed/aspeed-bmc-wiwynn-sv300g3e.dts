@@ -4,6 +4,7 @@
 
 #include "aspeed-g5.dtsi"
 #include <dt-bindings/gpio/aspeed-gpio.h>
+#include <dt-bindings/interrupt-controller/aspeed-scu-ic.h>
 
 / {
 	model = "SV300G3-E BMC";
@@ -186,6 +187,20 @@
 	// BMC KCS channel 3
 	status = "okay";
 	kcs_addr = <0xca2>;
+};
+
+&lpc_bmc {
+	interrupt {
+        status = "okay";
+        compatible = "aspeed,bmc-misc";
+        interrupts-extended = <&scu_ic ASPEED_AST2500_SCU_IC_LPC_RESET_HI_TO_LO>;
+        lpc-rst {
+            offset = <0x08>;
+            bit-mask = <1>;
+            bit-shift = <6>;
+            label = "lpc-rst";
+		};
+    };
 };
 
 &mac0 {

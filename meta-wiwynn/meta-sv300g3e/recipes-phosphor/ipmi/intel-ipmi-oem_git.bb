@@ -32,6 +32,7 @@ SRC_URI = "git://github.com/openbmc/intel-ipmi-oem \
            file://0027-Support-fru-read-only-option.patch \
            file://0028-Add-timestamp-clock-synch-event-log.patch \
            file://0029-Support-IPMI-command-get-FRU-setting-from-JSON.patch \
+           file://0030-Support-System-Restart-sensor-type.patch \
           "
 # SRCREV = "ba9c1765f5edc2f0891e012f33b3059a0dbd7ff1"
 SRCREV = "147daec5fcfcdacd8813eab6a7735d0f1b615c8a"
