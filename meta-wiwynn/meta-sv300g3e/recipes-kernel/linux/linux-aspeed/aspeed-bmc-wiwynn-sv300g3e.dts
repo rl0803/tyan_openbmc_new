@@ -31,21 +31,21 @@
             reg = <0x98000000 0x04000000>; /* 64M */
         };
 
-		vga_memory: framebuffer@7f000000 {
-			no-map;
-			reg = <0x7f000000 0x01000000>;
-		};
-        safs_memory: region@30000000 {
-            no-map;
-            reg = <0x30000000 0x08000000>; /* 128M */
-        };
+		ramoops@9c000000 {
+			compatible = "ramoops";
+			reg = <0x9c000000 0x180000>;
+			record-size = <0x4000>;
+			console-size = <0x4000>;
+			pmsg-size = <0x4000>;
+			max-reason = <3>; /* KMSG_DUMP_EMERG */
 
-        gfx_memory: framebuffer {
-            size = <0x04000000>;
-            alignment = <0x01000000>;
-            compatible = "shared-dma-pool";
-            reusable;
-        };
+		};
+
+		gfx_memory: framebuffer@9f000000 {
+			no-map;
+			compatible = "shared-dma-pool";
+			reg = <0x9f000000 0x01000000>; /* 16M */
+		};
 	};
 
 	leds {
