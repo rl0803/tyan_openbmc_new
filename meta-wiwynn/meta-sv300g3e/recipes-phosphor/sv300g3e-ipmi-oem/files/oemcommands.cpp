@@ -825,6 +825,84 @@ ipmi_ret_t IpmiGetGpio(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     return IPMI_CC_OK;
 }
 
+/**
+ *  @brief Function of Get BIOS Post End status
+ *  @brief NetFn: 0x30, Cmd: 0xAA
+ *
+ *  @return BIOS Post End status.
+ **/
+ipmi_ret_t IpmiGetPostEndStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                ipmi_request_t request, ipmi_response_t response,
+                                ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    if (*data_len != 0)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetPostEndStatus request data len invalid, "
+                         "received: %d, required: %d\n",
+                         *data_len, 0);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    GetPostEndStatusCmdRes* resData = reinterpret_cast<GetPostEndStatusCmdRes*>(response);
+
+    constexpr auto powerService   = "org.openbmc.control.Power";
+    constexpr auto powerObjPath   = "/org/openbmc/control/power0";
+    constexpr auto pgoodInterface = "org.openbmc.control.Power";
+    constexpr auto postcmplInterface = "org.openbmc.control.PostComplete";
+
+    static bool pgood = false;
+    static bool postcomplete = false;
+
+    std::shared_ptr<sdbusplus::asio::connection> systemBus = getSdBus();
+    try
+    {
+        /* Get pgood property */
+        auto powerDbus = systemBus->new_method_call(powerService, powerObjPath,
+                                                    propertyInterface, "Get");
+        powerDbus.append(pgoodInterface, "pgood");
+
+        std::variant<int> state;
+        auto reply = systemBus->call(powerDbus);
+        reply.read(state);
+        pgood = (gpioHi == std::get<int>(state)) ? true : false;
+
+        /* Get postcomplete property */
+        auto postDbus = systemBus->new_method_call(powerService, powerObjPath,
+                                                   propertyInterface, "Get");
+
+        postDbus.append(postcmplInterface, "postcomplete");
+
+        reply = systemBus->call(postDbus);
+        reply.read(state);
+        postcomplete = (gpioLo == std::get<int>(state)) ? true : false;
+    }
+    catch (sdbusplus::exception_t& e)
+    {
+        sd_journal_print(LOG_ERR,
+                         "[%s] Unable to get pgood/postcomplete property\n",
+                         __FUNCTION__);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    if (pgood && postcomplete)
+    {
+        resData->postEndStatus = BIOS_POST_END;
+    }
+    else if (pgood && !postcomplete)
+    {
+        resData->postEndStatus = DURING_BIOS_POST;
+    }
+    else
+    {
+        resData->postEndStatus = POWER_OFF;
+    }
+
+    *data_len = 1;
+
+    return IPMI_CC_OK;
+}
+
 /*
     Set SOL pattern func
     NetFn: 0x3E / CMD: 0xB2
@@ -1926,6 +2004,10 @@ static void register_oem_functions(void)
     // <Get GPIO>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_GPIO,
                            NULL, IpmiGetGpio, PRIVILEGE_USER);
+
+    // <Get POST END Status>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_POST_END_STATUS,
+                           NULL, IpmiGetPostEndStatus, PRIVILEGE_USER);
 
     // <Set SOL Pattern>
     ipmi_register_callback(netFnSv300g3eOEM3, CMD_SET_SOL_PATTERN,

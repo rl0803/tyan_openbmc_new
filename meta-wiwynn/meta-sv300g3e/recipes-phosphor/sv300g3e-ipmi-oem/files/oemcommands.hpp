@@ -44,6 +44,7 @@ enum ipmi_sv300g3e_oem2_cmds : uint8_t
     CMD_GET_SYSTEM_LED_STATUS = 0x16,
     CMD_SET_GPIO = 0x17,
     CMD_GET_GPIO = 0x18,
+    CMD_GET_POST_END_STATUS = 0xAA,
 };
 
 enum ipmi_sv300g3e_oem3_cmds : uint8_t
@@ -71,6 +72,19 @@ enum
 {
     FSC_MODE_MANUAL = 0x00,
     FSC_MODE_AUTO = 0x01,
+};
+
+enum HostStatus : uint8_t
+{
+    BIOS_POST_END = 0x00,
+    DURING_BIOS_POST = 0x01,
+    POWER_OFF = 0xE0,
+};
+
+enum GpioStatus : uint8_t
+{
+    gpioHi = 1,
+    gpioLo = 0,
 };
 
 enum vr_type : uint8_t
@@ -164,6 +178,11 @@ typedef struct
     uint8_t pin_direction;
     uint8_t pin_value;
 }__attribute__((packed)) GetGpioCmdRes;
+
+typedef struct
+{
+    uint8_t postEndStatus;
+}__attribute__((packed)) GetPostEndStatusCmdRes;
 
 /**
  *  Maintain the request data pwmIndex(which pwm we are going to write)
