@@ -20,9 +20,18 @@ static constexpr const char* i2cbus_eeprom = "6";
 static constexpr const char* i2caddr_eeprom = "54";
 static constexpr auto offset_devguid = 0x1920;
 static constexpr auto offset_sysguid = 0x1940;
+static constexpr auto offset_AMT_status = 0x1960;
 static constexpr auto device_guid = 0;
 static constexpr auto system_guid = 1;
 static constexpr auto guid_generation = 0x1;
+static constexpr auto AMT_status_length = 2;
+
+enum bios_amt_mode : uint8_t
+{
+    disableAMT = 0x0,
+    enableAMT = 0x2,
+    ignoreAMT = 0x4,
+};
 
 typedef struct
 {
@@ -37,4 +46,3 @@ typedef struct
     uint16_t time_mid;
     uint32_t time_low;
 }__attribute__((packed)) IPMI_GUID_T;
-

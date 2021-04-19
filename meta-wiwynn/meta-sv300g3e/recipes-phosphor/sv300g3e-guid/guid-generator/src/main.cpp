@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <random>
+#include <cstdio>
 #include <openbmc/libmisc.h>
 #include <openbmc/libobmci2c.h>
 #include "guid.hpp"
@@ -167,6 +168,57 @@ int checkGUID(uint8_t guid_type)
     return 0;
 }
 
+int checkAMTStatus()
+{
+    uint8_t buffer[2] = {0};
+    uint8_t AMT_status_value = 0xff;
+    uint8_t AMT_status_checksum = 0xff;
+    uint8_t writeIgnore[2] = {0};
+
+    if (FAILURE == i2cEEPROMGet(i2cbus_eeprom, i2caddr_eeprom,
+                                offset_AMT_status, sizeof(buffer), buffer))
+    {
+        std::cerr << "Failed to read AMT value from EEPROM\n";
+        return -1;
+    }
+
+    AMT_status_value = buffer[0];
+    AMT_status_checksum = buffer[1];
+    writeIgnore[0] = ignoreAMT;
+    writeIgnore[1] = zeroChecksum(writeIgnore, sizeof(writeIgnore)-1);
+    std::printf("AMT status [%x,%x]\n", AMT_status_value, AMT_status_checksum);
+
+    if ( AMT_status_value != disableAMT &&
+         AMT_status_value != enableAMT  &&
+         AMT_status_value != ignoreAMT)
+    {
+        std::printf("AMT Status invalid! Write to [%x,%x]\n", writeIgnore[0], writeIgnore[1]);
+        if (FAILURE == i2cEEPROMSet(i2cbus_eeprom, i2caddr_eeprom,
+                                    offset_AMT_status, sizeof(writeIgnore), writeIgnore))
+        {
+            std::cerr << "Failed to write AMT status ignore to EEPROM\n";
+            return -1;
+        }
+
+        return 0;
+    }
+
+    uint8_t checksum = zeroChecksum(buffer, sizeof(buffer)-1);
+
+    if (checksum != AMT_status_checksum)
+    {
+        std::printf("Checksum should be %x! Write to [%x,%x]\n", checksum, writeIgnore[0], writeIgnore[1]);
+        if (FAILURE == i2cEEPROMSet(i2cbus_eeprom, i2caddr_eeprom,
+                                    offset_AMT_status, sizeof(writeIgnore), writeIgnore))
+        {
+            std::cerr << "Failed to write AMT status ignore to EEPROM\n";
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     // Check Device GUID
@@ -180,6 +232,13 @@ int main(int argc, char *argv[])
     if (checkGUID(system_guid) < 0)
     {
         std::cerr << "Failed to Access system GUID\n";
+        return -1;
+    }
+
+    // Check AMT Status
+    if (checkAMTStatus() < 0)
+    {
+        std::cerr << "Failed to check AMT Status\n";
         return -1;
     }
 

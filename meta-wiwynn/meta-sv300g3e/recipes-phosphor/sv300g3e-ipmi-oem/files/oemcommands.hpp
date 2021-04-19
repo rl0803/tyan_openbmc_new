@@ -129,6 +129,13 @@ enum ctrl_bios_amt_status : uint8_t
     setAMTStatus = 0x1,
 };
 
+enum bios_amt_mode : uint8_t
+{
+    disableAMT = 0x0,
+    enableAMT = 0x2,
+    ignoreAMT = 0x4,
+};
+
 enum asd_jtag_mux : uint8_t
 {
     JTAG_to_CPLD = 0x0,

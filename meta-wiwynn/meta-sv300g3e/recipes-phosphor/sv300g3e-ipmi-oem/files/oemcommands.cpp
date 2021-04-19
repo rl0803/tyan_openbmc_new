@@ -1604,8 +1604,10 @@ ipmi_ret_t ipmiCtrlBiosAMTStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
             AMT_status_first_time = false;
         }
 
-        if((AMT_status_value != 0x00 && AMT_status_value != 0x01) ||
-          ((AMT_status_value + AMT_status_checksum) & 0xFF) != 0x00)
+        if (( AMT_status_value != disableAMT &&
+              AMT_status_value != enableAMT  &&
+              AMT_status_value != ignoreAMT) ||
+           (((AMT_status_value + AMT_status_checksum) & 0xFF) != 0x00))
         {
             sd_journal_print(LOG_CRIT, "Invalid BIOS AMT status\n");
             return IPMI_CC_UNSPECIFIED_ERROR;
@@ -1626,7 +1628,9 @@ ipmi_ret_t ipmiCtrlBiosAMTStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         uint8_t AMTStatus = reqData->AMTStatus;
         buffer[0] = AMTStatus;
 
-        if(buffer[0] != 0x0 && buffer[0] != 0x1)
+        if(buffer[0] != disableAMT &&
+           buffer[0] != enableAMT &&
+           buffer[0] != ignoreAMT)
         {
             sd_journal_print(LOG_CRIT, "[%s] invalid cmd data %d\n",
                             __FUNCTION__, buffer[0]);
@@ -1634,7 +1638,7 @@ ipmi_ret_t ipmiCtrlBiosAMTStatus(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
         }
 
         uint8_t checksum = (~buffer[0])+1;
-        buffer[1] = checksum;
+        buffer[1] = 0xFF & checksum;
 
         status = i2cEEPROMSet(i2cbus_eeprom, i2caddr_eeprom, offset_AMT_status, AMT_status_length, buffer);
 
