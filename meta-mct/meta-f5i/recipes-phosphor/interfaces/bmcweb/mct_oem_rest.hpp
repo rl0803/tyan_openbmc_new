@@ -77,8 +77,8 @@ inline void solLogHandler(const crow::Request& req, crow::Response& res)
 
 inline void crashdumpsHandler(const crow::Request& req, crow::Response& res)
 {
-    std::vector<std::string> crashdumpslist;
-    nlohmann::json crashdumpslistData;
+    std::map<std::string,std::string> crashdumpslist;
+    std::map<std::string,nlohmann::json> crashdumpslistData;
     std::string path = "/var/lib/crashdump/output";
 
     if(std::filesystem::exists(std::filesystem::path(path))){
@@ -89,9 +89,13 @@ inline void crashdumpsHandler(const crow::Request& req, crow::Response& res)
                 continue;
             }
             std::ifstream ifs(entry.path().string());
+            std::string subEntry = entry.path().filename().string().substr(
+                0,entry.path().filename().string().find("-", 0)).c_str();
             nlohmann::json crashdumpsData = nlohmann::json::parse(ifs);
-            crashdumpslist.push_back(entry.path().filename().string());
-            crashdumpslistData.push_back({entry.path().filename().string(),crashdumpsData});
+            crashdumpslist.insert(
+                std::pair<std::string,std::string>(subEntry,entry.path().filename().string()));
+            crashdumpslistData.insert(
+                std::pair<std::string,nlohmann::json>(subEntry,crashdumpsData));
         }
     }
 
