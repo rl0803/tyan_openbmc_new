@@ -1,0 +1,161 @@
+From 2d7a5f6e78be097b3a77a4c1853abdee53e9e147 Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Wed, 21 Apr 2021 17:33:37 +0800
+Subject: [PATCH] Change CPU sensor reading function to thread function
+
+---
+ CMakeLists.txt        |  2 +-
+ include/CPUSensor.hpp |  4 ++++
+ src/CPUSensor.cpp     | 56 +++++++++++++++++++++++----------------------------
+ 3 files changed, 30 insertions(+), 32 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2cff7fa..074c691 100755
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -88,7 +88,7 @@ set (NVME_SRC_FILES src/Utils.cpp src/NVMeSensorMain.cpp src/NVMeSensor.cpp src/
+ set (MOSTEMP_SRC_FILES src/Utils.cpp src/Thresholds.cpp)
+ 
+ set (EXTERNAL_PACKAGES Boost sdbusplus-project nlohmann-json)
+-set (SENSOR_LINK_LIBS -lsystemd stdc++fs sdbusplus)
++set (SENSOR_LINK_LIBS -lsystemd stdc++fs sdbusplus -pthread)
+ 
+ set (MNVME_SRC_FILES src/Utils.cpp src/Utils.cpp src/Thresholds.cpp)
+ 
+diff --git a/include/CPUSensor.hpp b/include/CPUSensor.hpp
+index 3ec457c..650f4ba 100755
+--- a/include/CPUSensor.hpp
++++ b/include/CPUSensor.hpp
+@@ -41,15 +41,19 @@ class CPUSensor : public Sensor
+     boost::asio::posix::stream_descriptor inputDev;
+     boost::asio::steady_timer waitTimer;
+     boost::asio::streambuf readBuf;
++    boost::system::error_code ec;
+     std::shared_ptr<sdbusplus::asio::connection> connCPURead;
+     std::string nameTcontrol;
+     std::string path;
++    std::string response;
+     double privTcontrol;
+     double dtsOffset;
+     bool show;
+     int retry = 0;
+     size_t errCount;
+     thresholds::ThresholdTimer thresholdTimer;
++    std::thread readtimer;
++    void readfile(void);
+     void setupRead(void);
+     void handleResponse(const boost::system::error_code& err);
+     void checkThresholds(void) override;
+diff --git a/src/CPUSensor.cpp b/src/CPUSensor.cpp
+index 06ef86d..e8f5b94 100755
+--- a/src/CPUSensor.cpp
++++ b/src/CPUSensor.cpp
+@@ -24,6 +24,8 @@
+ #include <boost/algorithm/string/replace.hpp>
+ #include <iostream>
+ #include <istream>
++#include <fstream>
++#include <thread>
+ #include <limits>
+ #include <memory>
+ #include <sdbusplus/asio/connection.hpp>
+@@ -97,11 +99,32 @@ CPUSensor::~CPUSensor()
+     }
+ }
+ 
++void CPUSensor::readfile(void)
++{
++    try
++    {
++        std::ifstream responseStream(path);
++        if(responseStream.fail())
++        {
++            ec = boost::system::errc::make_error_code(boost::system::errc::bad_file_descriptor);
++        }
++        else
++        {
++            std::getline(responseStream, response);
++            ec = boost::system::errc::make_error_code(boost::system::errc::success);
++        }
++    }
++    catch (const std::invalid_argument&)
++    {
++        errCount++;
++    }
++}
++
+ void CPUSensor::setupRead(void)
+ {
+     boost::system::error_code ec;
+-    inputDev.non_blocking(true);
+-    boost::asio::read_until(inputDev, readBuf, '\n', ec);
++    readtimer =  std::thread(&CPUSensor::readfile,this);
++    readtimer.detach();
+     handleResponse(ec);
+ }
+ 
+@@ -109,7 +132,6 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+ {
+     if (err == boost::system::errc::bad_file_descriptor)
+     {
+-        updateValueInvalid(true);
+         return; // we're being destroyed
+     }
+     size_t pollTime = CPUSensor::sensorPollMs;
+@@ -122,22 +144,6 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+         updateValueInvalid(true);
+         errCount = 0;
+ 
+-        if(err != boost::system::errc::resource_unavailable_try_again)
+-        {
+-            // clear response buffer reading
+-            std::istream invalidResponseStream(&readBuf);
+-            std::string invalidResponse;
+-            std::getline(invalidResponseStream, invalidResponse);
+-            invalidResponseStream.clear();
+-        }
+-
+-        inputDev.close();
+-        int fd = open(path.c_str(), O_RDONLY);
+-        if (fd <= 0)
+-        {
+-            return; // we're no longer valid
+-        }
+-        inputDev.assign(fd);
+         waitTimer.expires_from_now(boost::asio::chrono::milliseconds(pollTime));
+         waitTimer.async_wait([&](const boost::system::error_code& ec) {
+         if (ec == boost::asio::error::operation_aborted)
+@@ -150,15 +156,11 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+         return;
+     }
+ 
+-    std::istream responseStream(&readBuf);
+     if (!err)
+     {
+-        std::string response;
+         try
+         {
+-            std::getline(responseStream, response);
+             double nvalue = std::stof(response);
+-            responseStream.clear();
+             nvalue /= CPUSensor::sensorScaleFactor;
+ 
+             if(path.find("peci-dimmtemp")!= std::string::npos && nvalue >= 85)
+@@ -289,14 +291,6 @@ void CPUSensor::handleResponse(const boost::system::error_code& err)
+         }
+     }
+ 
+-    responseStream.clear();
+-    inputDev.close();
+-    int fd = open(path.c_str(), O_RDONLY);
+-    if (fd < 0)
+-    {
+-        return; // we're no longer valid
+-    }
+-    inputDev.assign(fd);
+     waitTimer.expires_from_now(boost::asio::chrono::milliseconds(pollTime));
+     waitTimer.async_wait([&](const boost::system::error_code& ec) {
+         if (ec == boost::asio::error::operation_aborted)
+-- 
+2.7.4
+
