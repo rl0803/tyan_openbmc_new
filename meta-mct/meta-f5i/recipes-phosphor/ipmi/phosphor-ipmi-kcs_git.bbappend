@@ -2,5 +2,6 @@ KCS_DEVICE = "ipmi-kcs2"
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://0001-IPMB-support-for-NM-commands.patch \
+            file://0003-Change-KCS-service-wantedby-from-multi-user-target-t.patch \
             "
 
