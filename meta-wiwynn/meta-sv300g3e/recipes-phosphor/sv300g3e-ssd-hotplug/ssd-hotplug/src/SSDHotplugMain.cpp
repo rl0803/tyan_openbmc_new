@@ -141,7 +141,7 @@ static void writeSEL(bool ssdStatus, uint8_t ssdIdx)
     return;
 }
 
-static void readSSDstatusThruI2C(bool *ssdStatus)
+static int readSSDstatusThruI2C(bool *ssdStatus)
 {
     int fd = -1;
     int res = -1;
@@ -153,6 +153,7 @@ static void readSSDstatusThruI2C(bool *ssdStatus)
     if(fd < 0)
     {
         std::cerr << "[SSD] Fail to open I2C device\n";
+        return -1;
     }
 
     std::vector<uint8_t> cmdData;
@@ -166,11 +167,14 @@ static void readSSDstatusThruI2C(bool *ssdStatus)
     res = i2c_master_write_read(fd, slaveAddr, cmdData.size(), cmdData.data(),
                                 readBuf.size(), readBuf.data());
     uint8_t raw_value = readBuf.at(0);
+
+    close_i2c_dev(fd);
+
     if (res < 0)
     {
         std::cerr << "[SSD] I2C read error\n";
+        return -1;
     }
-    close_i2c_dev(fd);
 
     // SSD present status in bitwise map
     for(uint8_t i = 0 ; i < ssdNumber ; i++)
@@ -187,22 +191,25 @@ static void readSSDstatusThruI2C(bool *ssdStatus)
         }
     }
 
-    return;
+    return res;
 }
 
 static void pollSSDstatus()
 {
-    readSSDstatusThruI2C(ssdCurrentStatus);
+    int status = readSSDstatusThruI2C(ssdCurrentStatus);
 
-    for(uint8_t i = 0; i < ssdNumber; i++)
+    if(status != -1)
     {
-        if(ssdCurrentStatus[i] != ssdOriginalStatus[i])
+        for(uint8_t i = 0; i < ssdNumber; i++)
         {
-            ssdOriginalStatus[i] = ssdCurrentStatus[i];
-
-            if (true == acpiPowerStateOn)
+            if(ssdCurrentStatus[i] != ssdOriginalStatus[i])
             {
-                writeSEL(ssdOriginalStatus[i], i);
+                ssdOriginalStatus[i] = ssdCurrentStatus[i];
+
+                if (true == acpiPowerStateOn)
+                {
+                    writeSEL(ssdOriginalStatus[i], i);
+                }
             }
         }
     }
@@ -238,7 +245,7 @@ int main(int argc, char *argv[])
     }
 
     //Initial SSD status
-    readSSDstatusThruI2C(ssdOriginalStatus);
+    int status = readSSDstatusThruI2C(ssdOriginalStatus);
 
     // SSD present status polling
     pollSSDstatus();
