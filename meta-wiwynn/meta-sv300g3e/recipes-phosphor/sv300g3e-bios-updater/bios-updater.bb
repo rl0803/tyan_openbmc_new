@@ -10,8 +10,8 @@ TARGET_CC_ARCH += "${LDFLAGS}"
 
 S = "${WORKDIR}"
 
-DEPENDS += "systemd sdbusplus obmc-libi2c libgpiod phosphor-dbus-interfaces"
-RDEPENDS_${PN} += "libsystemd sdbusplus obmc-libi2c libgpiod"
+DEPENDS += "systemd sdbusplus obmc-libi2c libgpiod phosphor-dbus-interfaces obmc-libmisc"
+RDEPENDS_${PN} += "libsystemd sdbusplus obmc-libi2c libgpiod obmc-libmisc"
 
 SRC_URI = "file://Makefile \
            file://main.cpp \

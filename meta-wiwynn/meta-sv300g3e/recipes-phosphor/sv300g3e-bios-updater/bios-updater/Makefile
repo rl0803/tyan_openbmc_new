@@ -5,7 +5,7 @@ CC      ?= $(CROSS_COMPILE)g++
 CFLAGS += $(shell pkg-config --cflags $(DEPPKGS))
 CFLAGS += -std=c++1z
 LIBS += $(shell pkg-config --libs $(LIBPKGS))
-LIBS += -fPIC -lrt -lm -lsystemd -lsdbusplus -lobmci2c -lgpiod -lphosphor_dbus
+LIBS += -fPIC -lrt -lm -lsystemd -lsdbusplus -lobmci2c -lgpiod -lphosphor_dbus -lobmcmisc
 
 all: $(EXE)
 $(EXE): $(CFILE)
