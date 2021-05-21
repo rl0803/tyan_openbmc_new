@@ -7,4 +7,5 @@ SRC_URI += "file://0001-Determine-the-host-initial-state-with-pgood.patch \
             file://0003-Support-power-cycle-interval.patch \
             file://0004-Run-power-policy-service-for-AC-lost-event-only.patch \
             file://0005-Add-power-on-host-after-multi-user-target.patch \
+            file://0006-Set-restart-cause-for-power-policy.patch \
            "

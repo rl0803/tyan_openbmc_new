@@ -1,0 +1,47 @@
+From 94ed8c4e8394bf266bef80572ddfed39e8d097f3 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 21 May 2021 08:38:34 +0800
+Subject: [PATCH] Restart cause for power policy
+
+---
+ discover_system_state.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/discover_system_state.cpp b/discover_system_state.cpp
+index 452a113..8e2e593 100644
+--- a/discover_system_state.cpp
++++ b/discover_system_state.cpp
+@@ -33,6 +33,12 @@ constexpr auto MAPPER_INTERFACE = "xyz.openbmc_project.ObjectMapper";
+ 
+ constexpr auto PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties";
+ 
++constexpr auto RESTART_CAUSE_OBJPATH = "/xyz/openbmc_project/state/host0";
++constexpr auto RESTART_CAUSE_INTERFACE = "xyz.openbmc_project.State.Host";
++constexpr auto RESTART_CAUSE_PROPERTY = "RestartCause";
++constexpr auto RESTART_CAUSE_ALWAYS_ON = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyAlwaysOn";
++constexpr auto RESTART_CAUSE_PREVIOUS = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyPreviousState";
++
+ std::string getService(sdbusplus::bus::bus& bus, std::string path,
+                        std::string interface)
+ {
+@@ -235,6 +241,8 @@ int main(int argc, char** argv)
+         std::this_thread::sleep_for (std::chrono::seconds(sleepTime));
+ 
+         log<level::INFO>("power_policy=ALWAYS_POWER_ON, powering host on");
++        setProperty(bus, RESTART_CAUSE_OBJPATH, RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY,
++                    RESTART_CAUSE_ALWAYS_ON);
+         setProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition",
+                     convertForMessage(server::Host::Transition::On));
+     }
+@@ -251,6 +259,8 @@ int main(int argc, char** argv)
+         {
+             uint32_t sleepTime = getRandomDelayTime(bus, settings);
+             std::this_thread::sleep_for (std::chrono::seconds(sleepTime));
++            setProperty(bus, RESTART_CAUSE_OBJPATH, RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY,
++                        RESTART_CAUSE_PREVIOUS);
+         }
+         setProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition",
+                     hostReqState);
+-- 
+2.17.1
+

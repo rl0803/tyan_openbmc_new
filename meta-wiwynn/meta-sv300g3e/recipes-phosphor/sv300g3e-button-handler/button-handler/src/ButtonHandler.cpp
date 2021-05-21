@@ -38,6 +38,15 @@ static int releaseEvent = 0;
 bool power_off_set = false;
 std::queue<int> powerBtnEventQueue; // press=100,release=0
 
+constexpr auto RESTART_CAUSE_SERVICE = "xyz.openbmc_project.State.Host";
+constexpr auto RESTART_CAUSE_OBJPATH = "/xyz/openbmc_project/state/host0";
+constexpr auto RESTART_CAUSE_INTERFACE = "xyz.openbmc_project.State.Host";
+constexpr auto RESTART_CAUSE_PROPERTY = "RestartCause";
+constexpr auto RESTART_CAUSE_POWER_BTN = "xyz.openbmc_project.State.Host.RestartCause.PowerButton";
+constexpr auto RESTART_CAUSE_RESET_BTN = "xyz.openbmc_project.State.Host.RestartCause.ResetButton";
+constexpr auto PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties";
+constexpr auto PROPERTY_SET_METHOD = "Set";
+
 enum event_type : uint8_t
 {
     EVENT_RESET,
@@ -99,6 +108,7 @@ void ButtonObject::buttonEventHandler()
     if (sensorName == "RESET_BUTTON")
     {
         addBtnSEL(EVENT_RESET);
+        setRestartCause(RESTART_CAUSE_RESET_BTN);
     }
     /* Push power button event to queue*/
     else if (sensorName == "POWER_BUTTON")
@@ -167,6 +177,7 @@ void ButtonObject::runPowerButtonEventAlgorithm()
                 {
                     gpiod_ctxless_set_value("0", power_pin, 0, false, "power-button-event", NULL, NULL);
                     addBtnSEL(EVENT_POWER_ON);
+                    setRestartCause(RESTART_CAUSE_POWER_BTN);
                     // Generate at lest 100ms pulse
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
@@ -286,4 +297,24 @@ void ButtonObject::addBtnSEL(int eventType)
     }
 
     return;
+}
+
+int ButtonObject::setRestartCause(std::string cause)
+{
+    auto bus = sdbusplus::bus::new_default_system();
+    auto method = bus.new_method_call(RESTART_CAUSE_SERVICE, RESTART_CAUSE_OBJPATH,
+                                        PROPERTY_INTERFACE, PROPERTY_SET_METHOD);
+    method.append(RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY, std::variant<std::string>(cause));
+
+    try
+    {
+        auto reply = bus.call(method);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "Fail to set restart cause:" << e.what() << '\n';
+        return -1;
+    }
+    
+    return 0;
 }

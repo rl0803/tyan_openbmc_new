@@ -1,0 +1,84 @@
+From f6983b1b01b0db6b8621bd32035a4c2e64dca8ce Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Fri, 21 May 2021 08:30:39 +0800
+Subject: [PATCH] Set restart cause for chassis control
+
+---
+ chassishandler.cpp | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/chassishandler.cpp b/chassishandler.cpp
+index 62b91db..808bd43 100644
+--- a/chassishandler.cpp
++++ b/chassishandler.cpp
+@@ -59,6 +59,16 @@ constexpr size_t SIZE_COOKIE = 4;
+ constexpr size_t SIZE_VERSION = 2;
+ constexpr size_t DEFAULT_IDENTIFY_TIME_OUT = 15;
+ 
++constexpr auto RESTART_CAUSE_SERVICE = "xyz.openbmc_project.State.Host";
++constexpr auto RESTART_CAUSE_OBJPATH = "/xyz/openbmc_project/state/host0";
++constexpr auto RESTART_CAUSE_INTERFACE = "xyz.openbmc_project.State.Host";
++constexpr auto RESTART_CAUSE_PROPERTY = "RestartCause";
++constexpr auto RESTART_CAUSE_CHASSIS_CMD_PWRON = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerOn";
++constexpr auto RESTART_CAUSE_CHASSIS_CMD_PWRCYCLE = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerCycle";
++constexpr auto RESTART_CAUSE_CHASSIS_CMD_PWRRESET = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerReset";
++constexpr auto PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties";
++constexpr auto PROPERTY_SET_METHOD = "Set";
++
+ // PetiBoot-Specific
+ static constexpr uint8_t net_conf_initial_bytes[] = {0x80, 0x21, 0x70, 0x62,
+                                                      0x21, 0x00, 0x01, 0x06};
+@@ -515,6 +525,26 @@ uint32_t getPOHCounter()
+     return std::get<uint32_t>(propValue);
+ }
+ 
++int setRestartCause(std::string cause)
++{
++    auto bus = sdbusplus::bus::new_default_system();
++    auto method = bus.new_method_call(RESTART_CAUSE_SERVICE, RESTART_CAUSE_OBJPATH,
++                                        PROPERTY_INTERFACE, PROPERTY_SET_METHOD);
++    method.append(RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY, std::variant<std::string>(cause));
++
++    try
++    {
++        auto reply = bus.call(method);
++    }
++    catch(const std::exception& e)
++    {
++        std::cerr << "Fail to set restart cause:" << e.what() << '\n';
++        return -1;
++    }
++    
++    return 0;
++}
++
+ /** @brief Implements the get chassis capabilities command
+  *
+  *  @returns IPMI completion code plus response data
+@@ -1229,6 +1259,7 @@ ipmi::RspType<> ipmiChassisControl(uint8_t chassisControl)
+             }
+ 
+             rc = initiate_state_transition(State::Host::Transition::On);
++            setRestartCause(RESTART_CAUSE_CHASSIS_CMD_PWRON);
+             break;
+         }
+         case CMD_POWER_OFF:
+@@ -1271,6 +1302,7 @@ ipmi::RspType<> ipmiChassisControl(uint8_t chassisControl)
+             // Start the system power reset service
+             std::string resetService("host-powerreset.service");
+             rc = startSystemdUnit(resetService);
++            setRestartCause(RESTART_CAUSE_CHASSIS_CMD_PWRRESET);
+             break;
+         }
+         case CMD_POWER_CYCLE:
+@@ -1285,6 +1317,7 @@ ipmi::RspType<> ipmiChassisControl(uint8_t chassisControl)
+             indicate_no_softoff_needed();
+ 
+             rc = initiate_state_transition(State::Host::Transition::Reboot);
++            setRestartCause(RESTART_CAUSE_CHASSIS_CMD_PWRCYCLE);
+             break;
+ 
+         case CMD_SOFT_OFF_VIA_OVER_TEMP:
+-- 
+2.17.1
+

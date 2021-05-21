@@ -80,4 +80,5 @@ class ButtonObject
         void runPowerButtonEventAlgorithm();
         void setupTimer();
         void addBtnSEL(int eventType);
+        int setRestartCause(std::string cause);
 };

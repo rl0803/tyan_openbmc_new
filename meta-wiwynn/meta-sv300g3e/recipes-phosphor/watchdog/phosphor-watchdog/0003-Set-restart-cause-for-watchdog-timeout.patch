@@ -1,0 +1,55 @@
+From 4f282a49891aba63e22f09dd3da0df53fb23e914 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Mon, 19 Apr 2021 15:09:50 +0800
+Subject: [PATCH] Set restart cause for watchdog timeout
+
+---
+ watchdog.cpp | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/watchdog.cpp b/watchdog.cpp
+index 6b16a4c..f83f07e 100755
+--- a/watchdog.cpp
++++ b/watchdog.cpp
+@@ -22,6 +22,15 @@ using sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
+ constexpr auto SYSTEMD_SERVICE = "org.freedesktop.systemd1";
+ constexpr auto SYSTEMD_ROOT = "/org/freedesktop/systemd1";
+ constexpr auto SYSTEMD_INTERFACE = "org.freedesktop.systemd1.Manager";
++
++constexpr auto RESTART_CAUSE_SERVICE = "xyz.openbmc_project.State.Host";
++constexpr auto RESTART_CAUSE_OBJPATH = "/xyz/openbmc_project/state/host0";
++constexpr auto RESTART_CAUSE_INTERFACE = "xyz.openbmc_project.State.Host";
++constexpr auto RESTART_CAUSE_PROPERTY = "RestartCause";
++constexpr auto RESTART_CAUSE_WDR_RESET = "xyz.openbmc_project.State.Host.RestartCause.WatchdogTimer";
++constexpr auto PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties";
++constexpr auto PROPERTY_SET_METHOD = "Set";
++
+ static const std::unordered_map<Watchdog::Action, uint8_t> actionIdxMap =
+ {
+     {Watchdog::Action::None, 0x0},
+@@ -150,6 +159,22 @@ void Watchdog::timeOutHandler()
+             entry("TIMER_USE=%s", convertForMessage(expiredTimerUse()).c_str()),
+             entry("TARGET=%s", target->second.c_str()));
+ 
++        if ((expiredTimerUse() == TimerUse::BIOSFRB2) && (action == Action::HardReset || action == Action::PowerCycle))
++        {
++            try
++            {
++                auto method = bus.new_method_call(RESTART_CAUSE_SERVICE, RESTART_CAUSE_OBJPATH,
++                                                    PROPERTY_INTERFACE, PROPERTY_SET_METHOD);
++                method.append(RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY, 
++                                std::variant<std::string>(RESTART_CAUSE_WDR_RESET));
++                bus.call_noreply(method);
++            }
++            catch(const std::exception& e)
++            {
++                log<level::ERR>("watchdog: Failed to set restart cause", entry("ERROR=%s", e.what()));
++            }
++        }
++
+         try
+         {
+             auto method = bus.new_method_call(SYSTEMD_SERVICE, SYSTEMD_ROOT,
+-- 
+2.17.1
+

@@ -37,6 +37,17 @@ static const std::string ipmiSysRestartSelAdd = "System Restart";
 
 static const std::string sensorPathPrefix = "/xyz/openbmc_project/sensors/";
 
+static const std::string restartCauseDefault = "xyz.openbmc_project.State.Host.RestartCause.Unknown";
+static const std::string restartCauseChassisPWRON = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerOn";
+static const std::string restartCauseResetButton = "xyz.openbmc_project.State.Host.RestartCause.ResetButton";
+static const std::string restartCausePowerButton = "xyz.openbmc_project.State.Host.RestartCause.PowerButton";
+static const std::string restartCauseWatchdog = "xyz.openbmc_project.State.Host.RestartCause.WatchdogTimer";
+static const std::string restartCausePowerPolicyAlwaysOn = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyAlwaysOn";
+static const std::string restartCausePowerPolicyPrevious = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyPrevious";
+static const std::string restartCauseSoftReset = "xyz.openbmc_project.State.Host.RestartCause.SoftReset";
+static const std::string restartCauseChassisPWRCYCLE = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerCycle";
+static const std::string restartCauseChassisPWRRESET = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerReset";
+
 static std::vector<std::string> registerMatch;
 static std::vector<std::string> findPath;
 
@@ -46,3 +57,5 @@ std::vector<std::string> findRegisterPath();
 void interruptAction(std::string lpcPath);
 void interruptHandler(std::string lpcPath, std::string interruptPath);
 void findLpcIntFiles();
+uint8_t getRestartCause();
+void setRestartCauseDefault();
