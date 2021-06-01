@@ -1,0 +1,32 @@
+From 29600c0d1d32234efa8db1aa8eb75fbf9776e68b Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Wed, 10 Mar 2021 19:17:18 +0800
+Subject: [PATCH] Add dbus match function for rescan FRU cache
+
+---
+ src/storagecommands.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/storagecommands.cpp b/src/storagecommands.cpp
+index ff95a99..9ad26ea 100755
+--- a/src/storagecommands.cpp
++++ b/src/storagecommands.cpp
+@@ -440,6 +440,15 @@ ipmi_ret_t replaceCacheFru(uint8_t devId)
+     return IPMI_CC_OK;
+ }
+ 
++static sdbusplus::bus::match::match replaceCacheMatch(
++    *getSdBus(),
++    "type='signal',member='SensorReplaceCache'",
++    [](sdbusplus::message::message &m) {
++        uint8_t value;
++        m.read(value);
++        replaceCacheFru(value);
++    });
++
+ ipmi_ret_t ipmiStorageReadFRUData(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                   ipmi_request_t request,
+                                   ipmi_response_t response,
+-- 
+2.7.4
+
