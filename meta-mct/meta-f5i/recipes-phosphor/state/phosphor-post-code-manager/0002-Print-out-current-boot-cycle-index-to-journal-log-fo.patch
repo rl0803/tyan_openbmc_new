@@ -1,0 +1,41 @@
+From 770e2698ce95e7d9da90c182dcebdf3b83ad0e73 Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Tue, 30 Mar 2021 15:57:52 +0800
+Subject: [PATCH] Print out  current boot cycle index to journal log for
+ identification
+
+---
+ inc/post_code.hpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/inc/post_code.hpp b/inc/post_code.hpp
+index d651c39..cdd9432 100755
+--- a/inc/post_code.hpp
++++ b/inc/post_code.hpp
+@@ -114,6 +114,7 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+                                     this->currentBootCycleIndex() + 1);
+                             }
+                             this->postCodes.clear();
++                            std::cerr << "Current boot cycle index " << std::to_string(currentBootCycleIndex()) << std::endl;
+                         }
+                     }
+                 }
+@@ -140,6 +141,7 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+                             this->currentBootCycleIndex() + 1);
+                     }
+                     this->postCodes.clear();
++                    std::cerr << "Current boot cycle index " << std::to_string(currentBootCycleIndex()) << std::endl;
+                 }
+             })
+     {
+@@ -163,6 +165,7 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+         {
+             currentBootCycleIndex(currentBootCycleIndex() + 1);
+         }
++        std::cerr << "Current boot cycle index " << std::to_string(currentBootCycleIndex()) << std::endl;
+     }
+     ~PostCode()
+     {
+-- 
+2.7.4
+
