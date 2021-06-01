@@ -1,0 +1,47 @@
+From 7f85279109ad9ac997859dcf4def2c6d10b26c19 Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Tue, 6 Apr 2021 15:41:23 +0800
+Subject: [PATCH] Add dbus signal function for clear SEL feature
+
+%% original patch: 0032-Add-dbus-signal-function-for-clear-SEL-feature.patch
+---
+ src/storagecommands.cpp | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/src/storagecommands.cpp b/src/storagecommands.cpp
+index 9ad26ea..068f2e9 100755
+--- a/src/storagecommands.cpp
++++ b/src/storagecommands.cpp
+@@ -1365,8 +1365,27 @@ ipmi::RspType<uint8_t> ipmiStorageClearSEL(ipmi::Context::ptr ctx,
+     {
+         for (const std::filesystem::path& file : selLogFiles)
+         {
+-            std::error_code ec;
+-            std::filesystem::remove(file, ec);
++            if (0 == file.compare(intel_oem::ipmi::sel::selLogDir / intel_oem::ipmi::sel::selLogFilename))
++            {
++                std::ofstream logStream;
++                logStream.open(file, std::ofstream::out | std::ofstream::trunc);
++                logStream.close();
++            }
++            else
++            {
++                std::error_code ec;
++                std::filesystem::remove(file, ec);
++            }
++
++            constexpr auto objectPath = "/";
++            constexpr auto interface = "org.freedesktop.DBus";
++            constexpr auto signal = "ClearSelEvent";
++
++            auto bus = sdbusplus::bus::new_default();
++            auto msg = bus.new_signal(objectPath, interface, signal);
++            bool parameter = true;
++            msg.append(parameter);
++            msg.signal_send();
+         }
+     }
+ 
+-- 
+2.7.4
+

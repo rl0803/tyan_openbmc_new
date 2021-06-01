@@ -9,5 +9,6 @@ SRC_URI += "file://0001-Change-ipmi_sel-location-to-persistent-folder.patch \
             file://0002-f5i-alert-led-when-happen-warning.patch \
             file://0003-fix-sensor-reading-not-match-assert-value-issue.patch \
             file://0004-f5i-bypass-SYS-Air-Inlet-sensor-for-alert-led.patch \
+            file://0005-Fix-IPMI-SEL-entry-in-command-does-not-match-IPMI-SE.patch \
             "
 

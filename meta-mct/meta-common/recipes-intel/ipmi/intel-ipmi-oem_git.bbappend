@@ -20,5 +20,6 @@ SRC_URI += "file://0001-s7106-disable-Intel-OEM-command.patch \
             file://0029-Support-FRU-configuration-in-JSON-format.patch \
             file://0030-Support-system-event-sensor-type.patch \
             file://0031-Add-dbus-match-function-for-rescan-FRU-cache.patch \
+            file://0032-Add-dbus-signal-function-for-clear-SEL-feature.patch \
             "
 
