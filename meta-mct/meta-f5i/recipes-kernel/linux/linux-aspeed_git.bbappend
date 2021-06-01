@@ -17,5 +17,6 @@ SRC_URI += "file://f5i.cfg \
             file://0014-misc-Add-clock-control-logic-into-Aspeed-LPC-SNOOP-d.patch \
             file://0015-media-aspeed-fix-clock-handling-logic.patch \
             file://0016-Update-PECI-driver-from-intel-kernel.patch \
+            file://0017-Set-I2C-msg-buffer-to-NULL-after-the-transaction.patch \
             "
 
