@@ -49,7 +49,8 @@ def main():
     print res
 
     # Inform other services time sync is done. 
-    os.mknod("/run/time_sync_done")
+    if not os.path.isfile("/run/time_sync_done"):
+        os.mknod("/run/time_sync_done")
     return 0
 
 if __name__ == '__main__':
