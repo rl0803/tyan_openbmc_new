@@ -72,3 +72,8 @@ void registerHandler(boost::asio::io_context& io,double delay);
  * @param[in] status - Status for handler getting.
  */
 void interruptAction(std::string lpcPath, int status);
+
+
+uint8_t getRestartCause();
+void setRestartCauseDefault();
+

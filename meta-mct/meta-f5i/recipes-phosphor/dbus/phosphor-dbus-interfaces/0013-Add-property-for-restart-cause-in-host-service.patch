@@ -1,0 +1,82 @@
+From e7bae2e715a87aca2b62dce580e70cd140f326b0 Mon Sep 17 00:00:00 2001
+From: Frederick Lee <Frederick_Lee@wiwynn.com>
+Date: Thu, 20 May 2021 18:14:15 +0800
+Subject: [PATCH] Add property for restart cause in host service
+
+---
+ xyz/openbmc_project/State/Host.interface.yaml | 55 +++++++++++++++++++
+ 1 file changed, 55 insertions(+)
+
+diff --git a/xyz/openbmc_project/State/Host.interface.yaml b/xyz/openbmc_project/State/Host.interface.yaml
+index 1cbd2b4..4042b3b 100644
+--- a/xyz/openbmc_project/State/Host.interface.yaml
++++ b/xyz/openbmc_project/State/Host.interface.yaml
+@@ -17,6 +17,14 @@ properties:
+           comparing the CurrentHostState and the RequestedHostTransition
+           properties.
+ 
++    - name: RestartCause
++      type: enum[self.RestartCause]
++      dafault: 'xyz.openbmc_project.State.Host.RestartCause.Unknown'
++      description: >
++          The property describing information about what last caused the
++          system to restart.
++
++
+ enumerations:
+     - name: Transition
+       description: >
+@@ -61,3 +69,50 @@ enumerations:
+             system while the host is in this state will prevent the debug data
+             from being properly collected. The host will move to one of the
+             other states once complete.
++
++    - name: RestartCause
++      description: >
++        The restart cause of the host.
++      values:
++        - name: 'Unknown'
++          description: >
++            System start/restart detected, but cause unknown.
++        - name: 'ChassisCommandPowerOn'
++          description: >
++            Host is restarted by "Chassis Control command - ipmitool power on".
++        - name: 'ResetButton'
++          description: >
++            Host is restarted by "Reset Button".
++        - name: 'PowerButton'
++          description: >
++            Host is restarted by "Power Button".
++        - name: 'WatchdogTimer'
++          description: >
++            Host is restarted by "Watch Dog timer timeout".
++        - name: 'OEM'
++          description: >
++            Host is restarted by "OEM reason".
++        - name: 'PowerPolicyAlwaysOn'
++          description: >
++            Host is restarted by "Power Policy Always On".
++        - name: 'PowerPolicyPreviousState'
++          description: >
++            Host is restarted by "Power Policy Previous State".
++        - name: 'PEFReset'
++          description: >
++            Host is restarted by "PEF reset".
++        - name: 'PEFCycle'
++          description: >
++            Host is restarted by "PEF power cycle".
++        - name: 'SoftReset'
++          description: >
++            Host is restarted by "host soft reset(e.g. init 6 or CTRL-ALT-DEL)".
++        - name: 'RTCPowerUp'
++          description: >
++            Host is restarted by "power-up via RTC wakeup".
++        - name: 'ChassisCommandPowerCycle'
++          description: >
++            Host is restarted by "Chassis Control command - ipmitool power cycle".    
++        - name: 'ChassisCommandPowerReset'
++          description: >
++            Host is restarted by "Chassis Control command - ipmitool power reset".
+-- 
+2.17.1
+

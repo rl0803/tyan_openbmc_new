@@ -16,8 +16,9 @@ if [ $pwrstatus -eq 1 ]; then
     /usr/bin/gpioset gpiochip0 35=0
     sleep 1
     /usr/bin/gpioset gpiochip0 35=1
-
-    busctl call $SERVICE $OBJECT $INTERFACE $METHOD ssaybq "SEL Entry" "/xyz/openbmc_project/sensors/restart/SYSTEM_RESTART" 3 {0x07,0x01,0x00} yes 0x20
+    
+    #SEL log move to lpc reset monitor service
+  #  busctl call $SERVICE $OBJECT $INTERFACE $METHOD ssaybq "SEL Entry" "/xyz/openbmc_project/sensors/restart/SYSTEM_RESTART" 3 {0x07,0x01,0x00} yes 0x20
 
 else
     echo "System is off state."

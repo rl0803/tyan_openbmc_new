@@ -1,0 +1,47 @@
+From 7733a2247c642adb5992056af57668acf99d9c1c Mon Sep 17 00:00:00 2001
+From: "ray.lue" <ray.lue@mic.com.tw>
+Date: Mon, 31 May 2021 18:03:48 +0800
+Subject: [PATCH 1/1] Restart cause for power policy
+
+---
+ discover_system_state.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/discover_system_state.cpp b/discover_system_state.cpp
+index c634606..91b8799 100755
+--- a/discover_system_state.cpp
++++ b/discover_system_state.cpp
+@@ -33,6 +33,12 @@ constexpr auto MAPPER_INTERFACE = "xyz.openbmc_project.ObjectMapper";
+ 
+ constexpr auto PROPERTY_INTERFACE = "org.freedesktop.DBus.Properties";
+ 
++constexpr auto RESTART_CAUSE_OBJPATH = "/xyz/openbmc_project/state/host0";
++constexpr auto RESTART_CAUSE_INTERFACE = "xyz.openbmc_project.State.Host";
++constexpr auto RESTART_CAUSE_PROPERTY = "RestartCause";
++constexpr auto RESTART_CAUSE_ALWAYS_ON = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyAlwaysOn";
++constexpr auto RESTART_CAUSE_PREVIOUS = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyPreviousState";
++
+ std::string getService(sdbusplus::bus::bus& bus, std::string path,
+                        std::string interface)
+ {
+@@ -250,6 +256,8 @@ int main(int argc, char** argv)
+         }
+ 
+         log<level::INFO>("power_policy=ALWAYS_POWER_ON, Starting power on");
++        setProperty(bus, RESTART_CAUSE_OBJPATH, RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY,
++                    RESTART_CAUSE_ALWAYS_ON);
+ 
+         setProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition",
+                     convertForMessage(server::Host::Transition::On));
+@@ -260,6 +268,8 @@ int main(int argc, char** argv)
+         log<level::INFO>("power_policy=RESTORE, restoring last state");
+ 
+         // Read last requested state and re-request it to execute it
++        setProperty(bus, RESTART_CAUSE_OBJPATH, RESTART_CAUSE_INTERFACE, RESTART_CAUSE_PROPERTY,
++                        RESTART_CAUSE_PREVIOUS);
+         auto hostReqState =
+             getProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition");
+         setProperty(bus, hostPath, HOST_BUSNAME, "RequestedHostTransition",
+-- 
+2.29.0
+

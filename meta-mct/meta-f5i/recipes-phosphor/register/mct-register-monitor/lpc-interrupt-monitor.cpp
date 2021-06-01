@@ -17,6 +17,41 @@
 
 #include <iostream>
 #include "utils.hpp"
+#include <xyz/openbmc_project/State/Host/server.hpp>
+namespace State = sdbusplus::xyz::openbmc_project::State::server;
+
+enum IpmiRestartCause
+{
+    Unknown = 0x00,
+    ChassisCommandPowerOn = 0x01,
+    ResetButton = 0x02,
+    PowerButton = 0x03,
+    WatchdogTimer = 0x04,
+    PowerPolicyAlwaysOn = 0x06,
+    PowerPolicyPreviousState = 0x07,
+    SoftReset = 0x0a,
+    ChassisCommandPowerCycle = 0x0c,
+    ChassisCommandPowerReset = 0x0d,
+};
+
+static constexpr char const *ipmiSelService = "xyz.openbmc_project.Logging.IPMI";
+static constexpr char const *ipmiSelPath = "/xyz/openbmc_project/Logging/IPMI";
+static constexpr char const *ipmiSelAddInterface = "xyz.openbmc_project.Logging.IPMI";
+static const std::string ipmiSysRestartSelAdd = "System Restart";
+
+static const std::string sensorPathPrefix = "/xyz/openbmc_project/sensors/";
+
+
+static const std::string restartCauseDefault = "xyz.openbmc_project.State.Host.RestartCause.Unknown";
+static const std::string restartCauseChassisPWRON = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerOn";
+static const std::string restartCauseResetButton = "xyz.openbmc_project.State.Host.RestartCause.ResetButton";
+static const std::string restartCausePowerButton = "xyz.openbmc_project.State.Host.RestartCause.PowerButton";
+static const std::string restartCauseWatchdog = "xyz.openbmc_project.State.Host.RestartCause.WatchdogTimer";
+static const std::string restartCausePowerPolicyAlwaysOn = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyAlwaysOn";
+static const std::string restartCausePowerPolicyPrevious = "xyz.openbmc_project.State.Host.RestartCause.PowerPolicyPrevious";
+static const std::string restartCauseSoftReset = "xyz.openbmc_project.State.Host.RestartCause.SoftReset";
+static const std::string restartCauseChassisPWRCYCLE = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerCycle";
+static const std::string restartCauseChassisPWRRESET = "xyz.openbmc_project.State.Host.RestartCause.ChassisCommandPowerReset";
 
 static constexpr bool DEBUG = false;
 
@@ -180,8 +215,135 @@ void interruptAction(std::string lpcPath, int status)
     msg.append(parameter);
     msg.signal_send();
     writeFileValue(lpcPath,0);
+
+    // Check pgood status
+    auto method = bus.new_method_call("org.openbmc.control.Power",
+                    "/org/openbmc/control/power0",
+                    "org.freedesktop.DBus.Properties", "Get");
+
+    method.append("org.openbmc.control.Power", "pgood");
+    try
+    {
+        std::variant<int> state;
+        auto reply = bus.call(method);
+        reply.read(state);
+
+        if(std::get<int>(state))
+        {
+            std::cerr << "Platform Reset!!!\n";
+
+            // SEL Add
+            uint16_t genId = 0x20;
+            std::vector<uint8_t> eventData(3, 0xFF);
+            std::string dbusPath = sensorPathPrefix + "restart/SYSTEM_RESTART";
+            bool assert = true;
+
+            /* Sensor type: System Restart (0x1d)
+                Sensor specific offset: 07h - Intended to be used with Event Data 2 and or 3
+            */
+            eventData.at(0) = 0x7;
+            eventData.at(1) = getRestartCause();
+
+            sdbusplus::message::message writeSEL = bus.new_method_call(
+                ipmiSelService, ipmiSelPath, ipmiSelAddInterface, "IpmiSelAdd");
+            writeSEL.append(ipmiSysRestartSelAdd, dbusPath, eventData, assert, genId);
+
+            try
+            {
+                bus.call_noreply(writeSEL);
+            }
+            catch (sdbusplus::exception_t& e)
+            {
+                std::cerr<<"failed to log system restart SEL\n";
+            }
+
+            setRestartCauseDefault();
+        }
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << "Not able to get pgood property\n";
+    }
+
 }
 
+uint8_t getRestartCause()
+{
+    // Bus for system control
+    auto bus = sdbusplus::bus::new_system();
+
+    // Get restart cause from dbus
+    auto method = bus.new_method_call("xyz.openbmc_project.State.Host",
+                    "/xyz/openbmc_project/state/host0",
+                    "org.freedesktop.DBus.Properties", "Get");
+
+    method.append("xyz.openbmc_project.State.Host", "RestartCause");
+
+    uint8_t result = 0x0;
+
+    try
+    {
+        std::variant<std::string> dbusCause;
+        auto reply = bus.call(method);
+        reply.read(dbusCause);
+
+        std::cerr<<"Restart Cause: "<< std::get<std::string>(dbusCause) << "\n";
+
+        std::string strCause = std::get<std::string>(dbusCause);
+        auto cause = State::Host::convertRestartCauseFromString(strCause);
+
+        switch(cause)
+        {
+            case State::Host::RestartCause::ChassisCommandPowerOn: 
+                return IpmiRestartCause::ChassisCommandPowerOn;
+            case State::Host::RestartCause::ResetButton: 
+                return IpmiRestartCause::ResetButton;
+            case State::Host::RestartCause::PowerButton: 
+                return IpmiRestartCause::PowerButton;
+            case State::Host::RestartCause::WatchdogTimer: 
+                return IpmiRestartCause::WatchdogTimer;
+            case State::Host::RestartCause::PowerPolicyAlwaysOn: 
+                return IpmiRestartCause::PowerPolicyAlwaysOn;
+            case State::Host::RestartCause::PowerPolicyPreviousState: 
+                return IpmiRestartCause::PowerPolicyPreviousState;
+            case State::Host::RestartCause::Unknown: 
+                return IpmiRestartCause::SoftReset;
+            case State::Host::RestartCause::ChassisCommandPowerCycle: 
+                return IpmiRestartCause::ChassisCommandPowerCycle;
+            case State::Host::RestartCause::ChassisCommandPowerReset: 
+                return IpmiRestartCause::ChassisCommandPowerReset;
+            default:
+                return IpmiRestartCause::Unknown;
+        }
+
+    }
+    catch (const sdbusplus::exception::SdBusError& e)
+    {
+        std::cerr << "Not able to get restart cause property\n";
+    }
+}
+
+void setRestartCauseDefault()
+{
+    // Bus for system control
+    auto bus = sdbusplus::bus::new_system();
+
+    // Get restart cause from dbus
+    auto method = bus.new_method_call("xyz.openbmc_project.State.Host",
+                    "/xyz/openbmc_project/state/host0",
+                    "org.freedesktop.DBus.Properties", "Set");
+
+    method.append("xyz.openbmc_project.State.Host", "RestartCause", std::variant<std::string>(restartCauseDefault));
+
+    try
+    {
+        bus.call_noreply(method);
+    }
+    catch (sdbusplus::exception_t& e)
+    {
+        std::cerr<<"failed to set restart cause to default\n";
+    }
+}
 int main(int argc, char *argv[])
 {
     boost::asio::io_context io;
