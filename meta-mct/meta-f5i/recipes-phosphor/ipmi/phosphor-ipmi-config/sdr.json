@@ -108,10 +108,46 @@
          "sensorName" : "CPU1_MC1_F0"
     },
     {
-        "ownerId" : "0x2c",
-        "sensorNumber" : "0x08",
-        "sensorType" : "0x01",
-        "sensorName" : "PCH_temperature"
+          "ownerId" : "0x21",
+          "sensorNumber" : "0x80",
+          "sensorType" : "0x13",
+          "sensorName" : "NVME0"
+    },
+    {
+          "ownerId" : "0x21",
+          "sensorNumber" : "0x81",
+          "sensorType" : "0x13",
+          "sensorName" : "NVME1"
+    },
+    {
+          "ownerId" : "0x21",
+          "sensorNumber" : "0x82",
+          "sensorType" : "0x13",
+          "sensorName" : "NVME2"
+    },
+    {
+          "ownerId" : "0x21",
+          "sensorNumber" : "0x83",
+          "sensorType" : "0x13",
+          "sensorName" : "NVME3"
+    },
+    {
+          "ownerId" : "0x21",
+          "sensorNumber" : "0x84",
+          "sensorType" : "0x13",
+          "sensorName" : "OCP"
+    },
+    {
+          "ownerId" : "0x21",
+          "sensorNumber" : "0x85",
+          "sensorType" : "0x13",
+          "sensorName" : "VGA"
+     },
+    {
+         "ownerId" : "0x2c",
+         "sensorNumber" : "0x08",
+         "sensorType" : "0x01",
+         "sensorName" : "PCH_temperature"
     },
     {
          "ownerId" : "0x2c",
