@@ -1,0 +1,113 @@
+From 3bca8ee64b4401b5eeb1b058ef6950d8f8efcb0e Mon Sep 17 00:00:00 2001
+From: Alwin Joseph <alwinj@twitter.com>
+Date: Tue, 18 May 2021 19:55:04 +0000
+Subject: [PATCH] Modify Crashdump Log HTTP download format
+
+---
+ include/openbmc_dbus_rest.hpp | 72 +++++++++++++++++++----------------
+ 1 file changed, 40 insertions(+), 32 deletions(-)
+
+diff --git a/include/openbmc_dbus_rest.hpp b/include/openbmc_dbus_rest.hpp
+index 85032f3..61dee32 100644
+--- a/include/openbmc_dbus_rest.hpp
++++ b/include/openbmc_dbus_rest.hpp
+@@ -16,6 +16,7 @@
+ #include <app.h>
+ #include <tinyxml2.h>
+ 
++#include <cstdio>
+ #include <async_resp.hpp>
+ #include <boost/algorithm/string.hpp>
+ #include <boost/container/flat_set.hpp>
+@@ -23,6 +24,7 @@
+ #include <dbus_utility.hpp>
+ #include <filesystem>
+ #include <fstream>
++#include <memory>
+ #include <regex>
+ #include <sdbusplus/message/types.hpp>
+ 
+@@ -2074,6 +2076,40 @@ inline void handleDBusUrl(const crow::Request &req, crow::Response &res,
+     res.end();
+ }
+ 
++inline void handleCrashdumps(const crow::Request& req, crow::Response& res)
++{
++    std::map<std::string,std::string> crashdumpslist;
++    std::map<std::string,nlohmann::json> crashdumpslistData;
++    std::string path = "/var/lib/crashdump/";
++
++    if(std::filesystem::exists(std::filesystem::path(path))){
++        for (const auto & entry : std::filesystem::directory_iterator(path))
++        {
++            if(entry.path().filename().string().find("json",0) == std::string::npos)
++            {
++                continue;
++            }
++            std::ifstream ifs(entry.path().string());
++            std::string subEntry = entry.path().filename().string().substr(
++                0,entry.path().filename().string().find("-", 0)).c_str();
++            nlohmann::json crashdumpsData = nlohmann::json::parse(ifs);
++            crashdumpslist.insert(
++                std::pair<std::string,std::string>(subEntry,entry.path().filename().string()));
++            crashdumpslistData.insert(
++                std::pair<std::string,nlohmann::json>(subEntry,crashdumpsData));
++        }
++    }
++
++    res.addHeader("Content-Type", "application/json");
++
++    res.jsonValue = {{"status", "ok"},
++                     {"message", "200 OK"},
++                     {"list", std::move(crashdumpslist)},
++                     {"data", std::move(crashdumpslistData)}
++                     };
++    res.end();
++}
++
+ template <typename... Middlewares> void requestRoutes(Crow<Middlewares...> &app)
+ {
+     BMCWEB_ROUTE(app, "/bus/")
+@@ -2254,38 +2290,10 @@ template <typename... Middlewares> void requestRoutes(Crow<Middlewares...> &app)
+             }
+         });
+ 
+-    BMCWEB_ROUTE(app, "/crashdumps/<str>")
+-        .requires({"ConfigureManager"})
+-        .methods("GET"_method)([](const crow::Request &req, crow::Response &res,
+-                                  const std::string &crashdumpFile) {
+-
+-            std::string objectPath = "/var/lib/crashdump/" + crashdumpFile;
+-
+-            std::filesystem::path loc(objectPath);
+-
+-            if (!std::filesystem::exists(loc) ||
+-                std::filesystem::is_empty(loc) || !std::filesystem::is_regular_file(loc))
+-            {
+-                BMCWEB_LOG_ERROR << loc << "Crashdump json not found";
+-                res.result(boost::beast::http::status::not_found);
+-                res.end();
+-                return;
+-            }
+-
+-            std::ifstream readFile(loc);
+-
+-            if (readFile.good())
+-            {
+-                res.addHeader("Content-Type", "application/octet-stream");
+-                res.body() = {std::istreambuf_iterator<char>(readFile),
+-                              std::istreambuf_iterator<char>()};
+-                res.end();
+-                return;
+-            }else{
+-                res.result(boost::beast::http::status::not_found);
+-                res.end();
+-                return;
+-            }
++    BMCWEB_ROUTE(app, "/crashdumps")
++        .requires({"Login"})
++        .methods("GET"_method)([](const crow::Request &req, crow::Response &res) {
++	    handleCrashdumps(req, res);
+         });
+ 
+     BMCWEB_ROUTE(app, "/bus/system/<str>/")

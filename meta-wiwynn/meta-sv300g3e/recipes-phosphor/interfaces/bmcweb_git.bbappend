@@ -5,6 +5,7 @@ SRC_URI += "file://0001-Add-download-method-for-host-console-log.patch \
             file://0003-Add-http-download-method-for-ACD-crashdump.patch \
             file://0004-Add-Process-Name-to-BMC-Journal-Log-JSON-Response.patch \
             file://0005-Change-ACD-log-path-to-var-lib-crashdump.patch \
+            file://0006-Modify-Crashdump-Log-HTTP-download-format.patch \
             "
 # Enable CPU Log and Raw PECI support
 EXTRA_OECMAKE_append += "-DBMCWEB_ENABLE_REDFISH_CPU_LOG=ON"
