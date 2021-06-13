@@ -11,6 +11,7 @@ SRC_URI += "file://0001-Add-to-support-IPMI-Set-Power-Cycle-Interval-command.pat
             file://0009-Run-the-power-on-delay-service-when-the-power-off-service-is-activating.patch \
             file://0010-Add-CMOS-clear-setting-support.patch \
             file://0011-Set-restart-cause-for-chassis-control.patch \
+            file://0012-Modify-reset-function-and-add-sel.patch \
             file://master_write_read_white_list.json \
            "
 
