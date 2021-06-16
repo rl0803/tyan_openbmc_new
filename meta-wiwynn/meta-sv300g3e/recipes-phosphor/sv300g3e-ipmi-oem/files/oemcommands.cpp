@@ -75,6 +75,8 @@ const static constexpr char* systemdObjPath = "/org/freedesktop/systemd1";
 const static constexpr char* systemdMagIface = "org.freedesktop.systemd1.Manager";
 const static constexpr char* systemdUnitIface = "org.freedesktop.systemd1.Unit";
 
+constexpr auto sensorThresholdPath = "/var/configuration/system.json";
+
 static void register_oem_functions() __attribute__((constructor));
 
 const std::string pwrRestoreNoDelay("xyz.openbmc_project.Control.Power.RestorePolicy.Delay.Disable");
@@ -821,6 +823,282 @@ ipmi_ret_t IpmiGetGpio(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
     resData->pin_direction = direction;
     resData->pin_value = value;
     *data_len = sizeof(GetGpioCmdRes);
+
+    return IPMI_CC_OK;
+}
+
+uint8_t restoreSensorThreshold()
+{
+    std::filesystem::remove_all(sensorThresholdPath);
+    std::string sysUnit = "xyz.openbmc_project.EntityManager.service";
+    auto bus = sdbusplus::bus::new_default();
+    try
+    {
+        auto method = bus.new_method_call(systemdBusName, systemdObjPath,
+                                          systemdMagIface, "RestartUnit");
+        method.append(sysUnit, "replace");
+        bus.call_noreply(method);
+    }
+    catch (std::exception& e)
+    {
+        return IPMI_CC_RESPONSE_ERROR;
+    }
+    return 0;
+}
+
+uint8_t restoreFanMode()
+{
+    std::filesystem::remove_all(manualModeFilePath);
+
+    const auto modeService = "xyz.openbmc_project.State.FanCtrl";
+    const auto modeRoot = "/xyz/openbmc_project/settings/fanctrl";
+    const auto modeIntf = "xyz.openbmc_project.Control.Mode";
+    constexpr auto propIntf = "org.freedesktop.DBus.Properties";
+
+    // Bus for system control.
+    std::shared_ptr<sdbusplus::asio::connection> bus = getSdBus();
+
+    // Get all zones object path.
+    DbusSubTree zonesPath = getSubTree(*bus, modeRoot, 1, modeIntf);
+    if (zonesPath.empty() == true)
+    {
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    // Set manual property on dbus to false.
+    for (auto& path : zonesPath)
+    {
+        std::variant<bool> value = false;
+        auto msg = bus->new_method_call(modeService, path.first.c_str(),
+                                        propIntf, "Set");
+        msg.append(modeIntf, "Manual", value);
+
+        try
+        {
+            bus->call_noreply(msg);
+        }
+        catch (const sdbusplus::exception::SdBusError& e)
+        {
+            return IPMI_CC_RESPONSE_ERROR;
+        }
+    }
+
+    return 0;
+}
+
+uint8_t restorePowerCycleInterval()
+{
+    std::string defaultConfigPath =
+        "/run/initramfs/ro";
+    std::string configPath =
+        "/etc/default/obmc/phosphor-reboot-host/reboot.conf";
+
+    // read default setting of restore power cycle from read only files
+    defaultConfigPath = defaultConfigPath + configPath;
+    std::ifstream fin(defaultConfigPath);
+    if (fin.is_open() == false)
+    {
+        sd_journal_print(LOG_ERR, "[%s] failed to open file %s\n",
+                         __FUNCTION__, defaultConfigPath);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    std::string defaultPowerCycleIntervalStr;
+    fin >> defaultPowerCycleIntervalStr;
+    fin.close();
+
+    // write default setting of restore power cycle to reboot config
+    std::ofstream fout;
+    fout.open(configPath, std::ios::out | std::ios::trunc);
+    if (fout.is_open() == false)
+    {
+        sd_journal_print(LOG_ERR, "[%s] failed to open file %s\n",
+                         __FUNCTION__, configPath);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    fout << defaultPowerCycleIntervalStr << "\n";
+    if (fout.fail() == true)
+    {
+        fout.close();
+        sd_journal_print(LOG_ERR, "[%s] failed to write file %s\n",
+                         __FUNCTION__, configPath);
+        return IPMI_CC_UNSPECIFIED_ERROR;
+    }
+
+    fout.close();
+
+    return 0;
+}
+
+uint8_t restoreLeakyBucketThreshold()
+{
+    uint16_t Thrd_Default[3] = {1, 0, 65535};
+
+    // Bus for system control.
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+
+    // Set Leaky Bucket threshold property on dbus to default value.
+    for (int num = 0; num < 3; num++)
+    {
+        try
+        {
+            ipmi::setDbusProperty(*dbus, leakyBucketService, thresholdObjPath,
+                                thresholdInterface, "Threshold"+std::to_string((num+1)), Thrd_Default[num]);
+        }
+        catch (const sdbusplus::exception::SdBusError& e)
+        {
+            return IPMI_CC_RESPONSE_ERROR;
+        }
+    }
+
+    return 0;
+}
+
+uint8_t restoreSOLPattern()
+{
+    // Bus for system control.
+    std::shared_ptr<sdbusplus::asio::connection> dbus = getSdBus();
+    std::string clearPattern = "";
+
+    for(int patternNum = 0; patternNum < 4; patternNum++)
+    {
+        std::string solPatternObjPath = solPatternObjPrefix + std::to_string((patternNum+1));
+
+        try
+        {
+            ipmi::setDbusProperty(*dbus, solPatternService, solPatternObjPath,
+                                solPatternInterface, "Pattern", clearPattern);
+        }
+        catch (const sdbusplus::exception::SdBusError& e)
+        {
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ *  @brief Function of restore item to default
+ *  @brief NetFn: 0x30, Cmd: 0x19
+ *  @param[in] restore item
+ *   - 00h = restore all item
+ *   - 01h = restore BMC sensor threshold
+ *   - 02h = restore fan mode
+ *   - 03h = restore power interval
+
+ *  @return BIOS Post End status.
+ **/
+ipmi_ret_t IpmiRestoreToDefault(ipmi_netfn_t netfn, ipmi_cmd_t cmd,
+                                ipmi_request_t request, ipmi_response_t response,
+                                ipmi_data_len_t data_len, ipmi_context_t context)
+{
+    if (*data_len != 1)
+    {
+        sd_journal_print(LOG_ERR,
+                         "IPMI GetPostEndStatus request data len invalid, "
+                         "received: %d, required: %d\n",
+                         *data_len, 0);
+        return IPMI_CC_REQ_DATA_LEN_INVALID;
+    }
+
+    RestoreToDefaultCmdReq* reqData = reinterpret_cast<RestoreToDefaultCmdReq*>(request);
+
+    if (reqData->restore_item == allItemRestore)
+    {
+        bool isFncFail = false;
+        int ret = restoreFanMode();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore fan mode." << "\n";
+            isFncFail = true;
+        }
+
+        ret = restoreSensorThreshold();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore sensor threshold." << "\n";
+            isFncFail = true;
+        }
+
+        ret = restorePowerCycleInterval();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore power cycle interval." << "\n";
+            isFncFail = true;
+        }
+
+        ret = restoreLeakyBucketThreshold();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore leaky bucket threshold." << "\n";
+            isFncFail = true;
+        }
+
+        ret = restoreSOLPattern();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore SOL pattern." << "\n";
+            isFncFail = true;
+        }
+
+        if(isFncFail)
+        {
+            return IPMI_CC_UNSPECIFIED_ERROR;
+        }
+    }
+    else if (reqData->restore_item == restoreItemSensorThreshold)
+    {
+        int ret = restoreSensorThreshold();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore sensor threshold." << "\n";
+            return ret;
+        }
+    }
+    else if (reqData->restore_item == restoreItemFanMode)
+    {
+        int ret = restoreFanMode();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore fan mode." << "\n";
+            return ret;
+        }
+    }
+    else if (reqData->restore_item == restoreItemPowerInterval)
+    {
+        int ret = restorePowerCycleInterval();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore power cycle interval." << "\n";
+            return ret;
+        }
+    }
+    else if (reqData->restore_item == restoreItemLeakyBucketThreshold)
+    {
+        int ret = restoreLeakyBucketThreshold();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore leaky bucket threshold." << "\n";
+            return ret;
+        }
+    }
+    else if (reqData->restore_item == restoreItemSOLPattern)
+    {
+        int ret = restoreSOLPattern();
+        if (ret != 0)
+        {
+            std::cerr << __FUNCTION__ << ": fail to restore SOL pattern." << "\n";
+            return ret;
+        }
+    }
+    else
+    {
+        return IPMI_CC_INVALID_FIELD_REQUEST;
+    }
+
+    *data_len = 0;
 
     return IPMI_CC_OK;
 }
@@ -2008,6 +2286,10 @@ static void register_oem_functions(void)
     // <Get GPIO>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_GPIO,
                            NULL, IpmiGetGpio, PRIVILEGE_USER);
+
+    // <Restore Item to Default>
+    ipmi_register_callback(netFnSv300g3eOEM2, CMD_RESTORE_TO_DEFAULT,
+                           NULL, IpmiRestoreToDefault, PRIVILEGE_USER);
 
     // <Get POST END Status>
     ipmi_register_callback(netFnSv300g3eOEM2, CMD_GET_POST_END_STATUS,

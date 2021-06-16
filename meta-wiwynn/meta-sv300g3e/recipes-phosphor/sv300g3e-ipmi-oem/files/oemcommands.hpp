@@ -44,6 +44,7 @@ enum ipmi_sv300g3e_oem2_cmds : uint8_t
     CMD_GET_SYSTEM_LED_STATUS = 0x16,
     CMD_SET_GPIO = 0x17,
     CMD_GET_GPIO = 0x18,
+    CMD_RESTORE_TO_DEFAULT = 0x19,
     CMD_GET_POST_END_STATUS = 0xAA,
 };
 
@@ -97,6 +98,16 @@ enum vr_type : uint8_t
     CPU1_DIMM1,
     CPU0_VCCIO,
     CPU1_VCCIO,
+};
+
+enum restore_item : uint8_t
+{
+    allItemRestore = 0x0,
+    restoreItemSensorThreshold = 0x1,
+    restoreItemFanMode = 0x2,
+    restoreItemPowerInterval = 0x3,
+    restoreItemLeakyBucketThreshold = 0x4,
+    restoreItemSOLPattern = 0x5,
 };
 
 enum delay_policy : uint8_t
@@ -185,6 +196,11 @@ typedef struct
     uint8_t pin_direction;
     uint8_t pin_value;
 }__attribute__((packed)) GetGpioCmdRes;
+
+typedef struct
+{
+    uint8_t restore_item;
+}__attribute__((packed)) RestoreToDefaultCmdReq;
 
 typedef struct
 {
