@@ -1,0 +1,47 @@
+From fbee83c120d2b2bef7fa3d91ec0974688f1295b7 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Thu, 17 Jun 2021 09:25:43 +0800
+Subject: [PATCH] Add event sensor for BMC kernel panic
+
+---
+ include/EventSensor.hpp | 4 +++-
+ src/EventSensor.cpp     | 1 +
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/include/EventSensor.hpp b/include/EventSensor.hpp
+index 4dd85f6..d36c8aa 100755
+--- a/include/EventSensor.hpp
++++ b/include/EventSensor.hpp
+@@ -73,7 +73,8 @@ static const std::vector<struct sensorTypeMap> sensorList = {
+     {.sensorName = "BMC_Image_1", .sensorType = "oem1/"},
+     {.sensorName = "BMC_Image_2", .sensorType = "oem1/"},
+     {.sensorName = "HW_WDT_Timeout", .sensorType = "oem1/"},
+-    {.sensorName = "System_Restart", .sensorType = "systemrestart/"}
++    {.sensorName = "System_Restart", .sensorType = "systemrestart/"},
++    {.sensorName = "BMC_Kernel_Panic", .sensorType = "mgmtsystemhealth/"},
+ };
+ 
+ enum class sensorListIdx : uint8_t
+@@ -97,6 +98,7 @@ enum class sensorListIdx : uint8_t
+     BMC_Image_2 = 16,
+     HW_WDT_Timeout = 17,
+     System_Restart = 18,
++    BMC_Kernel_Panic = 19,
+ };
+ 
+ class EventOnlySensor
+diff --git a/src/EventSensor.cpp b/src/EventSensor.cpp
+index bbe2ac9..91d242e 100755
+--- a/src/EventSensor.cpp
++++ b/src/EventSensor.cpp
+@@ -142,6 +142,7 @@ void EventOnlySensor::bmcRebootEventLog(
+         {
+             // Sensor specific offset: 01h - controller access degraded or unavailable
+             eventData.at(0) = 0x01;
++            dbusPath = sensorPathPrefix + "mgmtsystemhealth/BMC_Kernel_Panic";
+ 
+             // SRAM content clear
+             write_register(sRAMReg, 0x0);
+-- 
+2.17.1
+
