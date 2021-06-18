@@ -6,5 +6,6 @@ SRC_URI += "file://0001-add-SEL-log-for-Power-Button-Press.patch \
             file://0004-Write-to-SEL-when-reset-button-is-pressed.patch \
             file://0005-Fix-SEL-event-issue-for-the-power-and-reset-button.patch \
             file://0006-Restart-cause-for-power-policy.patch \
+            file://0007-Add-the-dbus-matching-function-for-reloading-the-usi.patch \
             "
 
