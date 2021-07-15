@@ -4,5 +4,7 @@
       Properties:
           AmtStatus:
               Default: 0
+          AmtMonitorStatus:
+              Default: 0
           watchdog2Status:
               Default: 0

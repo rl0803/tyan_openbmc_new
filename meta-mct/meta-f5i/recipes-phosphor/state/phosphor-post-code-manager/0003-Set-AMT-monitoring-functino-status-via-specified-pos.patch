@@ -1,0 +1,46 @@
+From 2da9d4ef159cf2b54c03d4064fb7373dbf0840fc Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Wed, 30 Jun 2021 19:56:05 +0800
+Subject: [PATCH] Set AMT monitoring functino status via specified post code
+
+---
+ inc/post_code.hpp | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/inc/post_code.hpp b/inc/post_code.hpp
+index cdd9432..c32a64c 100755
+--- a/inc/post_code.hpp
++++ b/inc/post_code.hpp
+@@ -74,6 +74,29 @@ struct PostCode : sdbusplus::server::object_t<post_code>
+                 {
+                     if (valPropMap != msgData.end())
+                     {
++                        constexpr auto service = "xyz.openbmc_project.Settings";
++                        constexpr auto path = "/xyz/openbmc_project/oem/HostStatus";
++                        constexpr auto hostStatusInterface = "xyz.openbmc_project.OEM.HostStatus";
++
++                        auto bus = sdbusplus::bus::new_default();
++
++                        auto method = bus.new_method_call(service, path, "org.freedesktop.DBus.Properties","Set");
++
++                        switch(std::get<uint64_t>(valPropMap->second))
++                        {
++                            case 0xBD:
++                                method.append(hostStatusInterface, "AmtMonitorStatus", sdbusplus::message::variant<bool>(0x01));
++                                bus.call_noreply(method);
++                                break;
++                            case 0x01:
++                            case 0xBB:
++                                method.append(hostStatusInterface, "AmtMonitorStatus", sdbusplus::message::variant<bool>(0x00));
++                                bus.call_noreply(method);
++                                break;
++                            default:
++                                break;
++                        }
++
+                         this->savePostCodes(
+                             sdbusplus::message::variant_ns::get<uint64_t>(
+                                 valPropMap->second));
+-- 
+2.7.4
+

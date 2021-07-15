@@ -1,0 +1,27 @@
+From 64680ba1eacfc9beab83801df263a5862eade0db Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Wed, 30 Jun 2021 19:50:15 +0800
+Subject: [PATCH] Add property for AMT monitor sattus in host status interface
+
+---
+ xyz/openbmc_project/OEM/HostStatus.interface.yaml | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/xyz/openbmc_project/OEM/HostStatus.interface.yaml b/xyz/openbmc_project/OEM/HostStatus.interface.yaml
+index 81403ff..de9eb88 100755
+--- a/xyz/openbmc_project/OEM/HostStatus.interface.yaml
++++ b/xyz/openbmc_project/OEM/HostStatus.interface.yaml
+@@ -6,6 +6,10 @@ properties:
+       type: boolean
+       description: >
+          Setting of advanced memory test
++    - name: AmtMonitorStatus
++      type: boolean
++      description: >
++         Setting of monitoring advanced memory test
+     - name: watchdog2Status
+       type: boolean
+       description: >
+-- 
+2.7.4
+
