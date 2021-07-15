@@ -1,0 +1,28 @@
+From f69af8f848414d72c4cce770957d8a209948202a Mon Sep 17 00:00:00 2001
+From: John Chung <john.chung@mic.com.tw>
+Date: Thu, 15 Jul 2021 10:26:30 +0800
+Subject: [PATCH] Update watchdog default timeout time to 300 second
+
+---
+ xyz/openbmc_project/State/Watchdog.interface.yaml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ mode change 100644 => 100755 xyz/openbmc_project/State/Watchdog.interface.yaml
+
+diff --git a/xyz/openbmc_project/State/Watchdog.interface.yaml b/xyz/openbmc_project/State/Watchdog.interface.yaml
+old mode 100644
+new mode 100755
+index da95d4c..e2a9b17
+--- a/xyz/openbmc_project/State/Watchdog.interface.yaml
++++ b/xyz/openbmc_project/State/Watchdog.interface.yaml
+@@ -37,7 +37,7 @@ properties:
+       type: uint64
+       description: >
+           Time interval to arm the watchdog, in milli-second.
+-      default: 30000
++      default: 300000
+     - name: TimeRemaining
+       type: uint64
+       description: >
+-- 
+2.7.4
+
