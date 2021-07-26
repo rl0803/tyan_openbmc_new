@@ -1,0 +1,82 @@
+From 7e15f91854f843e17fb1b435624108dcd020cd67 Mon Sep 17 00:00:00 2001
+From: Dicos Tsai <dicos_tsai@wiwynn.com>
+Date: Mon, 28 Jun 2021 11:08:08 +0800
+Subject: [PATCH] Get default gateway mac directly from kernel route
+
+---
+ transporthandler.cpp | 45 ++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 39 insertions(+), 6 deletions(-)
+
+diff --git a/transporthandler.cpp b/transporthandler.cpp
+index 1546a20..f042b4d 100644
+--- a/transporthandler.cpp
++++ b/transporthandler.cpp
+@@ -109,6 +109,12 @@ constexpr auto INTF_NEIGHBOR_CREATE_STATIC =
+ constexpr auto INTF_VLAN = "xyz.openbmc_project.Network.VLAN";
+ constexpr auto INTF_VLAN_CREATE = "xyz.openbmc_project.Network.VLAN.Create";
+ 
++constexpr auto SERVICE_NET = "xyz.openbmc_project.Network";
++constexpr auto INTF_GATEWAY = "xyz.openbmc_project.Network.Gateway";
++constexpr auto METHOD_MAC = "GetMac";
++constexpr auto UNSPECIFIED_MAC = "00:00:00:00:00:00";
++
++
+ /** @brief Generic paramters for different address families */
+ template <int family>
+ struct AddrFamily
+@@ -943,6 +949,38 @@ std::optional<IfNeigh<family>> getGatewayNeighbor(sdbusplus::bus::bus& bus,
+     return findGatewayNeighbor<family>(bus, params, neighbors);
+ }
+ 
++template <int family>
++ether_addr getGatewayMac(sdbusplus::bus::bus& bus,
++                        const ChannelParams& params)
++{
++    std::string mac = UNSPECIFIED_MAC;
++    auto busMethod = bus.new_method_call(SERVICE_NET, PATH_SYSTEMCONFIG,
++                                         INTF_GATEWAY, METHOD_MAC);
++    try
++    {
++        auto reply = bus.call(busMethod);
++
++        if (reply.is_method_error())
++        {
++            log<level::ERR>("Fail to call get gateway mac");
++            elog<InternalFailure>();
++        }
++        else
++        {
++            reply.read(mac);
++        }
++    }
++    catch (const std::exception& e)
++    {
++        std::cerr << "GET MAC EXCPTION=" << e.what() << '\n';
++        log<level::ERR>("Fail to call get gateway mac");
++        elog<InternalFailure>();
++    }
++
++    return stringToMAC(mac.c_str());
++}
++
++
+ template <int family>
+ void reconfigureGatewayMAC(sdbusplus::bus::bus& bus,
+                            const ChannelParams& params, const ether_addr& mac)
+@@ -1795,12 +1833,7 @@ RspType<message::Payload> getLan(uint4_t channelBits, uint3_t, bool revOnly,
+         }
+         case LanParam::Gateway1MAC:
+         {
+-            ether_addr mac{};
+-            auto neighbor = channelCall<getGatewayNeighbor<AF_INET>>(channel);
+-            if (neighbor)
+-            {
+-                mac = neighbor->mac;
+-            }
++            auto mac = channelCall<getGatewayMac<AF_INET>>(channel);
+             ret.pack(dataRef(mac));
+             return responseSuccess(std::move(ret));
+         }
+-- 
+2.17.1
+

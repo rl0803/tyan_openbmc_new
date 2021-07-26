@@ -12,6 +12,7 @@ SRC_URI += "file://0001-Add-to-support-IPMI-Set-Power-Cycle-Interval-command.pat
             file://0010-Add-CMOS-clear-setting-support.patch \
             file://0011-Set-restart-cause-for-chassis-control.patch \
             file://0012-Modify-reset-function-and-add-sel.patch \
+            file://0013-Get-default-gateway-mac-directly-from-kernel-route.patch \
             file://master_write_read_white_list.json \
            "
 
