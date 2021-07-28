@@ -15,11 +15,11 @@ Subject: [PATCH] f5i fan speed control
  pid/ec/fsc.cpp                  |  44 +++++
  pid/ec/fsc.hpp                  |  40 +++++
  pid/fancontroller.cpp           |   2 +
- pid/fsccontroller.cpp           | 362 ++++++++++++++++++++++++++++++++++++++++
+ pid/fsccontroller.cpp           | 364 ++++++++++++++++++++++++++++++++++++++++
  pid/fsccontroller.hpp           |  60 +++++++
  pid/zone.cpp                    |   1 +
  sensors/builder.cpp             |   6 +-
- 15 files changed, 764 insertions(+), 15 deletions(-)
+ 15 files changed, 766 insertions(+), 15 deletions(-)
  mode change 100644 => 100755 Makefile.am
  mode change 100644 => 100755 conf.hpp
  mode change 100644 => 100755 dbus/dbusconfiguration.cpp
@@ -630,7 +630,7 @@ new file mode 100755
 index 0000000..3ed8468
 --- /dev/null
 +++ b/pid/fsccontroller.cpp
-@@ -0,0 +1,362 @@
+@@ -0,0 +1,364 @@
 +/*
 +// Copyright (c) 2019
 +//
@@ -923,7 +923,7 @@ index 0000000..3ed8468
 +double FscController::inputProc(void)
 +{
 +    double value = std::numeric_limits<double>::lowest();
-+    double sensorvalue[10];
++    double sensorvalue[10]={0};
 +    size_t i=0;
 +    double sFloorDuty;
 +    ec::FscInfo info = get_fsc_info();
@@ -931,7 +931,9 @@ index 0000000..3ed8468
 +
 +    for (const auto& in : _inputs)
 +    {
-+        sensorvalue[i]=_owner->getCachedValue(in);
++        if(!std::isnan(_owner->getCachedValue(in))){
++           sensorvalue[i]=_owner->getCachedValue(in);
++        }
 +        i++;
 +    }
 +
