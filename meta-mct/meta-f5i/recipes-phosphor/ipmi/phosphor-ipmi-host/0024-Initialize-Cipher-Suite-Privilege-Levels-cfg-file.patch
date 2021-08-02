@@ -1,0 +1,123 @@
+From 9c67e7ad8e5f6675af321e5faec26743e69e5c88 Mon Sep 17 00:00:00 2001
+From: Sumanth Bhat <sumanth.bhat@linux.intel.com>
+Date: Tue, 14 May 2019 12:13:57 +0000
+Subject: [PATCH 4/4] Initialize Cipher Suite Privilege Levels cfg file
+
+IPMI Spec 13.17 provides a way to pick a "highest level matching
+proposed algorithms" during RMCPP Open Session Request, and effective
+privilege levels are decided taking Cipher Suite Privilege Levels into
+account. This patch ships default Cipher Suite Privilege Levels file
+from root filesystem. By default, admin privileges are
+given to all Cipher Suites across all channels.
+
+Tested:
+1. By default, cs_privilege_levels.json is present in location
+   /usr/share/ipmi-providers/
+Provided support from below patch.
+https://gerrit.openbmc-project.xyz/#/c/openbmc/meta-phosphor/+/28923/
+2. File data is as expected and persistent across reboots.
+3. Manually deleted the json file while phosphor-ipmi-host was running
+and rebooted and the file was re-created.
+
+Change-Id: I526b8708f63659210768c77e8e19fa5a76df1f0d
+Signed-off-by: Sumanth Bhat <sumanth.bhat@linux.intel.com>
+Signed-off-by: vijayabharathix shetty <vijayabharathix.shetty@intel.com>
+---
+ user_channel/Makefile.am       | 3 ++-
+ user_channel/channel_layer.cpp | 4 +++-
+ user_channel/channel_layer.hpp | 9 +++++++--
+ user_channel/channel_mgmt.cpp  | 2 +-
+ user_channel/cipher_mgmt.cpp   | 1 +
+ 5 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/user_channel/Makefile.am b/user_channel/Makefile.am
+index 747c4c8..bcd8573 100644
+--- a/user_channel/Makefile.am
++++ b/user_channel/Makefile.am
+@@ -39,7 +39,8 @@ endif
+ lib_LTLIBRARIES += libchannellayer.la
+ libchannellayer_la_SOURCES = \
+ 	channel_mgmt.cpp \
+-	channel_layer.cpp
++	channel_layer.cpp \
++	cipher_mgmt.cpp
+ libchannellayer_la_LDFLAGS = \
+ 	$(SYSTEMD_LIBS) \
+ 	$(libmapper_LIBS) \
+diff --git a/user_channel/channel_layer.cpp b/user_channel/channel_layer.cpp
+index c6866c2..aedbfeb 100644
+--- a/user_channel/channel_layer.cpp
++++ b/user_channel/channel_layer.cpp
+@@ -17,6 +17,7 @@
+ #include "channel_layer.hpp"
+ 
+ #include "channel_mgmt.hpp"
++#include "cipher_mgmt.hpp"
+ 
+ #include <phosphor-logging/log.hpp>
+ 
+@@ -81,7 +82,8 @@ size_t getChannelMaxTransferSize(uint8_t chNum)
+ ipmi_ret_t ipmiChannelInit()
+ {
+     getChannelConfigObject();
+-    return IPMI_CC_OK;
++    getCipherConfigObject(csPrivFileName, csPrivDefaultFileName);
++    return ccSuccess;
+ }
+ 
+ ipmi_ret_t getChannelInfo(const uint8_t chNum, ChannelInfo& chInfo)
+diff --git a/user_channel/channel_layer.hpp b/user_channel/channel_layer.hpp
+index 4eb51b7..bf60522 100644
+--- a/user_channel/channel_layer.hpp
++++ b/user_channel/channel_layer.hpp
+@@ -14,8 +14,8 @@
+ // limitations under the License.
+ */
+ #pragma once
+-#include <ipmid/api.h>
+-
++#include <array>
++#include <ipmid/api.hpp>
+ #include <string>
+ 
+ namespace ipmi
+@@ -25,6 +25,11 @@ static constexpr uint8_t maxIpmiChannels = 16;
+ static constexpr uint8_t currentChNum = 0xE;
+ static constexpr uint8_t invalidChannel = 0xff;
+ 
++/**
++ * @array of privilege levels
++ */
++extern const std::array<std::string, PRIVILEGE_OEM + 1> privList;
++
+ /**
+  * @enum IPMI return codes specific to channel (refer spec se 22.22 response
+  * data)
+diff --git a/user_channel/channel_mgmt.cpp b/user_channel/channel_mgmt.cpp
+index 759de43..5af4d00 100644
+--- a/user_channel/channel_mgmt.cpp
++++ b/user_channel/channel_mgmt.cpp
+@@ -133,7 +133,7 @@ static std::array<std::string, 4> accessModeList = {
+ static std::array<std::string, 4> sessionSupportList = {
+     "session-less", "single-session", "multi-session", "session-based"};
+ 
+-static std::array<std::string, PRIVILEGE_OEM + 1> privList = {
++const std::array<std::string, PRIVILEGE_OEM + 1> privList = {
+     "priv-reserved", "priv-callback", "priv-user",
+     "priv-operator", "priv-admin",    "priv-oem"};
+ 
+diff --git a/user_channel/cipher_mgmt.cpp b/user_channel/cipher_mgmt.cpp
+index ca9c2d4..fc12e2a 100644
+--- a/user_channel/cipher_mgmt.cpp
++++ b/user_channel/cipher_mgmt.cpp
+@@ -22,6 +22,7 @@
+ 
+ #include <filesystem>
+ #include <fstream>
++#include <include/ipmid/api-types.hpp>
+ #include <phosphor-logging/log.hpp>
+ 
+ namespace ipmi
+-- 
+2.29.0
+

@@ -17,6 +17,10 @@ SRC_URI += "file://0004-Implement-NMI-command-in-Chassis-Control-command.patch \
             file://0018-Add-the-detect-for-firmare-revision.patch \
             file://0019-block-power-control-until-pervious-action-completed.patch \
             file://0020-Set-restart-cause-for-chassis-control.patch \
+            file://0021-transporthandler-Change-for-set-and-get-lan-config.patch \
+            file://0022-Added-Cipher-Suite-priv-param-24-to-set-get-LanCfg.patch \
+            file://0023-transporthandler-Fix-get-lan-config-param-22-23.patch \
+            file://0024-Initialize-Cipher-Suite-Privilege-Levels-cfg-file.patch \
             "
 EXTRA_OECONF += "--disable-i2c-whitelist-check"
 
